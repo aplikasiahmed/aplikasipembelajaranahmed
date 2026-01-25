@@ -406,7 +406,7 @@ const PublicTasks: React.FC = () => {
                       <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:bg-emerald-100 transition-colors">
                         <Camera size={20} />
                       </div>
-                      <p className="text-[10px] md:text-xs text-slate-500">Klik untuk membuka kamera HP atau pilih file</p>
+                      <p className="text-[10px] md:text-xs text-slate-500">Klik untuk membuka kamera HP atau pilih file (ukuran foto maksimal 1MB)</p>
                     </div>
                   )}
                 </div>

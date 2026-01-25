@@ -14,7 +14,7 @@ const PublicGrades: React.FC = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nis.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Input Kosong', text: 'Masukkan NIS siswa!', confirmButtonColor: '#059669' });
+      Swal.fire({ icon: 'warning', title: 'Opss..', text: 'Silakan masukkan nomor induk Anda!', confirmButtonColor: '#059669' });
       return;
     }
 

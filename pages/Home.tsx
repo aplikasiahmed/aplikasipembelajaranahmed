@@ -1,8 +1,10 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Calendar, Quote } from 'lucide-react';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const features = [
     { title: 'Kelas 7', desc: 'Siswa baru mengenal dasar-dasar PAI & Budi Pekerti.', color: 'bg-blue-500' },
     { title: 'Kelas 8', desc: 'Pendalaman materi Aqidah, Fiqih, dan Sejarah Islam.', color: 'bg-emerald-500' },
@@ -21,10 +23,16 @@ const Home: React.FC = () => {
             Portal pembelajaran terpadu untuk monitoring nilai, absensi, dan materi PAI khusus Kelas 7, 8, dan 9.
           </p>
           <div className="pt-2 flex flex-wrap gap-3">
-            <button className="bg-white text-emerald-700 px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-50 transition-all shadow-md active:scale-95">
+            <button 
+              onClick={() => navigate('/materi')}
+              className="bg-white text-emerald-700 px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-50 transition-all shadow-md active:scale-95"
+            >
               Lihat Materi
             </button>
-            <button className="bg-emerald-600 text-white border border-emerald-500/50 px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all shadow-md active:scale-95">
+            <button 
+              onClick={() => navigate('/nilai')}
+              className="bg-emerald-600 text-white border border-emerald-500/50 px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all shadow-md active:scale-95"
+            >
               Cek Nilai Saya
             </button>
           </div>

@@ -18,7 +18,7 @@ const PublicAbsensi: React.FC = () => {
     if (!nisn.trim()) {
       Swal.fire({
         icon: 'warning',
-        title: 'Input Kosong',
+        title: 'Opss..',
         text: 'Silakan masukkan nomor induk Anda!',
         confirmButtonColor: '#059669',
       });
