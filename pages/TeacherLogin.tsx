@@ -78,7 +78,7 @@ const TeacherLogin: React.FC<TeacherLoginProps> = ({ onClose }) => {
           <div className="inline-flex bg-white/20 p-2 md:p-3 rounded-xl md:rounded-2xl mb-3 md:mb-4 backdrop-blur-sm">
             <BookOpen size={24} className="md:w-8 md:h-8" />
           </div>
-          <h1 className="text-lg md:text-2xl font-bold">Area Guru</h1>
+          <h1 className="text-lg md:text-2xl font-bold">Masuk Sebagai Guru</h1>
           <p className="text-emerald-100 text-[10px] md:text-sm mt-1">Silakan masuk untuk mengelola data</p>
         </div>
         
@@ -127,7 +127,7 @@ const TeacherLogin: React.FC<TeacherLoginProps> = ({ onClose }) => {
           </button>
 
           <p className="text-center text-slate-400 text-[9px] md:text-xs leading-relaxed px-4">
-            Akses khusus Guru Pendidikan Agama Islam & Budi Pekerti
+            Akses khusus Guru siswa tidak bisa masuk !
           </p>
         </form>
       </div>

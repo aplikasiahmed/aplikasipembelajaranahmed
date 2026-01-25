@@ -19,7 +19,7 @@ const PublicAbsensi: React.FC = () => {
       Swal.fire({
         icon: 'warning',
         title: 'Opss..',
-        text: 'Silakan masukkan nomor NIS Anda!',
+        text: 'Silakan masukkan nomor induk Anda!',
         confirmButtonColor: '#059669',
       });
       return;
@@ -47,8 +47,8 @@ const PublicAbsensi: React.FC = () => {
       } else {
         Swal.fire({
           icon: 'error',
-          title: 'Opss...',
-          text: 'Nomor NIS tidak terdaftar',
+          title: 'Tidak Ditemukan',
+          text: 'Nomor induk tidak terdaftar',
           confirmButtonColor: '#059669',
         });
       }
@@ -79,14 +79,14 @@ const PublicAbsensi: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-3 md:space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
       <div className="text-center space-y-0.5 md:space-y-1">
         <h1 className="text-base md:text-2xl font-bold text-slate-800">Cek Absensi Siswa</h1>
-        <p className="text-[9px] md:text-xs text-slate-500 font-medium tracking-tighter md:tracking-normal">Pilih semester & masukkan NIS untuk mengecek absensi.</p>
+        <p className="text-[9px] md:text-xs text-slate-500 font-medium tracking-tighter md:tracking-normal">pilih semester & masukkan NIS untuk cek absensi.</p>
       </div>
 
       <div className="bg-white p-2.5 md:p-5 rounded-2xl shadow-sm border border-slate-100">
         <form onSubmit={handleSearch} className="space-y-2 md:space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 md:gap-2">
             <select 
-              className="w-full px-3 py-2 text-[10px] md:text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-medium focus:border-emerald-500 outline-none transition-all"
+              className="w-full px-3 py-2 text-[10px] md:text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold focus:border-emerald-500 outline-none transition-all"
               value={semester}
               onChange={(e) => setSemester(e.target.value)}
             >
@@ -110,9 +110,9 @@ const PublicAbsensi: React.FC = () => {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-emerald-600 text-white px-5 md:px-7 py-2.5 rounded-xl text-[10px] md:text-[11px] font-bold hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20"
+            className="w-full bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] md:text-[11px] font-medium hover:bg-emerald-700 active:scale-95 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
           >
-            {loading ? 'Mencari...' : <><Search size={13} /> Cek Absensi</>}
+            {loading ? 'Mencari...' : <><Search size={13} /> Cari Data Absensi</>}
           </button>
         </form>
       </div>
