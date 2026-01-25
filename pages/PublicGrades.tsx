@@ -44,10 +44,12 @@ const PublicGrades: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
             <input 
               type="text" 
-              placeholder="Masukkan NIS Anda" 
-              className="w-full pl-9 pr-3 py-2.5 text-[11px] md:text-sm rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Masukkan nomor NIS Anda" 
+              className="w-full pl-9 pr-3 py-2.5 text-[11px] md:text-sm rounded-xl border border-slate-200 bg-white text-slate-900 font-bold focus:border-emerald-500 outline-none shadow-sm transition-all"
               value={nis}
-              onChange={(e) => setNis(e.target.value)}
+              onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
             />
           </div>
           <button type="submit" disabled={loading} className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[11px] font-bold hover:bg-emerald-700 active:scale-95 shadow-lg shadow-emerald-600/20">

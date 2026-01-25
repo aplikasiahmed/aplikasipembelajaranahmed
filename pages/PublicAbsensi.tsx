@@ -18,7 +18,7 @@ const PublicAbsensi: React.FC = () => {
       Swal.fire({
         icon: 'warning',
         title: 'Input Kosong',
-        text: 'Silakan masukkan NISN Anda!',
+        text: 'Silakan masukkan nomor induk Anda!',
         confirmButtonColor: '#059669',
       });
       return;
@@ -32,14 +32,12 @@ const PublicAbsensi: React.FC = () => {
       const found = await db.getStudentByNISN(nisn);
       if (found) {
         setStudent(found);
-        // Fix: Use non-null assertion for student id as it is required by the database service
         const records = await db.getAttendanceByStudent(found.id!);
         setAttendance(records);
         
         Swal.fire({
           icon: 'success',
           title: 'Data Ditemukan',
-          // Fix: Access 'namalengkap' property as defined in the Student interface (line 41)
           text: `Halo ${found.namalengkap}, data absensi Anda berhasil dimuat.`,
           timer: 2000,
           showConfirmButton: false,
@@ -50,7 +48,7 @@ const PublicAbsensi: React.FC = () => {
         Swal.fire({
           icon: 'error',
           title: 'Tidak Ditemukan',
-          text: 'Nomor NISN tidak terdaftar di database kami.',
+          text: 'Nomor induk tidak terdaftar di database kami.',
           confirmButtonColor: '#059669',
         });
       }
@@ -71,7 +69,7 @@ const PublicAbsensi: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
       <div className="text-center space-y-1">
         <h1 className="text-lg md:text-2xl font-bold text-slate-800">Cek Absensi Siswa</h1>
-        <p className="text-[10px] md:text-xs text-slate-500 font-medium">Monitoring kehadiran Anda melalui Nomor NISN.</p>
+        <p className="text-[10px] md:text-xs text-slate-500 font-medium">Monitoring kehadiran Anda melalui Nomor Induk.</p>
       </div>
 
       <div className="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -80,10 +78,12 @@ const PublicAbsensi: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
             <input 
               type="text" 
-              placeholder="Masukkan NISN (10 Digit)" 
-              className="w-full pl-9 pr-3 py-2.5 text-[11px] md:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Masukkan nomor NIS Anda" 
+              className="w-full pl-9 pr-3 py-2.5 text-[11px] md:text-sm rounded-xl border border-slate-200 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-sm"
               value={nisn}
-              onChange={(e) => setNisn(e.target.value)}
+              onChange={(e) => setNisn(e.target.value.replace(/[^0-9]/g, ''))}
             />
           </div>
           <button 
