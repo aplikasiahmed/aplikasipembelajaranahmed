@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, ClipboardCheck, Calendar, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Search, Calendar, CheckCircle2, Clock, AlertCircle, UserCheck, UserMinus, Thermometer, FileText, Ban } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, AttendanceRecord } from '../types';
 import Swal from 'sweetalert2';
@@ -11,6 +11,7 @@ const PublicAbsensi: React.FC = () => {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Logika pencarian tetap sama, tidak diubah
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -38,7 +39,7 @@ const PublicAbsensi: React.FC = () => {
         Swal.fire({
           icon: 'success',
           title: 'Data Ditemukan',
-          text: `Halo ${found.namalengkap}, data absensi Anda berhasil dimuat.`,
+          text: `Nama siswa terverifikasi`,
           timer: 2000,
           showConfirmButton: false,
           toast: true,
@@ -48,7 +49,7 @@ const PublicAbsensi: React.FC = () => {
         Swal.fire({
           icon: 'error',
           title: 'Tidak Ditemukan',
-          text: 'Nomor induk tidak terdaftar di database kami.',
+          text: 'Nomor induk tidak terdaftar',
           confirmButtonColor: '#059669',
         });
       }
@@ -56,13 +57,23 @@ const PublicAbsensi: React.FC = () => {
     }, 700);
   };
 
-  const getStatusStyle = (status: string) => {
+  // Helper untuk mendapatkan inisial dan warna status
+  const getStatusInitial = (status: string) => {
     switch(status) {
-      case 'hadir': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-      case 'sakit': return 'bg-amber-50 text-amber-700 border-amber-100';
-      case 'izin': return 'bg-blue-50 text-blue-700 border-blue-100';
-      default: return 'bg-red-50 text-red-700 border-red-100';
+      case 'hadir': return { char: 'H', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
+      case 'sakit': return { char: 'S', color: 'text-amber-600 bg-amber-50 border-amber-100' };
+      case 'izin': return { char: 'I', color: 'text-blue-600 bg-blue-50 border-blue-100' };
+      case 'alfa': return { char: 'A', color: 'text-red-600 bg-red-50 border-red-100' };
+      default: return { char: '?', color: 'text-slate-400 bg-slate-50 border-slate-100' };
     }
+  };
+
+  // Hitung Statistik
+  const stats = {
+    hadir: attendance.filter(a => a.status === 'hadir').length,
+    sakit: attendance.filter(a => a.status === 'sakit').length,
+    izin: attendance.filter(a => a.status === 'izin').length,
+    alfa: attendance.filter(a => a.status === 'alfa').length
   };
 
   return (
@@ -72,6 +83,7 @@ const PublicAbsensi: React.FC = () => {
         <p className="text-[10px] md:text-xs text-slate-500 font-medium">Monitoring kehadiran Anda melalui Nomor Induk.</p>
       </div>
 
+      {/* Input Pencarian - Tetap dengan background putih & font tebal */}
       <div className="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-slate-100">
         <form onSubmit={handleSearch} className="flex gap-2">
           <div className="relative flex-1">
@@ -80,7 +92,7 @@ const PublicAbsensi: React.FC = () => {
               type="text" 
               inputMode="numeric"
               pattern="[0-9]*"
-              placeholder="Masukkan nomor NIS Anda" 
+              placeholder="Masukkan nomor NIS/NISN Anda" 
               className="w-full pl-9 pr-3 py-2.5 text-[11px] md:text-sm rounded-xl border border-slate-200 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-sm"
               value={nisn}
               onChange={(e) => setNisn(e.target.value.replace(/[^0-9]/g, ''))}
@@ -98,39 +110,92 @@ const PublicAbsensi: React.FC = () => {
 
       {student && (
         <div className="space-y-4 animate-slideUp">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white p-3 md:p-4 rounded-2xl border border-slate-100 text-center">
-              <CheckCircle2 className="mx-auto text-emerald-600 mb-1" size={18} />
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Total Hadir</p>
-              <p className="text-lg font-black text-slate-800">{attendance.filter(a => a.status === 'hadir').length}</p>
+          {/* KARTU INFORMASI SISWA - SESUAI PERMINTAAN */}
+          <div className="bg-emerald-700 text-white p-5 rounded-2xl shadow-lg flex justify-between items-center">
+            <div>
+              <p className="text-emerald-200 text-[10px] font-bold uppercase tracking-widest">Informasi Siswa</p>
+              <h2 className="text-sm md:text-lg font-bold">{student.namalengkap}</h2>
+              <p className="text-emerald-100 text-[10px]">Kelas {student.grade}-{student.rombel} • NIS {student.nis}</p>
             </div>
-            <div className="bg-white p-3 md:p-4 rounded-2xl border border-slate-100 text-center">
-              <Clock className="mx-auto text-amber-600 mb-1" size={18} />
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Ketidakhadiran</p>
-              <p className="text-lg font-black text-slate-800">{attendance.filter(a => a.status !== 'hadir').length}</p>
+            <div className="bg-white/10 p-2 rounded-xl border border-white/20">
+              <Calendar size={24} className="opacity-50" />
             </div>
           </div>
 
+          {/* Kartu Statistik Kehadiran - 4 Kolom Sejajar */}
+          <div className="grid grid-cols-4 gap-1.5 md:gap-3">
+            <div className="bg-emerald-50 p-2 md:p-4 rounded-xl border border-emerald-100 text-center flex flex-col items-center justify-center">
+              <UserCheck className="text-emerald-600 mb-1" size={16} />
+              <p className="text-[8px] md:text-[10px] font-bold text-emerald-700 uppercase tracking-tighter">Hadir</p>
+              <p className="text-xs md:text-xl font-black text-emerald-800 leading-none mt-1">{stats.hadir}</p>
+            </div>
+            <div className="bg-amber-50 p-2 md:p-4 rounded-xl border border-amber-100 text-center flex flex-col items-center justify-center">
+              <Thermometer className="text-amber-600 mb-1" size={16} />
+              <p className="text-[8px] md:text-[10px] font-bold text-amber-700 uppercase tracking-tighter">Sakit</p>
+              <p className="text-xs md:text-xl font-black text-amber-800 leading-none mt-1">{stats.sakit}</p>
+            </div>
+            <div className="bg-blue-50 p-2 md:p-4 rounded-xl border border-blue-100 text-center flex flex-col items-center justify-center">
+              <FileText className="text-blue-600 mb-1" size={16} />
+              <p className="text-[8px] md:text-[10px] font-bold text-blue-700 uppercase tracking-tighter">Izin</p>
+              <p className="text-xs md:text-xl font-black text-blue-800 leading-none mt-1">{stats.izin}</p>
+            </div>
+            <div className="bg-red-50 p-2 md:p-4 rounded-xl border border-red-100 text-center flex flex-col items-center justify-center">
+              <Ban className="text-red-600 mb-1" size={16} />
+              <p className="text-[8px] md:text-[10px] font-bold text-red-700 uppercase tracking-tighter">Alfa</p>
+              <p className="text-xs md:text-xl font-black text-red-800 leading-none mt-1">{stats.alfa}</p>
+            </div>
+          </div>
+
+          {/* Tabel Riwayat Kehadiran */}
           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-slate-50">
+            <div className="p-4 border-b border-slate-50 bg-slate-50/50">
               <h3 className="text-[11px] md:text-xs font-bold text-slate-800 flex items-center gap-2">
-                <Calendar size={14} className="text-emerald-600" /> Riwayat Kehadiran Terbaru
+                <Calendar size={14} className="text-emerald-600" /> Riwayat Kehadiran (H/S/I/A)
               </h3>
             </div>
-            <div className="divide-y divide-slate-50">
-              {attendance.length > 0 ? [...attendance].reverse().map((record) => (
-                <div key={record.id} className="p-3 md:p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                  <div className="space-y-0.5">
-                    <p className="text-[11px] md:text-sm font-bold text-slate-800">{new Date(record.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-                    <p className="text-[9px] md:text-[10px] text-slate-400 font-medium">PAI & Budi Pekerti • Kelas {record.grade}</p>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-tight border ${getStatusStyle(record.status)}`}>
-                    {record.status}
-                  </span>
-                </div>
-              )) : (
-                <div className="p-8 text-center text-slate-400 text-[11px]">Belum ada data absensi tercatat.</div>
-              )}
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">No.</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Tanggal</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase text-center">Ket.</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {attendance.length > 0 ? [...attendance].reverse().map((record, idx) => {
+                    const statusInfo = getStatusInitial(record.status);
+                    return (
+                      <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3 text-[11px] md:text-sm font-medium text-slate-400">
+                          {idx + 1}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-[11px] md:text-sm font-bold text-slate-800">
+                            {new Date(record.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black border ${statusInfo.color}`}>
+                            {statusInfo.char}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-slate-400 text-[11px]">Belum ada data absensi tercatat.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="p-3 bg-slate-50 border-t border-slate-100">
+              <p className="text-[9px] text-slate-400 italic text-center">
+                * Keterangan: <strong>H</strong>: Hadir, <strong>S</strong>: Sakit, <strong>I</strong>: Izin, <strong>A</strong>: Alfa
+              </p>
             </div>
           </div>
         </div>

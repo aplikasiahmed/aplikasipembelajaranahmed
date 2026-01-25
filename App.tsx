@@ -9,6 +9,7 @@ import PublicAbsensi from './pages/PublicAbsensi';
 import PublicTasks from './pages/PublicTasks';
 import PublicMaterials from './pages/PublicMaterials';
 import TeacherInputGrades from './pages/TeacherInputGrades';
+import TeacherInputAbsensi from './pages/TeacherInputAbsensi';
 import TeacherReports from './pages/TeacherReports';
 
 // Higher Order Component for Route Protection
@@ -68,7 +69,7 @@ const App: React.FC = () => {
           } />
           <Route path="/guru/absensi" element={
             <ProtectedRoute>
-              <PlaceholderPage title="Input Absensi Guru" />
+              <TeacherInputAbsensi />
             </ProtectedRoute>
           } />
           <Route path="/guru/laporan" element={

@@ -8,10 +8,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_2MlaJJX4yWGwaxU5qIVADA_4N1bqqZ-';
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 class DatabaseService {
-  // Fungsi Massal untuk Import Data Siswa dari Excel ke tabel data_siswa
   async upsertStudents(students: Omit<Student, 'id'>[]) {
     const { data, error } = await supabase
-      .from('data_siswa') // Diubah dari 'students'
+      .from('data_siswa')
       .upsert(students, { onConflict: 'nis' })
       .select();
 
@@ -32,10 +31,9 @@ class DatabaseService {
     return data ? data[0] : null;
   }
 
-  // Fungsi untuk mengambil data Siswa berdasarkan Grade dari tabel data_siswa
   async getStudentsByGrade(grade: GradeLevel) {
     const { data, error } = await supabase
-      .from('data_siswa') // Diubah dari 'students'
+      .from('data_siswa')
       .select('*')
       .eq('grade', grade);
     
@@ -46,10 +44,9 @@ class DatabaseService {
     return data as Student[];
   }
 
-  // Mencari siswa berdasarkan NIS di tabel data_siswa
   async getStudentByNIS(nis: string) {
     const { data, error } = await supabase
-      .from('data_siswa') // Diubah dari 'students'
+      .from('data_siswa')
       .select('*')
       .eq('nis', nis)
       .single();
@@ -58,10 +55,9 @@ class DatabaseService {
     return data as Student;
   }
 
-  // Mencari siswa berdasarkan NISN (fallback ke NIS) di tabel data_siswa
   async getStudentByNISN(nisn: string) {
     const { data, error } = await supabase
-      .from('data_siswa') // Diubah dari 'students'
+      .from('data_siswa')
       .select('*')
       .eq('nis', nisn)
       .single();
@@ -72,7 +68,7 @@ class DatabaseService {
 
   async addAttendance(records: Omit<AttendanceRecord, 'id'>[]) {
     const { data, error } = await supabase
-      .from('attendance')
+      .from('kehadiran') // Diperbarui dari 'attendance'
       .insert(records)
       .select();
     if (error) throw error;
@@ -81,7 +77,7 @@ class DatabaseService {
 
   async getAttendanceByStudent(studentId: string): Promise<AttendanceRecord[]> {
     const { data, error } = await supabase
-      .from('attendance')
+      .from('kehadiran') // Diperbarui dari 'attendance'
       .select('*')
       .eq('student_id', studentId)
       .order('date', { ascending: false });
@@ -91,7 +87,7 @@ class DatabaseService {
 
   async addGrade(record: Omit<GradeRecord, 'id' | 'created_at'>) {
     const { data, error } = await supabase
-      .from('grades')
+      .from('Nilai') // Diperbarui dari 'grades'
       .insert([record])
       .select();
     if (error) throw error;
@@ -100,7 +96,7 @@ class DatabaseService {
 
   async getGradesByStudent(studentId: string): Promise<GradeRecord[]> {
     const { data, error } = await supabase
-      .from('grades')
+      .from('Nilai') // Diperbarui dari 'grades'
       .select('*')
       .eq('student_id', studentId)
       .order('created_at', { ascending: false });
@@ -119,8 +115,8 @@ class DatabaseService {
   }
 
   async resetAllData() {
-    await supabase.from('attendance').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('grades').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('kehadiran').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('Nilai').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     return true;
   }
 }

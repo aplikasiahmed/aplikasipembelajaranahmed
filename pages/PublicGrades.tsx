@@ -26,7 +26,7 @@ const PublicGrades: React.FC = () => {
       setGrades(studentGrades);
       Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, icon: 'success', title: 'Data Ditemukan' });
     } else {
-      Swal.fire({ icon: 'error', title: 'Tidak Ditemukan', text: 'NIS tidak terdaftar.', confirmButtonColor: '#059669' });
+      Swal.fire({ icon: 'error', title: 'Opss...', text: 'NIS tidak terdaftar.', confirmButtonColor: '#059669' });
     }
     setLoading(false);
   };
