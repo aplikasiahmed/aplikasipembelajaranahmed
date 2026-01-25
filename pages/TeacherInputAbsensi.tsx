@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 
 const TeacherInputAbsensi: React.FC = () => {
   const [grade, setGrade] = useState<GradeLevel>('7');
+  const [semester, setSemester] = useState('1'); // State semester baru
   const [rombel, setRombel] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
@@ -14,7 +15,6 @@ const TeacherInputAbsensi: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Ambil daftar rombel unik berdasarkan grade
   const [availableRombels, setAvailableRombels] = useState<string[]>([]);
 
   useEffect(() => {
@@ -22,18 +22,15 @@ const TeacherInputAbsensi: React.FC = () => {
       setLoading(true);
       const allStudents = await db.getStudentsByGrade(grade);
       
-      // Ambil rombel unik
       const uniqueRombels = Array.from(new Set(allStudents.map(s => s.rombel))).sort();
       setAvailableRombels(uniqueRombels);
       
-      // Filter berdasarkan rombel jika dipilih
       const filtered = rombel 
         ? allStudents.filter(s => s.rombel === rombel)
         : allStudents;
         
       setStudents(filtered);
       
-      // Reset attendance data dengan default 'hadir'
       const initial: Record<string, string> = {};
       filtered.forEach(s => {
         initial[s.id!] = 'hadir';
@@ -54,7 +51,7 @@ const TeacherInputAbsensi: React.FC = () => {
 
     const result = await Swal.fire({
       title: 'Simpan Absensi?',
-      text: `Menyimpan data kehadiran untuk ${students.length} siswa tanggal ${date}.`,
+      text: `Menyimpan data kehadiran untuk ${students.length} siswa semester ${semester} tanggal ${date}.`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#d97706',
@@ -69,7 +66,8 @@ const TeacherInputAbsensi: React.FC = () => {
         student_id: s.id!,
         status: attendanceData[s.id!] as any,
         date: date,
-        grade: grade
+        grade: grade,
+        semester: semester // Menyertakan semester dalam record
       }));
 
       await db.addAttendance(records);
@@ -96,12 +94,11 @@ const TeacherInputAbsensi: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn pb-20">
       <div className="bg-amber-600 text-white p-6 md:p-8 rounded-3xl shadow-xl shadow-amber-900/10">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Input Absensi Harian</h1>
-        <p className="text-amber-50 text-sm">Kelola kehadiran siswa secara kolektif per kelas.</p>
+        <p className="text-amber-50 text-sm">Kelola kehadiran siswa secara kolektif per kelas dan semester.</p>
       </div>
 
       <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-        {/* Filter Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Pilih Grade</label>
             <div className="flex gap-1">
@@ -115,6 +112,18 @@ const TeacherInputAbsensi: React.FC = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Semester</label>
+            <select 
+              className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
+              value={semester}
+              onChange={(e) => setSemester(e.target.value)}
+            >
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+            </select>
           </div>
 
           <div className="space-y-1">
@@ -142,7 +151,6 @@ const TeacherInputAbsensi: React.FC = () => {
           </div>
         </div>
 
-        {/* Student List Section */}
         <div className="border border-slate-100 rounded-2xl overflow-hidden">
           <div className="bg-slate-50 p-3 border-b border-slate-100 flex justify-between items-center">
             <h3 className="text-xs font-bold text-slate-700 flex items-center gap-2">
@@ -166,10 +174,10 @@ const TeacherInputAbsensi: React.FC = () => {
 
                 <div className="flex gap-1 md:gap-2">
                   {[
-                    { val: 'hadir', label: 'H', color: 'bg-emerald-50 text-emerald-600 border-emerald-200 active:bg-emerald-600' },
-                    { val: 'sakit', label: 'S', color: 'bg-amber-50 text-amber-600 border-amber-200 active:bg-amber-600' },
-                    { val: 'izin', label: 'I', color: 'bg-blue-50 text-blue-600 border-blue-200 active:bg-blue-600' },
-                    { val: 'alfa', label: 'A', color: 'bg-red-50 text-red-600 border-red-200 active:bg-red-600' },
+                    { val: 'hadir', label: 'H' },
+                    { val: 'sakit', label: 'S' },
+                    { val: 'izin', label: 'I' },
+                    { val: 'alfa', label: 'A' },
                   ].map(opt => (
                     <button
                       key={opt.val}
@@ -192,13 +200,11 @@ const TeacherInputAbsensi: React.FC = () => {
               <div className="p-10 text-center space-y-2">
                 <AlertCircle className="mx-auto text-slate-300" size={32} />
                 <p className="text-slate-500 text-xs">Siswa tidak ditemukan untuk filter ini.</p>
-                <p className="text-slate-400 text-[10px]">Pastikan Anda sudah mengimport data siswa di halaman Laporan.</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Action Button */}
         <div className="pt-4">
           <button
             onClick={handleSave}
@@ -212,7 +218,7 @@ const TeacherInputAbsensi: React.FC = () => {
             {saving ? (
               <><Loader2 size={20} className="animate-spin" /> Menyimpan...</>
             ) : (
-              <><Save size={20} /> Simpan Semua Kehadiran</>
+              <><Save size={20} /> Simpan Absensi Semester {semester}</>
             )}
           </button>
         </div>

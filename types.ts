@@ -16,6 +16,7 @@ export interface AttendanceRecord {
   date: string;
   status: 'hadir' | 'sakit' | 'izin' | 'alfa';
   grade: GradeLevel;
+  semester: string;
 }
 
 export interface GradeRecord {
@@ -25,6 +26,7 @@ export interface GradeRecord {
   score: number;
   description: string;
   grade: GradeLevel;
+  semester: string;
   created_at: string;
 }
 

@@ -1,6 +1,6 @@
 
 -- ==========================================================
--- SCRIPT DATABASE PORTAL PAI & BUDI PEKERTI (VERSI REVISI)
+-- SCRIPT DATABASE PORTAL PAI & BUDI PEKERTI (VERSI REVISI SEMESTER)
 -- Jalankan script ini di SQL Editor Supabase
 -- ==========================================================
 
@@ -15,24 +15,26 @@ CREATE TABLE IF NOT EXISTS data_siswa (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. TABEL KEHADIRAN (Sebelumnya: attendance)
+-- 2. TABEL KEHADIRAN
 CREATE TABLE IF NOT EXISTS kehadiran (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     student_id UUID REFERENCES data_siswa(id) ON DELETE CASCADE,
     date DATE DEFAULT CURRENT_DATE,
-    status TEXT NOT NULL, -- 'hadir', 'sakit', 'izin', 'alfa'
+    status TEXT NOT NULL, 
     grade TEXT NOT NULL,
+    semester TEXT DEFAULT '1', -- Kolom baru untuk semester
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. TABEL NILAI (Sebelumnya: grades)
+-- 3. TABEL NILAI
 CREATE TABLE IF NOT EXISTS "Nilai" (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     student_id UUID REFERENCES data_siswa(id) ON DELETE CASCADE,
-    subject_type TEXT NOT NULL, -- 'harian', 'uts', 'uas', 'praktik'
+    subject_type TEXT NOT NULL, 
     score NUMERIC NOT NULL,
     description TEXT,
     grade TEXT NOT NULL,
+    semester TEXT DEFAULT '1', -- Kolom baru untuk semester
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -44,7 +46,7 @@ CREATE TABLE IF NOT EXISTS "data_TugasSiswa" (
     grade TEXT,
     rombel TEXT,
     task_name TEXT,
-    submission_type TEXT, -- 'link' atau 'photo'
+    submission_type TEXT, 
     content TEXT, 
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -61,10 +63,13 @@ CREATE TABLE IF NOT EXISTS materials (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Tambahkan kolom semester jika tabel sudah ada sebelumnya
+ALTER TABLE "Nilai" ADD COLUMN IF NOT EXISTS semester TEXT DEFAULT '1';
+ALTER TABLE kehadiran ADD COLUMN IF NOT EXISTS semester TEXT DEFAULT '1';
+
 -- ==========================================================
 -- KEAMANAN (RLS)
 -- ==========================================================
-
 ALTER TABLE data_siswa ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kehadiran ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Nilai" ENABLE ROW LEVEL SECURITY;
@@ -76,7 +81,3 @@ CREATE POLICY "Allow all access" ON kehadiran FOR ALL USING (true) WITH CHECK (t
 CREATE POLICY "Allow all access" ON "Nilai" FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all access" ON "data_TugasSiswa" FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all access" ON materials FOR ALL USING (true) WITH CHECK (true);
-
--- Contoh Data Awal
-INSERT INTO materials (title, description, grade, category, content_url, thumbnail)
-VALUES ('Adab Menuntut Ilmu', 'Pembahasan dasar untuk siswa SMP.', '7', 'Akhlak', '#', 'https://picsum.photos/seed/pai1/400/250');

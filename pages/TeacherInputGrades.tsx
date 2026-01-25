@@ -6,6 +6,7 @@ import { Student, GradeLevel } from '../types';
 
 const TeacherInputGrades: React.FC = () => {
   const [grade, setGrade] = useState<GradeLevel>('7');
+  const [semester, setSemester] = useState('1');
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [score, setScore] = useState(80);
@@ -23,7 +24,14 @@ const TeacherInputGrades: React.FC = () => {
     if (!selectedStudentId) return;
 
     setStatus('saving');
-    await db.addGrade({ student_id: selectedStudentId, subject_type: type, score, description: desc, grade });
+    await db.addGrade({ 
+      student_id: selectedStudentId, 
+      subject_type: type, 
+      score, 
+      description: desc, 
+      grade,
+      semester // Mengirim data semester ke database
+    });
     setStatus('success');
     setTimeout(() => { setStatus('idle'); setScore(80); setDesc(''); }, 2000);
   };
@@ -32,7 +40,7 @@ const TeacherInputGrades: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-8 animate-fadeIn">
       <div className="bg-amber-600 text-white p-6 md:p-8 rounded-3xl shadow-xl shadow-amber-900/10">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Input Nilai Siswa</h1>
-        <p className="text-amber-50 text-sm">Pilih siswa berdasarkan tingkat kelas dan masukkan nilainya.</p>
+        <p className="text-amber-50 text-sm">Pilih siswa berdasarkan tingkat kelas, semester, dan masukkan nilainya.</p>
       </div>
 
       <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
@@ -52,6 +60,20 @@ const TeacherInputGrades: React.FC = () => {
             </div>
 
             <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Semester</label>
+              <select 
+                className="w-full p-3 rounded-xl border border-slate-200 bg-white font-bold" 
+                value={semester} 
+                onChange={(e) => setSemester(e.target.value)}
+              >
+                <option value="1">Semester 1 (Ganjil)</option>
+                <option value="2">Semester 2 (Genap)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Jenis Penilaian</label>
               <select className="w-full p-3 rounded-xl border border-slate-200 bg-white" value={type} onChange={(e: any) => setType(e.target.value)}>
                 <option value="harian">Penilaian Harian</option>
@@ -59,6 +81,14 @@ const TeacherInputGrades: React.FC = () => {
                 <option value="uas">UAS</option>
                 <option value="praktik">Ujian Praktik</option>
               </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Nilai</label>
+              <div className="relative">
+                <Award className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input type="number" min="0" max="100" className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200" value={score} onChange={(e) => setScore(parseInt(e.target.value))} required />
+              </div>
             </div>
           </div>
 
@@ -75,18 +105,9 @@ const TeacherInputGrades: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Nilai</label>
-              <div className="relative">
-                <Award className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="number" min="0" max="100" className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200" value={score} onChange={(e) => setScore(parseInt(e.target.value))} required />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Materi</label>
-              <input type="text" placeholder="Contoh: Bab Akhlak" className="w-full p-3 rounded-xl border border-slate-200" value={desc} onChange={(e) => setDesc(e.target.value)} />
-            </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Materi / Keterangan</label>
+            <input type="text" placeholder="Contoh: Bab 1 Adab Menuntut Ilmu" className="w-full p-3 rounded-xl border border-slate-200" value={desc} onChange={(e) => setDesc(e.target.value)} />
           </div>
 
           <button type="submit" disabled={status !== 'idle' || !selectedStudentId}
