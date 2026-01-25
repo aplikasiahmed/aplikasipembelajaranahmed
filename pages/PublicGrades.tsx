@@ -14,7 +14,7 @@ const PublicGrades: React.FC = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nis.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Input Kosong', text: 'Masukkan NIS Anda!', confirmButtonColor: '#059669' });
+      Swal.fire({ icon: 'warning', title: 'Input Kosong', text: 'Masukkan NIS siswa!', confirmButtonColor: '#059669' });
       return;
     }
 
@@ -35,7 +35,7 @@ const PublicGrades: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10">
       <div className="text-center space-y-1">
         <h1 className="text-lg md:text-2xl font-bold text-slate-800">Cek Nilai Siswa</h1>
-        <p className="text-[10px] md:text-xs text-slate-500 font-medium">Monitoring hasil belajar melalui NIS.</p>
+        <p className="text-[10px] md:text-xs text-slate-500 font-medium">cek penilaian melalui NIS.</p>
       </div>
 
       <div className="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -79,7 +79,7 @@ const PublicGrades: React.FC = () => {
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
                   <th className="px-4 py-3 font-bold text-slate-500">Penilaian</th>
-                  <th className="px-3 py-3 font-bold text-slate-500 text-center">Skor</th>
+                  <th className="px-3 py-3 font-bold text-slate-500 text-center">Nilai</th>
                   <th className="px-4 py-3 font-bold text-slate-500">Keterangan</th>
                 </tr>
               </thead>
