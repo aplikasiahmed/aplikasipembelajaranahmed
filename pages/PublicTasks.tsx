@@ -109,11 +109,11 @@ const PublicTasks: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 1 * 1024 * 1024) {
         Swal.fire({
           icon: 'error',
           title: 'File Terlalu Besar',
-          text: 'Maksimal ukuran foto adalah 2MB',
+          text: 'Maksimal ukuran foto adalah 1MB',
           confirmButtonColor: '#059669'
         });
         return;
@@ -145,8 +145,8 @@ const PublicTasks: React.FC = () => {
     if (!formData.task_name || !formData.content) {
       Swal.fire({
         icon: 'warning',
-        title: 'Lengkapi Form',
-        text: 'Judul tugas dan konten (link/foto) wajib diisi!',
+        title: 'Ops...',
+        text: 'kolom kosong wajib diisi!',
         confirmButtonColor: '#059669'
       });
       return;
@@ -301,7 +301,7 @@ const PublicTasks: React.FC = () => {
 
             {/* Nama Tugas */}
             <div className="space-y-1 md:col-span-2">
-              <label className="text-[10px] md:text-xs font-bold text-slate-600 ml-1">Nama Tugas / Materi</label>
+              <label className="text-[10px] md:text-xs font-bold text-slate-600 ml-1">Judul Tugas / Materi</label>
               <div className="relative">
                 <Send className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                 <input 
