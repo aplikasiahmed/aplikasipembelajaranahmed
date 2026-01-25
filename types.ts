@@ -2,11 +2,12 @@
 export type GradeLevel = '7' | '8' | '9';
 
 export interface Student {
-  id: string;
+  id?: string;
   nis: string;
-  name: string;
+  namalengkap: string;
+  jeniskelamin: string;
   grade: GradeLevel;
-  class: string;
+  rombel: string;
 }
 
 export interface AttendanceRecord {
@@ -24,6 +25,18 @@ export interface GradeRecord {
   score: number;
   description: string;
   grade: GradeLevel;
+  created_at: string;
+}
+
+export interface TaskSubmission {
+  id: string;
+  nisn: string;
+  student_name: string;
+  grade: GradeLevel;
+  rombel: string;
+  task_name: string;
+  submission_type: 'link' | 'photo';
+  content: string; 
   created_at: string;
 }
 

@@ -16,6 +16,38 @@
         .arabic-text {
             font-family: 'Amiri', serif;
         }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+          width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
+        }
+        /* SweetAlert2 Mobile Optimization */
+        .swal2-popup {
+            font-size: 0.75rem !important;
+            padding: 1rem !important;
+            border-radius: 1.5rem !important;
+        }
+        @media (min-width: 768px) {
+            .swal2-popup {
+                font-size: 0.9rem !important;
+                padding: 1.5rem !important;
+            }
+        }
+        .swal2-title {
+            font-size: 1.1rem !important;
+            font-weight: 700 !important;
+        }
+        .swal2-content {
+            font-size: 0.85rem !important;
+        }
+        .swal2-confirm {
+            font-size: 0.75rem !important;
+            border-radius: 0.75rem !important;
+            padding: 0.6rem 1.5rem !important;
+        }
     </style>
 <script type="importmap">
 {
@@ -25,7 +57,10 @@
     "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "sweetalert2": "https://esm.sh/sweetalert2@11",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "xlsx": "https://esm.sh/xlsx@0.18.5"
   }
 }
 </script>

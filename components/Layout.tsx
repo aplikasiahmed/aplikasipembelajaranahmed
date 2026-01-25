@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -10,31 +10,35 @@ import {
   Settings, 
   LogOut,
   ShieldCheck,
-  FileEdit
+  FileEdit,
+  PencilLine
 } from 'lucide-react';
 import BottomNav from './BottomNav';
+import TeacherLogin from '../pages/TeacherLogin';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isTeacherPage = location.pathname.startsWith('/guru');
-  const isLoginPage = location.pathname === '/login';
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     navigate('/');
   };
 
+  // Urutan Desktop: Beranda, Materi, Absensi, Nilai, Kumpulkan, Tugas, Profil Guru
   const navLinks = [
     { name: 'Beranda', path: '/', icon: Home },
-    { name: 'Nilai Siswa', path: '/nilai', icon: Award },
-    { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
-    { name: 'Tugas', path: '/tugas', icon: FileEdit },
     { name: 'Materi PAI', path: '/materi', icon: BookOpen },
+    { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
+    { name: 'Nilai Siswa', path: '/nilai', icon: Award },
+    { name: 'Kumpulkan', path: '/tugas', icon: FileEdit },
+    { name: 'Tugas PAI', path: '/kerjakan-tugas', icon: PencilLine },
     { name: 'Profil Guru', path: '/profil', icon: User },
   ];
 
@@ -45,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Laporan', path: '/guru/laporan', icon: ShieldCheck },
   ];
 
-  if (isTeacherPage && !isLoginPage) {
+  if (isTeacherPage) {
     return (
       <div className="min-h-screen flex bg-slate-50">
         <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col sticky top-0 h-screen">
@@ -103,23 +107,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16 md:pb-0">
+    <div className="min-h-screen bg-slate-50 pb-[80px] md:pb-0">
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="bg-emerald-600 p-1.5 rounded-lg text-white shrink-0">
               <BookOpen size={20} />
             </div>
-            <span className="font-bold text-[13px] sm:text-lg text-slate-800 whitespace-nowrap">Pendidikan Agama Islam</span>
+            <span className="font-bold text-[13px] sm:text-lg text-slate-800 whitespace-nowrap">PAI & Budi Pekerti</span>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-5">
+          <nav className="hidden md:flex items-center gap-2 lg:gap-4">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-xs font-semibold transition-colors ${
-                  location.pathname === link.path ? 'text-emerald-600 border-b-2 border-emerald-600 pb-1' : 'text-slate-500 hover:text-emerald-600'
+                className={`text-[10px] lg:text-[11px] font-bold transition-all px-2 py-1 rounded-md whitespace-nowrap ${
+                  location.pathname === link.path 
+                  ? 'bg-emerald-50 text-emerald-700' 
+                  : 'text-slate-500 hover:text-emerald-600'
                 }`}
               >
                 {link.name}
@@ -128,14 +134,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </nav>
 
           <div className="flex items-center gap-2">
-            {!isLoginPage && (
-              <Link 
-                to="/login" 
-                className="bg-slate-800 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold hover:bg-slate-700 transition-all"
-              >
-                Masuk
-              </Link>
-            )}
+            <button 
+              onClick={() => setShowLoginModal(true)}
+              className="bg-slate-800 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold hover:bg-slate-700 transition-all"
+            >
+              Masuk
+            </button>
           </div>
         </div>
       </header>
@@ -146,7 +150,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </main>
 
-      {!isTeacherPage && !isLoginPage && <BottomNav />}
+      {!isTeacherPage && <BottomNav />}
+
+      {/* Login Modal Overlay */}
+      {showLoginModal && (
+        <TeacherLogin onClose={() => setShowLoginModal(false)} />
+      )}
     </div>
   );
 };

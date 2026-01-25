@@ -1,75 +1,126 @@
 
-import { Student, AttendanceRecord, GradeRecord, Material, GradeLevel } from '../types';
+import { createClient } from '@supabase/supabase-js';
+import { Student, AttendanceRecord, GradeRecord, Material, GradeLevel, TaskSubmission } from '../types';
 
-// In a real app, you would use @supabase/supabase-js
-// This mock simulates the behavior for UI/UX demonstration
+const SUPABASE_URL = 'https://irqphggbsncuplifywul.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_2MlaJJX4yWGwaxU5qIVADA_4N1bqqZ-';
 
-const MOCK_STUDENTS: Student[] = [
-  { id: '1', nis: '1001', name: 'Ahmad Fauzi', grade: '7', class: '7-A' },
-  { id: '2', nis: '1002', name: 'Siti Aminah', grade: '7', class: '7-A' },
-  { id: '3', nis: '2001', name: 'Budi Santoso', grade: '8', class: '8-B' },
-  { id: '4', nis: '3001', name: 'Dewi Lestari', grade: '9', class: '9-C' },
-];
-
-const MOCK_MATERIALS: Material[] = [
-  { id: 'm1', title: 'Indahnya Kebersamaan dengan Shalat Berjamaah', description: 'Materi tentang tata cara dan keutamaan shalat berjamaah.', grade: '7', category: 'Fiqih', content_url: '#', thumbnail: 'https://picsum.photos/seed/pai1/400/250' },
-  { id: 'm2', title: 'Meneladani Sifat-Sifat Mulia Para Rasul', description: 'Mengenal sifat wajib, mustahil, dan jaiz bagi Rasul.', grade: '8', category: 'Aqidah', content_url: '#', thumbnail: 'https://picsum.photos/seed/pai2/400/250' },
-  { id: 'm3', title: 'Adab Bergaul dengan Teman Sebaya', description: 'Materi akhlak dalam pergaulan sehari-hari.', grade: '9', category: 'Akhlak', content_url: '#', thumbnail: 'https://picsum.photos/seed/pai3/400/250' },
-];
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 class DatabaseService {
-  private students: Student[] = MOCK_STUDENTS;
-  private attendance: AttendanceRecord[] = [];
-  private grades: GradeRecord[] = [];
+  // Fungsi Massal untuk Import Data Siswa dari Excel ke tabel data_siswa
+  async upsertStudents(students: Omit<Student, 'id'>[]) {
+    const { data, error } = await supabase
+      .from('data_siswa') // Diubah dari 'students'
+      .upsert(students, { onConflict: 'nis' })
+      .select();
 
-  async getStudentsByGrade(grade: GradeLevel) {
-    return this.students.filter(s => s.grade === grade);
+    if (error) {
+      console.error("Supabase Error (upsertStudents):", error);
+      throw error;
+    }
+    return data;
   }
 
+  async addTaskSubmission(submission: Omit<TaskSubmission, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('data_TugasSiswa')
+      .insert([submission])
+      .select();
+
+    if (error) throw error;
+    return data ? data[0] : null;
+  }
+
+  // Fungsi untuk mengambil data Siswa berdasarkan Grade dari tabel data_siswa
+  async getStudentsByGrade(grade: GradeLevel) {
+    const { data, error } = await supabase
+      .from('data_siswa') // Diubah dari 'students'
+      .select('*')
+      .eq('grade', grade);
+    
+    if (error) {
+      console.warn("Error fetching students by grade:", error.message);
+      return [];
+    }
+    return data as Student[];
+  }
+
+  // Mencari siswa berdasarkan NIS di tabel data_siswa
   async getStudentByNIS(nis: string) {
-    return this.students.find(s => s.nis === nis);
+    const { data, error } = await supabase
+      .from('data_siswa') // Diubah dari 'students'
+      .select('*')
+      .eq('nis', nis)
+      .single();
+    
+    if (error) return null;
+    return data as Student;
+  }
+
+  // Mencari siswa berdasarkan NISN (fallback ke NIS) di tabel data_siswa
+  async getStudentByNISN(nisn: string) {
+    const { data, error } = await supabase
+      .from('data_siswa') // Diubah dari 'students'
+      .select('*')
+      .eq('nis', nisn)
+      .single();
+    
+    if (error) return null;
+    return data as Student;
   }
 
   async addAttendance(records: Omit<AttendanceRecord, 'id'>[]) {
-    const newRecords = records.map(r => ({ ...r, id: Math.random().toString(36).substr(2, 9) }));
-    this.attendance.push(...newRecords);
-    return newRecords;
+    const { data, error } = await supabase
+      .from('attendance')
+      .insert(records)
+      .select();
+    if (error) throw error;
+    return data;
+  }
+
+  async getAttendanceByStudent(studentId: string): Promise<AttendanceRecord[]> {
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('date', { ascending: false });
+    if (error) return [];
+    return data as AttendanceRecord[];
   }
 
   async addGrade(record: Omit<GradeRecord, 'id' | 'created_at'>) {
-    const newRecord = { 
-      ...record, 
-      id: Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString()
-    };
-    this.grades.push(newRecord);
-    return newRecord;
+    const { data, error } = await supabase
+      .from('grades')
+      .insert([record])
+      .select();
+    if (error) throw error;
+    return data ? data[0] : null;
   }
 
-  async getAttendanceByStudent(studentId: string) {
-    return this.attendance.filter(a => a.student_id === studentId);
-  }
-
-  async getGradesByStudent(studentId: string) {
-    return this.grades.filter(g => g.student_id === studentId);
-  }
-
-  async getAllAttendance() {
-    return this.attendance;
-  }
-
-  async getAllGrades() {
-    return this.grades;
+  async getGradesByStudent(studentId: string): Promise<GradeRecord[]> {
+    const { data, error } = await supabase
+      .from('grades')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return data as GradeRecord[];
   }
 
   async getMaterials(grade?: GradeLevel) {
-    if (grade) return MOCK_MATERIALS.filter(m => m.grade === grade);
-    return MOCK_MATERIALS;
+    let query = supabase.from('materials').select('*');
+    if (grade) query = query.eq('grade', grade);
+    const { data, error } = await query;
+    if (error) {
+      return [{ id: 'm1', title: 'Materi Belum Tersedia', description: 'Silakan isi tabel materials.', grade: '7', category: 'Aqidah', content_url: '#', thumbnail: 'https://picsum.photos/seed/pai1/400/250' }] as Material[];
+    }
+    return data as Material[];
   }
 
-  resetAllData() {
-    this.attendance = [];
-    this.grades = [];
+  async resetAllData() {
+    await supabase.from('attendance').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('grades').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     return true;
   }
 }
