@@ -112,7 +112,7 @@ const PublicAbsensi: React.FC = () => {
             disabled={loading}
             className="w-full bg-emerald-600 text-white px-5 md:px-7 py-2.5 rounded-xl text-[10px] md:text-[11px] font-bold hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20"
           >
-            {loading ? 'Mencari...' : 'Cek Absensi'}
+            {loading ? 'Mencari...' : <><Search size={13} /> Cek Absensi</>}
           </button>
         </form>
       </div>
