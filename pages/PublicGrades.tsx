@@ -25,7 +25,7 @@ const PublicGrades: React.FC = () => {
       setStudent(found);
       const studentGrades = await db.getGradesByStudent(found.id!);
       setAllGrades(studentGrades);
-      Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, icon: 'success', title: 'Siswa Terverfikasi' });
+      Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, icon: 'success', title: 'Siswa Terverifikasi' });
     } else {
       setStudent(null);
       setAllGrades([]);
@@ -34,7 +34,6 @@ const PublicGrades: React.FC = () => {
     setLoading(false);
   };
 
-  // Filter nilai berdasarkan semester yang dipilih
   const filteredGrades = allGrades.filter(g => g.semester === semester);
 
   return (
@@ -81,7 +80,7 @@ const PublicGrades: React.FC = () => {
             <div className="space-y-0.5">
               <p className="text-emerald-200 text-[8px] md:text-[10px] font-bold uppercase tracking-wider">Info Siswa • Semester {semester}</p>
               <h2 className="text-xs md:text-lg font-bold leading-tight">{student.namalengkap}</h2>
-              <p className="text-emerald-100 text-[9px] md:text-[10px]">Kelas {student.grade}-{student.rombel} • NIS {student.nis}</p>
+              <p className="text-emerald-100 text-[9px] md:text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis} | {student.jeniskelamin}</p>
             </div>
             <div className="bg-white/10 px-3 py-1.5 md:px-4 md:py-2 rounded-xl border border-white/20 text-center shrink-0 ml-2">
               <p className="text-[7px] md:text-[9px] uppercase font-bold opacity-80">Rata-rata</p>

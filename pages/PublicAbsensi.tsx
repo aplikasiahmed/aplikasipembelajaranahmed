@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, Calendar, CheckCircle2, Clock, AlertCircle, UserCheck, UserMinus, Thermometer, FileText, Ban } from 'lucide-react';
+import { Search, Calendar, UserCheck, Thermometer, FileText, Ban } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, AttendanceRecord } from '../types';
 import Swal from 'sweetalert2';
@@ -19,7 +19,7 @@ const PublicAbsensi: React.FC = () => {
       Swal.fire({
         icon: 'warning',
         title: 'Opss..',
-        text: 'Silakan masukkan nomor induk Anda!',
+        text: 'Silakan masukkan nomor NIS Anda!',
         confirmButtonColor: '#059669',
       });
       return;
@@ -47,8 +47,8 @@ const PublicAbsensi: React.FC = () => {
       } else {
         Swal.fire({
           icon: 'error',
-          title: 'Tidak Ditemukan',
-          text: 'Nomor induk tidak terdaftar',
+          title: 'Opss...',
+          text: 'Nomor NIS tidak terdaftar',
           confirmButtonColor: '#059669',
         });
       }
@@ -123,7 +123,7 @@ const PublicAbsensi: React.FC = () => {
             <div className="space-y-0.5">
               <p className="text-emerald-200 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Info Siswa • Semester {semester}</p>
               <h2 className="text-xs md:text-lg font-bold leading-tight">{student.namalengkap}</h2>
-              <p className="text-emerald-100 text-[9px] md:text-[10px]">Kelas {student.grade}-{student.rombel} • NIS {student.nis}</p>
+              <p className="text-emerald-100 text-[9px] md:text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis} | {student.jeniskelamin}</p>
             </div>
             <div className="bg-white/10 p-1.5 md:p-2 rounded-xl border border-white/20 ml-2">
               <Calendar size={20} className="opacity-50 md:w-6 md:h-6" />

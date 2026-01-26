@@ -11,7 +11,10 @@ import {
   LogOut,
   ShieldCheck,
   FileEdit,
-  PencilLine
+  PencilLine,
+  LayoutDashboard,
+  FileSearch,
+  Users
 } from 'lucide-react';
 import BottomNav from './BottomNav';
 import TeacherLogin from '../pages/TeacherLogin';
@@ -31,7 +34,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     navigate('/');
   };
 
-  // Urutan Desktop: Beranda, Materi, Absensi, Nilai, Kumpulkan, Tugas, Profil Guru
   const navLinks = [
     { name: 'Beranda', path: '/', icon: Home },
     { name: 'Materi PAI', path: '/materi', icon: BookOpen },
@@ -43,10 +45,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const teacherLinks = [
-    { name: 'Dashboard', path: '/guru', icon: Settings },
+    { name: 'Dashboard', path: '/guru', icon: LayoutDashboard },
     { name: 'Input Nilai', path: '/guru/nilai', icon: Award },
     { name: 'Input Absensi', path: '/guru/absensi', icon: ClipboardCheck },
-    { name: 'Laporan', path: '/guru/laporan', icon: ShieldCheck },
+    { name: 'Cek Tugas Siswa', path: '/guru/tugas-masuk', icon: FileSearch },
+    { name: 'Laporan Database', path: '/guru/laporan', icon: Settings },
+    { name: 'Kelola Admin', path: '/guru/admin', icon: ShieldCheck },
   ];
 
   if (isTeacherPage) {
@@ -83,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="p-4 border-t border-slate-100">
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-600 py-2.5 rounded-lg text-sm font-bold hover:bg-red-50 hover:text-red-600 transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-xl text-sm font-black shadow-lg shadow-red-200 hover:bg-red-700 transition-all uppercase tracking-widest"
             >
               <LogOut size={16} /> Keluar
             </button>
@@ -91,13 +95,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </aside>
         
         <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 overflow-y-auto">
-          <header className="md:hidden flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-amber-600 text-sm">
-              <Settings size={18} />
-              <span className="font-bold">Admin Panel</span>
+          {/* Header Mobile - Diperbarui sesuai permintaan */}
+          <header className="md:hidden flex items-center justify-between mb-4 bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="bg-slate-800 p-1.5 rounded-lg text-white">
+                <LayoutDashboard size={14} />
+              </div>
+              <span className="font-black text-slate-800 text-[10px] uppercase tracking-tighter">Admin Panel PAI</span>
             </div>
-            <button onClick={handleLogout} className="text-slate-400 p-1.5"><LogOut size={18} /></button>
+            <button 
+              onClick={handleLogout} 
+              className="flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-200 active:scale-95 transition-all"
+            >
+              <LogOut size={12} strokeWidth={3} /> KELUAR
+            </button>
           </header>
+
           <div className="max-w-4xl mx-auto">
             {children}
           </div>

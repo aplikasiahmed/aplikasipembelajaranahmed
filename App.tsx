@@ -8,15 +8,17 @@ import PublicGrades from './pages/PublicGrades';
 import PublicAbsensi from './pages/PublicAbsensi';
 import PublicTasks from './pages/PublicTasks';
 import PublicMaterials from './pages/PublicMaterials';
+import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherInputGrades from './pages/TeacherInputGrades';
 import TeacherInputAbsensi from './pages/TeacherInputAbsensi';
 import TeacherReports from './pages/TeacherReports';
+import TeacherTaskCheck from './pages/TeacherTaskCheck';
+import TeacherAdminManagement from './pages/TeacherAdminManagement';
 
 // Higher Order Component for Route Protection
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   if (!isLoggedIn) {
-    // Redirect to home if not logged in, as login is now a modal
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
@@ -59,7 +61,7 @@ const App: React.FC = () => {
           {/* Protected Teacher Routes */}
           <Route path="/guru" element={
             <ProtectedRoute>
-              <PlaceholderPage title="Dashboard Guru" />
+              <TeacherDashboard />
             </ProtectedRoute>
           } />
           <Route path="/guru/nilai" element={
@@ -75,6 +77,16 @@ const App: React.FC = () => {
           <Route path="/guru/laporan" element={
             <ProtectedRoute>
               <TeacherReports />
+            </ProtectedRoute>
+          } />
+          <Route path="/guru/tugas-masuk" element={
+            <ProtectedRoute>
+              <TeacherTaskCheck />
+            </ProtectedRoute>
+          } />
+          <Route path="/guru/admin" element={
+            <ProtectedRoute>
+              <TeacherAdminManagement />
             </ProtectedRoute>
           } />
           

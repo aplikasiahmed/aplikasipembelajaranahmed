@@ -1,13 +1,22 @@
 
 export type GradeLevel = '7' | '8' | '9';
 
+export interface AdminUser {
+  id: string;
+  username: string;
+  password?: string;
+  fullname: string;
+  email?: string;
+  role: 'Super Admin' | 'Admin';
+  created_at: string;
+}
+
 export interface Student {
   id?: string;
   nis: string;
   namalengkap: string;
   jeniskelamin: string;
-  grade: GradeLevel;
-  rombel: string;
+  kelas: string; // Pengganti grade dan rombel (Contoh: 7.A)
 }
 
 export interface AttendanceRecord {
@@ -15,7 +24,7 @@ export interface AttendanceRecord {
   student_id: string;
   date: string;
   status: 'hadir' | 'sakit' | 'izin' | 'alfa';
-  grade: GradeLevel;
+  kelas: string;
   semester: string;
 }
 
@@ -25,7 +34,7 @@ export interface GradeRecord {
   subject_type: 'harian' | 'uts' | 'uas' | 'praktik';
   score: number;
   description: string;
-  grade: GradeLevel;
+  kelas: string;
   semester: string;
   created_at: string;
 }
@@ -34,8 +43,7 @@ export interface TaskSubmission {
   id: string;
   nisn: string;
   student_name: string;
-  grade: GradeLevel;
-  rombel: string;
+  kelas: string;
   task_name: string;
   submission_type: 'link' | 'photo';
   content: string; 
@@ -50,17 +58,4 @@ export interface Material {
   category: 'Aqidah' | 'Fiqih' | 'Sejarah' | 'Akhlak' | 'Al-Quran';
   content_url: string;
   thumbnail?: string;
-}
-
-export interface TeacherProfile {
-  name: string;
-  title: string;
-  bio: string;
-  nip: string;
-  photo_url: string;
-  socials: {
-    instagram?: string;
-    whatsapp?: string;
-    email?: string;
-  };
 }
