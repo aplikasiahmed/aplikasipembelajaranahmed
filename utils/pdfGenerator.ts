@@ -22,7 +22,7 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
     doc.setFontSize(12);
     doc.text(`KELAS ${meta.kelas}`, pageWidth / 2, 28, { align: 'center' });
     
-    doc.setLineWidth(0.5);
+    doc.setLineWidth(0.3); //Garis bawah judul
     doc.line(15, 32, pageWidth - 15, 32);
 
     doc.setFontSize(9);
@@ -105,11 +105,10 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
     doc.setTextColor(0);
     
     doc.text(`Tangerang, ${currentDate}`, signX, finalY);
-    doc.text('Mengetahui,', signX, finalY + 5);
     doc.text('Guru Mata Pelajaran', signX, finalY + 10);
     
     doc.setFont('helvetica', 'bold');
-    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 35);
+    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 28);
 };
 
 export const generatePDFReport = (
@@ -126,7 +125,7 @@ export const generatePDFReport = (
     // PERBAIKAN: Menggunakan Backticks (`) untuk string template agar tidak error syntax
     const title = type === 'nilai' 
       ? `LAPORAN NILAI SISWA ${meta.kelas} semester ${meta.semester}` 
-      : `Rekap Absensi_PAI ${meta.kelas} ${meta.bulan} semester ${meta.semester}`;
+      : `Rekap Absensi Mapel PAI Kelas ${meta.kelas} Bulan ${meta.bulan} semester ${meta.semester}`;
       
     const downloadDate = new Date().toLocaleDateString('id-ID');
     const pageWidth = doc.internal.pageSize.getWidth();

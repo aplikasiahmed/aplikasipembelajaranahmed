@@ -52,7 +52,7 @@ const TeacherInputAbsensi: React.FC = () => {
       Swal.fire({ 
         icon: 'warning', 
         title: 'Perhatian', 
-        text: 'Kolom kosong wajib di isi!', 
+        text: 'Kolom kosong wajib di pilih!', 
         heightAuto: false 
       });
       return;

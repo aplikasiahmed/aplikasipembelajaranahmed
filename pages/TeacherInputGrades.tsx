@@ -44,7 +44,6 @@ const TeacherInputGrades: React.FC = () => {
     e.preventDefault();
     
     // 1. Validasi Kolom Kosong menggunakan SweetAlert2
-    // Kita cek semua field penting termasuk desc (Ket/Materi)
     if (!selectedStudentId || !date || !semester || !type || !selectedKelas || score === undefined || score === null || isNaN(score) || !desc.trim()) {
       Swal.fire({ 
         icon: 'warning', 
@@ -89,7 +88,6 @@ const TeacherInputGrades: React.FC = () => {
 
     setStatus('saving');
     try {
-      // Menggunakan any pada subject_type karena kita mengizinkan string kosong di state awal, tapi API butuh tipe spesifik
       await db.addGrade({ 
         student_id: selectedStudentId, 
         subject_type: type as 'harian' | 'uts' | 'uas' | 'praktik', 
@@ -102,16 +100,12 @@ const TeacherInputGrades: React.FC = () => {
       
       setStatus('success');
       
-      // 4, 5, 6. Clear Content setelah berhasil
       setTimeout(() => { 
         setStatus('idle'); 
-        setScore(0); // Reset Nilai jadi 0
+        setScore(0); 
         setDesc(''); 
-        // Reset pilihan agar guru memilih ulang (mencegah double input tidak sengaja)
-        setType(''); // Reset Jenis Tugas
-        // Semester biasanya tetap sama saat input massal, tapi sesuai request kita reset
+        setType(''); 
         setSemester(''); 
-        // Reset Nama Siswa
         setSelectedStudentId('');
       }, 2000);
 
@@ -151,7 +145,6 @@ const TeacherInputGrades: React.FC = () => {
                   value={date} 
                   onChange={(e) => setDate(e.target.value)} 
                   placeholder="pilih tanggal"
-                  // required dihapus agar validasi via Swal
                 />
               </div>
             </div>
@@ -183,7 +176,6 @@ const TeacherInputGrades: React.FC = () => {
               className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-black outline-none" 
               value={selectedStudentId} 
               onChange={(e) => setSelectedStudentId(e.target.value)}
-              // required dihapus agar validasi via Swal
             >
               <option value="">-- Pilih Siswa --</option>
               {students.map(s => <option key={s.id} value={s.id!}>{s.namalengkap}</option>)}
@@ -211,7 +203,6 @@ const TeacherInputGrades: React.FC = () => {
                 className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[11px] md:text-sm font-black outline-none" 
                 value={score} 
                 onChange={(e) => setScore(e.target.value ? parseInt(e.target.value) : 0)} 
-                // required dihapus agar validasi via Swal
               />
             </div>
             <div className="space-y-1">
@@ -222,7 +213,6 @@ const TeacherInputGrades: React.FC = () => {
                 className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-medium outline-none" 
                 value={desc} 
                 onChange={(e) => setDesc(e.target.value)} 
-                // required dihapus agar validasi via Swal
               />
             </div>
           </div>
