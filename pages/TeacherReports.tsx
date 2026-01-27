@@ -63,7 +63,7 @@ const TeacherReports: React.FC = () => {
   const fetchAllKelas = async () => {
     const { data } = await supabase.from('data_siswa').select('kelas');
     if (data) {
-      const unique = Array.from(new Set(data.map(i => i.kelas))).sort();
+      const unique = Array.from(new Set(data.map((i: any) => i.kelas as string))).sort();
       setAvailKelas(unique);
     }
   };

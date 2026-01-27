@@ -3,14 +3,12 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, '.', '');
+  const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react()],
     define: {
-      // Polyfill process.env.API_KEY secara spesifik agar tidak error di Vercel
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      // Jika env.API_KEY tidak ada, isi dengan string kosong agar tidak undefined
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || '')
     }
   };
 });
