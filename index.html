@@ -48,6 +48,40 @@
             border-radius: 0.75rem !important;
             padding: 0.6rem 1.5rem !important;
         }
+
+        /* PRINT STYLING (Hanya untuk backup jika dibutuhkan) */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        
+        /* Elemen rahasia untuk menangkap gambar PDF agar tidak mengganggu UI utama */
+        #pdf-capture-area {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 800px; /* Ukuran standar kertas */
+            background: white;
+            color: black;
+            padding: 40px;
+        }
+        
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid black;
+        }
+        .pdf-table th, .pdf-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .pdf-header {
+            border-bottom: 2px solid black;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
     </style>
 <script type="importmap">
 {
@@ -60,12 +94,16 @@
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "sweetalert2": "https://esm.sh/sweetalert2@11",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
-    "xlsx": "https://esm.sh/xlsx@0.18.5"
+    "xlsx": "https://esm.sh/xlsx@0.18.5",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1"
   }
 }
 </script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
+    <!-- Area tersembunyi untuk proses generate PDF -->
+    <div id="pdf-capture-area"></div>
 </body>
 </html>

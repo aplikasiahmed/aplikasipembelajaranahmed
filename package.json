@@ -16,7 +16,9 @@
     "react-dom": "^19.2.3",
     "sweetalert2": "11",
     "@supabase/supabase-js": "2",
-    "xlsx": "0.18.5"
+    "xlsx": "0.18.5",
+    "jspdf": "2.5.1",
+    "html2canvas": "1.4.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

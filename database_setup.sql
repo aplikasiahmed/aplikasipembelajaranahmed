@@ -1,61 +1,26 @@
 
 -- ==========================================================
--- SCRIPT RESET TOTAL DATABASE - PORTAL PAI
--- JALANKAN INI DI SQL EDITOR SUPABASE UNTUK MEMBERSIHKAN ERROR
+-- SCRIPT RESET & RE-CREATE TABEL KEHADIRAN (VERSI FIX)
+-- JALANKAN INI DI SQL EDITOR SUPABASE
 -- ==========================================================
 
--- 1. HAPUS TABEL LAMA (MEMBERSIHKAN CACHE SCHEMA)
-DROP TABLE IF EXISTS "data_siswa" CASCADE;
+-- 1. Hapus tabel lama
+DROP TABLE IF EXISTS "kehadiran";
 
--- 2. BUAT ULANG TABEL SISWA DENGAN STRUKTUR BARU
-CREATE TABLE "data_siswa" (
+-- 2. Buat tabel baru dengan struktur yang dioptimalkan
+CREATE TABLE "kehadiran" (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    nis TEXT UNIQUE NOT NULL,
-    namalengkap TEXT NOT NULL,
-    jeniskelamin TEXT,
-    kelas TEXT NOT NULL, -- Format: 7.A, 7.B, dst (Sesuai Excel Bapak)
+    student_id UUID NOT NULL,
+    nis TEXT NOT NULL,
+    nama_siswa TEXT NOT NULL,
+    date DATE NOT NULL,               -- Tipe DATE asli (Sangat baik untuk performa)
+    status TEXT NOT NULL,             -- hadir, sakit, izin, alfa
+    kelas TEXT NOT NULL,
+    semester TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. PASTIKAN TABEL PENDUKUNG MENGGUNAKAN KOLOM KELAS
--- (Menjalankan ALTER agar tabel kehadiran, nilai, dan tugas sinkron)
-
-DO $$ 
-BEGIN 
-    -- Update tabel kehadiran
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='kehadiran' AND column_name='grade') THEN
-        ALTER TABLE "kehadiran" DROP COLUMN "grade";
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='kehadiran' AND column_name='kelas') THEN
-        ALTER TABLE "kehadiran" ADD COLUMN "kelas" TEXT;
-    END IF;
-
-    -- Update tabel Nilai
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Nilai' AND column_name='grade') THEN
-        ALTER TABLE "Nilai" DROP COLUMN "grade";
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Nilai' AND column_name='kelas') THEN
-        ALTER TABLE "Nilai" ADD COLUMN "kelas" TEXT;
-    END IF;
-
-    -- Update tabel data_TugasSiswa
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='data_TugasSiswa' AND column_name='grade') THEN
-        ALTER TABLE "data_TugasSiswa" DROP COLUMN "grade";
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='data_TugasSiswa' AND column_name='rombel') THEN
-        ALTER TABLE "data_TugasSiswa" DROP COLUMN "rombel";
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='data_TugasSiswa' AND column_name='kelas') THEN
-        ALTER TABLE "data_TugasSiswa" ADD COLUMN "kelas" TEXT;
-    END IF;
-END $$;
-
--- 4. PASTIKAN TABEL ADMIN TETAP AMAN
-CREATE TABLE IF NOT EXISTS "admin_users" (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    fullname TEXT NOT NULL,
-    role TEXT DEFAULT 'Admin',
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- 3. Kebijakan Akses (RLS)
+ALTER TABLE "kehadiran" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for public" ON "kehadiran";
+CREATE POLICY "Allow all for public" ON "kehadiran" FOR ALL USING (true) WITH CHECK (true);

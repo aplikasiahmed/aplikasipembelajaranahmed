@@ -16,7 +16,8 @@ import TeacherTaskCheck from './pages/TeacherTaskCheck';
 import TeacherAdminManagement from './pages/TeacherAdminManagement';
 
 // Higher Order Component for Route Protection
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+// Fix: Use React.FC and make children optional to resolve the "Property 'children' is missing" JSX error
+const ProtectedRoute: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   if (!isLoggedIn) {
     return <Navigate to="/" replace />;

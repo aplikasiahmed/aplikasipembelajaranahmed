@@ -16,12 +16,14 @@ export interface Student {
   nis: string;
   namalengkap: string;
   jeniskelamin: string;
-  kelas: string; // Pengganti grade dan rombel (Contoh: 7.A)
+  kelas: string; 
 }
 
 export interface AttendanceRecord {
   id: string;
   student_id: string;
+  nis: string;           // Tambahan baru
+  nama_siswa: string;    // Tambahan baru
   date: string;
   status: 'hadir' | 'sakit' | 'izin' | 'alfa';
   kelas: string;
