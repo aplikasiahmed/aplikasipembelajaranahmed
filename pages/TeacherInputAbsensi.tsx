@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, Users, Calendar, CheckCircle2, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -14,7 +13,10 @@ const TeacherInputAbsensi: React.FC = () => {
   const [availableKelas, setAvailableKelas] = useState<string[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
+  
+  // State Tanggal Manual (Tabel Tanggal)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -65,13 +67,12 @@ const TeacherInputAbsensi: React.FC = () => {
 
     setSaving(true);
     try {
-      // DATA DISIAPKAN SESUAI TABEL BARU (nis & nama_siswa)
       const records = students.map(s => ({ 
         student_id: s.id!, 
         nis: s.nis,                      
         nama_siswa: s.namalengkap,       
         status: (attendanceData[s.id!] || 'hadir') as any, 
-        date: date, 
+        date: date, // Menggunakan tanggal manual yang dipilih guru
         kelas: selectedKelas, 
         semester: String(semester) 
       }));
@@ -81,7 +82,7 @@ const TeacherInputAbsensi: React.FC = () => {
       Swal.fire({ 
         icon: 'success', 
         title: 'Alhamdulillah', 
-        text: `Absensi Kelas ${selectedKelas} berhasil disimpan ke database.`, 
+        text: `Absensi Kelas ${selectedKelas} tanggal ${date} berhasil disimpan.`, 
         timer: 2000, 
         showConfirmButton: false, 
         heightAuto: false 
@@ -91,7 +92,7 @@ const TeacherInputAbsensi: React.FC = () => {
       Swal.fire({ 
         icon: 'error', 
         title: 'Gagal Menyimpan', 
-        text: 'Pastikan Bapak sudah menjalankan Script SQL di Supabase untuk membuat ulang tabel kehadiran.', 
+        text: 'Terjadi kesalahan pada sistem database.', 
         confirmButtonColor: '#dc2626',
         heightAuto: false 
       });
@@ -127,8 +128,17 @@ const TeacherInputAbsensi: React.FC = () => {
             <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}><option value="">-- Kelas --</option>{availableKelas.map(k => <option key={k} value={k}>{k}</option>)}</select>
           </div>
           <div className="space-y-1">
-            <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
-            <input type="date" className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none" value={date} onChange={(e) => setDate(e.target.value)} />
+            <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal Absen</label>
+            <div className="relative">
+              {/* Input Tanggal Manual dengan Date Picker */}
+              <input 
+                type="date" 
+                className="w-full p-1.5 md:p-2 pl-7 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none cursor-pointer focus:border-amber-500" 
+                value={date} 
+                onChange={(e) => setDate(e.target.value)} 
+              />
+              <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 text-black pointer-events-none" size={12} />
+            </div>
           </div>
         </div>
 
