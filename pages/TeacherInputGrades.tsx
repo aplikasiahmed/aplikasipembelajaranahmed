@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, User, Award, CheckCircle2, ArrowLeft, Users, Search, Calendar } from 'lucide-react';
@@ -146,15 +145,16 @@ const TeacherInputGrades: React.FC = () => {
             <div className="space-y-1">
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
               <div className="relative">
+                {/* IKON TANGGAL DIPINDAH KE KIRI */}
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                 <input 
                   type="date" 
-                  className="w-full p-1.5 md:p-2 pl-3 pr-10 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-black outline-none focus:border-emerald-500 cursor-pointer text-slate-600 placeholder:text-slate-300" 
+                  className="w-full p-1.5 md:p-2 pl-10 pr-3 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-black outline-none focus:border-emerald-500 cursor-pointer text-slate-600 placeholder:text-slate-300" 
                   value={date} 
                   onChange={(e) => setDate(e.target.value)} 
                   placeholder="pilih tanggal"
                   // required dihapus agar validasi via Swal
                 />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
               </div>
             </div>
           </div>

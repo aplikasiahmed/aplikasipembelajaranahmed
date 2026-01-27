@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Link as LinkIcon, Send, Hash, Book, Youtube, Loader2, CheckCircle2, Info, UserCircle } from 'lucide-react';
+import { Camera, Link as LinkIcon, Send, Hash, Book, Youtube, Loader2, CheckCircle2, Info, UserCircle, ImageIcon, X, Plus } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { db } from '../services/supabaseMock';
 
@@ -11,12 +10,15 @@ const PublicTasks: React.FC = () => {
     jeniskelamin: '',
     kelas: '',
     task_name: '',
-    submission_type: 'link' as 'link' | 'photo',
+    submission_type: 'photo' as 'link' | 'photo',
     content: ''
   });
   
-  const [preview, setPreview] = useState<string | null>(null);
+  // State baru untuk menampung banyak foto
+  const [photos, setPhotos] = useState<string[]>([]);
+  
   const [loading, setLoading] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
   const [fetchingStudent, setFetchingStudent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,22 +99,119 @@ const PublicTasks: React.FC = () => {
     });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validasi 500KB sesuai instruksi Bapak Guru
-      if (file.size > 500 * 1024) { 
-        Swal.fire('Terlalu Besar', 'Maksimal ukuran foto adalah 500KB. Silakan kecilkan ukuran foto Anda.', 'error'); 
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return; 
-      }
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => { 
-        setPreview(reader.result as string); 
-        setFormData(prev => ({ ...prev, content: reader.result as string })); 
-      };
       reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1000;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject('Canvas context error');
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          resolve(dataUrl);
+        };
+        img.onerror = (error) => reject(error);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setProcessingImage(true);
+      try {
+        const newPhotos: string[] = [];
+        for (let i = 0; i < e.target.files.length; i++) {
+          const file = e.target.files[i];
+          const compressed = await compressImage(file);
+          newPhotos.push(compressed);
+        }
+        setPhotos(prev => [...prev, ...newPhotos]);
+      } catch (error) {
+        console.error("Gagal kompresi gambar", error);
+        Swal.fire('Error', 'Gagal memproses gambar.', 'error');
+      } finally {
+        setProcessingImage(false);
+        // Reset input agar bisa memilih file yang sama jika perlu
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
     }
+  };
+
+  const removePhoto = (indexToRemove: number) => {
+    setPhotos(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  // Fungsi menggabungkan banyak gambar menjadi satu gambar panjang (stitching)
+  const mergePhotos = async (images: string[]): Promise<string> => {
+    if (images.length === 0) return '';
+    if (images.length === 1) return images[0];
+
+    // Load semua gambar
+    const loadedImages = await Promise.all(images.map(src => {
+      return new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }));
+
+    // Hitung dimensi canvas
+    const width = Math.max(...loadedImages.map(img => img.width));
+    // Tinggi total = jumlah tinggi semua gambar + padding antar gambar
+    const totalHeight = loadedImages.reduce((acc, img) => acc + img.height, 0) + (loadedImages.length - 1) * 20;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = totalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+
+    // Background Putih
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, totalHeight);
+
+    let currentY = 0;
+    loadedImages.forEach((img, index) => {
+      // Gambar di tengah horizontal
+      const x = (width - img.width) / 2;
+      ctx.drawImage(img, x, currentY);
+      
+      // Garis pemisah jika bukan gambar terakhir
+      if (index < loadedImages.length - 1) {
+          ctx.beginPath();
+          ctx.moveTo(0, currentY + img.height + 10);
+          ctx.lineTo(width, currentY + img.height + 10);
+          ctx.strokeStyle = '#e2e8f0'; 
+          ctx.lineWidth = 4;
+          ctx.stroke();
+      }
+
+      currentY += img.height + 20; // Geser ke bawah untuk gambar berikutnya
+    });
+
+    return canvas.toDataURL('image/jpeg', 0.7);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,19 +220,53 @@ const PublicTasks: React.FC = () => {
       Swal.fire('Ops..', 'Masukkan NIS yang benar agar nama muncul otomatis.', 'warning'); 
       return; 
     }
-    if (!formData.task_name || !formData.content) { 
-      Swal.fire('Ops..', 'Kolom wajib diisi!', 'warning'); 
+    
+    // Validasi konten berdasarkan tipe
+    let finalContent = formData.content;
+
+    if (formData.submission_type === 'photo') {
+        if (photos.length === 0) { 
+            Swal.fire('Ops..', 'Belum ada foto yang diambil!', 'warning'); 
+            return; 
+        }
+        // Jika foto > 1, gabungkan dulu
+        if (photos.length > 1) {
+            setLoading(true); // Tampilkan loading saat merging
+            try {
+                finalContent = await mergePhotos(photos);
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Gagal', 'Gagal menggabungkan foto.', 'error');
+                setLoading(false);
+                return;
+            }
+        } else {
+            finalContent = photos[0];
+        }
+    } else {
+        // Tipe Link
+        if (!formData.content) {
+            Swal.fire('Ops..', 'Link Drive wajib diisi!', 'warning'); 
+            return;
+        }
+    }
+
+    if (!formData.task_name) { 
+      Swal.fire('Ops..', 'Judul tugas wajib diisi!', 'warning'); 
       return; 
     }
 
     const result = await Swal.fire({ 
       title: 'Kirim Tugas?', 
-      text: `Atas nama ${formData.student_name} dari kelas ${formData.kelas}`, 
+      text: `Atas nama ${formData.student_name} dari kelas ${formData.kelas}. ${photos.length > 1 ? `(${photos.length} Foto akan digabung)` : ''}`, 
       icon: 'question', 
       showCancelButton: true, 
       confirmButtonColor: '#059669' 
     });
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed) {
+        setLoading(false);
+        return;
+    }
 
     setLoading(true);
     try {
@@ -143,7 +276,7 @@ const PublicTasks: React.FC = () => {
         kelas: formData.kelas,
         task_name: formData.task_name,
         submission_type: formData.submission_type,
-        content: formData.content
+        content: finalContent
       });
 
       const now = new Date();
@@ -153,16 +286,14 @@ const PublicTasks: React.FC = () => {
       await Swal.fire({
         icon: 'success',
         title: 'Tugas Terkirim!',
-        text: `Alhamdulillah... ${formData.student_name} dari kelas ${formData.kelas} sudah mengirim tugas ${formData.task_name} pada tanggal ${dateStr} waktu ${timeStr}. Bisa screenshot ini sebagai bukti.`,
+        text: `Alhamdulillah... ${formData.student_name} dari kelas ${formData.kelas} sudah mengirim tugas ${formData.task_name}.`,
         confirmButtonText: 'OK',
         confirmButtonColor: '#059669',
-        customClass: {
-          popup: 'rounded-[2rem]'
-        }
+        customClass: { popup: 'rounded-[2rem]' }
       });
 
-      setFormData({ nisn: '', student_name: '', jeniskelamin: '', kelas: '', task_name: '', submission_type: 'link', content: '' });
-      setPreview(null); 
+      setFormData({ nisn: '', student_name: '', jeniskelamin: '', kelas: '', task_name: '', submission_type: 'photo', content: '' });
+      setPhotos([]); // Reset photos
       setIsVerified(false);
     } catch (err) { 
       Swal.fire('Gagal', 'Sistem error.', 'error'); 
@@ -266,17 +397,20 @@ const PublicTasks: React.FC = () => {
             <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 mb-2">
               <button 
                 type="button" 
-                onClick={() => setFormData(prev => ({ ...prev, submission_type: 'link', content: '' }))} 
-                className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-normal transition-all ${formData.submission_type === 'link' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400'}`}
+                onClick={() => {
+                    setFormData(prev => ({ ...prev, submission_type: 'photo' }));
+                    // Jangan reset photos jika user tidak sengaja klik link lalu balik lagi
+                }} 
+                className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${formData.submission_type === 'photo' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400'}`}
               >
-                Link Drive
+                <Camera size={12} /> Foto Kamera
               </button>
               <button 
                 type="button" 
-                onClick={() => setFormData(prev => ({ ...prev, submission_type: 'photo', content: '' }))} 
-                className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${formData.submission_type === 'photo' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400'}`}
+                onClick={() => setFormData(prev => ({ ...prev, submission_type: 'link', content: '' }))} 
+                className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-normal transition-all flex items-center justify-center gap-1.5 ${formData.submission_type === 'link' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400'}`}
               >
-                Foto Kamera
+                <LinkIcon size={12} /> Link Drive
               </button>
             </div>
 
@@ -304,33 +438,93 @@ const PublicTasks: React.FC = () => {
               </div>
             ) : (
               <div className="animate-fadeIn">
-                <div 
-                  onClick={() => fileInputRef.current?.click()} 
-                  className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all bg-slate-50"
-                >
-                  <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
-                  {preview ? (
-                    <img src={preview} className="max-h-40 rounded-xl shadow-md mx-auto border-2 border-white" />
-                  ) : (
-                    <div className="space-y-1">
-                      <Camera size={24} className="mx-auto text-slate-300" />
-                      <p className="text-[10px] font-normal text-slate-500 tracking-tighter">Ambil Foto Tugas, Maksimal ukuran foto 500KB</p>
+                {/* Hidden Input */}
+                <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                />
+
+                {/* Container Preview & Tombol Upload */}
+                {photos.length > 0 ? (
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {photos.map((photo, idx) => (
+                                <div key={idx} className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-100 aspect-square">
+                                    <img src={photo} className="w-full h-full object-cover" alt={`Preview ${idx + 1}`} />
+                                    <button 
+                                        type="button"
+                                        onClick={() => removePhoto(idx)}
+                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-lg active:scale-95 opacity-90 hover:opacity-100"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                    <span className="absolute bottom-1 right-1 bg-black/50 text-white text-[8px] px-1.5 py-0.5 rounded-md backdrop-blur-sm">
+                                        {idx + 1}
+                                    </span>
+                                </div>
+                            ))}
+                            
+                            {/* Tombol Tambah Foto Kecil di Grid */}
+                            <button 
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex flex-col items-center justify-center gap-1 border-2 border-dashed border-emerald-300 bg-emerald-50/50 rounded-xl aspect-square hover:bg-emerald-50 transition-all text-emerald-600 active:scale-95"
+                            >
+                                <Plus size={24} />
+                                <span className="text-[9px] font-bold uppercase">Tambah</span>
+                            </button>
+                        </div>
+                        <p className="text-[8px] text-center text-slate-400 italic">
+                             *Foto akan otomatis digabungkan saat dikirim.
+                        </p>
                     </div>
-                  )}
-                </div>
+                ) : (
+                    // Tampilan Awal (Box Besar)
+                    <div 
+                      onClick={() => !processingImage && fileInputRef.current?.click()} 
+                      className={`border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all bg-slate-50 ${processingImage ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      {processingImage ? (
+                        <div className="space-y-2">
+                           <Loader2 size={24} className="mx-auto text-emerald-600 animate-spin" />
+                           <p className="text-[10px] font-bold text-emerald-600">Mengompres Foto...</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-slate-100">
+                              <ImageIcon size={20} className="text-slate-400" />
+                          </div>
+                          <div>
+                             <p className="text-[10px] font-black text-slate-600 tracking-tight uppercase">Ambil Foto Tugas</p>
+                             <p className="text-[8px] font-normal text-slate-400">Fotolah dengan pencahayaan yang jelas & tidak blur</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                )}
+
+                {photos.length === 0 && !processingImage && (
+                    <p className="text-[8px] text-center text-slate-400 mt-2 italic">
+                        *Pastikan semua foto yang dikirim sudah benar !.
+                    </p>
+                )}
               </div>
             )}
           </div>
 
           <button 
             type="submit" 
-            disabled={loading || !isVerified} 
+            disabled={loading || !isVerified || processingImage} 
             className={`w-full py-4 rounded-xl text-xs font-black shadow-lg transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-2 active:scale-95 ${isVerified ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
           >
-            {loading ? (
+            {loading || processingImage ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Proses Kirim
+                {processingImage ? 'Proses Gambar...' : (photos.length > 1 ? 'Gabung & Kirim...' : 'Proses Kirim...')}
               </>
             ) : (
               <>
@@ -358,7 +552,9 @@ const PublicTasks: React.FC = () => {
             </div>
             <div>
               <p className="text-emerald-100 font-bold uppercase tracking-tighter opacity-80 mb-0.5">Metode Pengumpulan</p>
-              <p className="font-black uppercase text-white">{formData.submission_type}</p>
+              <p className="font-black uppercase text-white">
+                  {formData.submission_type === 'photo' ? `FOTO KAMERA (${photos.length} file)` : 'LINK DRIVE'}
+              </p>
             </div>
           </div>
           <div className="space-y-2.5">
