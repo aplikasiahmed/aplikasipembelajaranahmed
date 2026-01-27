@@ -74,7 +74,7 @@ const PublicTasks: React.FC = () => {
     const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Video%20Tutorial%20Upload%20file%20ke%20Link%20Google%20Drive.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9WaWRlbyBUdXRvcmlhbCBVcGxvYWQgZmlsZSBrZSBMaW5rIEdvb2dsZSBEcml2ZS5tcDQiLCJpYXQiOjE3Njk0MTEyODUsImV4cCI6MTgwMDk0NzI4NX0.2w9Ab3WVm34ItTWstBLHPJHsX51D-lBrL0WWqOjOmQI";
     
     Swal.fire({
-      title: 'Tutorial Upload Drive',
+      title: 'Tutorial Upload Drive (sinyal harus kuat untuk memutar video)',
       html: `
         <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl">
           <video 

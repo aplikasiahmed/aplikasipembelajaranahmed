@@ -56,8 +56,9 @@ class DatabaseService {
     if (grade) query = query.like('kelas', `${grade}.%`);
     const { data, error } = await query;
     if (error || !data) return [];
-    // Fix: Explicitly type the map and ensure the result is treated as string[] to resolve 'unknown[]' assignment error
-    const uniqueKelas = Array.from(new Set(data.map((item: any) => item.kelas as string))).sort();
+    
+    // Explicitly type the set to ensure we get a string[]
+    const uniqueKelas = Array.from(new Set<string>(data.map((item: any) => item.kelas as string))).sort();
     return uniqueKelas;
   }
 

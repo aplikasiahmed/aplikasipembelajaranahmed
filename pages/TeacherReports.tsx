@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -40,6 +41,8 @@ const TeacherReports: React.FC = () => {
   }, []);
 
   // LOGIKA DINAMIS: Bulan ke Semester
+  // Jika bulan 07-12 (Juli-Desember) => Semester 1
+  // Jika bulan 01-06 (Januari-Juni) => Semester 2
   useEffect(() => {
     const m = parseInt(monthAbsen);
     if (m >= 7 && m <= 12) {
@@ -359,7 +362,7 @@ const TeacherReports: React.FC = () => {
             </div>
             <div className="space-y-0.5 col-span-1">
               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <input type="text" readOnly className="w-full p-2 text-[10px] md:text-xs border border-slate-100 bg-slate-50 text-slate-500 rounded-xl font-black text-center" value={semAbsen} />
+              <input type="text" readOnly className="w-full p-2 text-[10px] md:text-xs border border-slate-100 bg-slate-50 text-slate-500 rounded-xl font-black text-center cursor-not-allowed" value={semAbsen} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 pt-1">
