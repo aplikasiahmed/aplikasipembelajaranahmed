@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 
 const PublicAbsensi: React.FC = () => {
   const [nisn, setNisn] = useState('');
-  const [semester, setSemester] = useState('1');
+  const [semester, setSemester] = useState('0'); // Default '0' agar muncul "Pilih Semester"
   const [student, setStudent] = useState<Student | null>(null);
   const [allAttendance, setAllAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -14,6 +14,19 @@ const PublicAbsensi: React.FC = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi Semester Wajib Dipilih
+    if (semester === '0') {
+      Swal.fire({ 
+        icon: 'warning', 
+        title: 'Pilih Semester', 
+        text: 'Silakan pilih semester terlebih dahulu!', 
+        confirmButtonColor: '#059669', 
+        heightAuto: false 
+      });
+      return;
+    }
+
     if (!nisn.trim()) {
       Swal.fire({ icon: 'warning', title: 'NIS Kosong', text: 'Silakan masukkan nomor NIS Anda!', confirmButtonColor: '#059669', heightAuto: false });
       return;
@@ -73,10 +86,11 @@ const PublicAbsensi: React.FC = () => {
         <form onSubmit={handleSearch} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <select 
-              className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-black focus:border-emerald-500 outline-none"
+              className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-normal focus:border-emerald-500 outline-none"
               value={semester}
               onChange={(e) => setSemester(e.target.value)}
             >
+              <option value="0">Pilih Semester</option>
               <option value="1">Semester 1 (Ganjil)</option>
               <option value="2">Semester 2 (Genap)</option>
             </select>
@@ -87,7 +101,7 @@ const PublicAbsensi: React.FC = () => {
                 type="text" 
                 inputMode="numeric"
                 placeholder="Masukkan nomor NIS siswa" 
-                className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-bold outline-none focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:border-emerald-500 transition-all shadow-sm"
                 value={nisn}
                 onChange={(e) => setNisn(e.target.value.replace(/[^0-9]/g, ''))}
               />
