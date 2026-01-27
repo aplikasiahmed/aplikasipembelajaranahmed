@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, Users, Calendar, CheckCircle2, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -8,14 +9,14 @@ import Swal from 'sweetalert2';
 const TeacherInputAbsensi: React.FC = () => {
   const navigate = useNavigate();
   const [grade, setGrade] = useState<GradeLevel>('7');
-  const [semester, setSemester] = useState('1');
+  const [semester, setSemester] = useState(''); // Default kosong "Pilih Semester"
   const [selectedKelas, setSelectedKelas] = useState('');
   const [availableKelas, setAvailableKelas] = useState<string[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [attendanceData, setAttendanceData] = useState<Record<string, string>>({});
   
-  // State Tanggal Manual (Tabel Tanggal)
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  // State Tanggal Manual (Tabel Tanggal) - Default Kosong
+  const [date, setDate] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -47,11 +48,23 @@ const TeacherInputAbsensi: React.FC = () => {
   };
 
   const handleSave = async () => {
+    // 1. Validasi Kolom Kosong
+    if (!selectedKelas || !date || !semester) {
+      Swal.fire({ 
+        icon: 'warning', 
+        title: 'Perhatian', 
+        text: 'Kolom kosong wajib di isi!', 
+        heightAuto: false 
+      });
+      return;
+    }
+
     if (students.length === 0) { 
       Swal.fire({ icon: 'error', title: 'Siswa Tidak Ada', text: 'Pilih kelas yang memiliki data siswa.', heightAuto: false }); 
       return; 
     }
     
+    // 2. Konfirmasi Sebelum Kirim
     const result = await Swal.fire({ 
       title: 'Simpan Rekap Absensi?', 
       text: `Kelas ${selectedKelas} - Semester ${semester} - Tanggal ${date}`, 
@@ -72,12 +85,15 @@ const TeacherInputAbsensi: React.FC = () => {
         nis: s.nis,                      
         nama_siswa: s.namalengkap,       
         status: (attendanceData[s.id!] || 'hadir') as any, 
-        date: date, // Menggunakan tanggal manual yang dipilih guru
+        date: date, 
         kelas: selectedKelas, 
         semester: String(semester) 
       }));
       
       await db.addAttendance(records);
+      
+      // 6. Reset Semester (Clear Content) setelah berhasil
+      setSemester('');
       
       Swal.fire({ 
         icon: 'success', 
@@ -121,23 +137,28 @@ const TeacherInputAbsensi: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}><option value="1">Semester 1</option><option value="2">Semester 2</option></select>
+            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
+              <option value="">-- Pilih Semester --</option>
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+            </select>
           </div>
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Kelas</label>
             <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}><option value="">-- Kelas --</option>{availableKelas.map(k => <option key={k} value={k}>{k}</option>)}</select>
           </div>
           <div className="space-y-1">
-            <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal Absen</label>
+            <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
             <div className="relative">
               {/* Input Tanggal Manual dengan Date Picker */}
               <input 
                 type="date" 
-                className="w-full p-1.5 md:p-2 pl-7 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none cursor-pointer focus:border-amber-500" 
+                className="w-full p-1.5 md:p-2 pl-3 pr-10 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none cursor-pointer focus:border-amber-500 text-slate-600 placeholder:text-slate-300" 
                 value={date} 
-                onChange={(e) => setDate(e.target.value)} 
+                onChange={(e) => setDate(e.target.value)}
+                placeholder="pilih tanggal"
               />
-              <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 text-black pointer-events-none" size={12} />
+              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Search, Award, AlertCircle, BookOpen } from 'lucide-react';
+import { Search, Award, AlertCircle, Calendar } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, GradeRecord } from '../types';
 import Swal from 'sweetalert2';
@@ -40,7 +41,16 @@ const PublicGrades: React.FC = () => {
     }
   };
 
-  const filteredGrades = allGrades.filter(g => String(g.semester) === String(semester));
+  // Filter dan Sort Data berdasarkan Tanggal (Ascending/Berurutan)
+  const filteredGrades = allGrades
+    .filter(g => String(g.semester) === String(semester))
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  // Helper untuk format tanggal 00/00/0000
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('en-GB'); // Format dd/mm/yyyy
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
@@ -89,41 +99,66 @@ const PublicGrades: React.FC = () => {
             <div className="space-y-1 relative z-10">
               <p className="text-emerald-200 text-[8px] font-bold uppercase tracking-widest">HASIL PENCARIAN • SEMESTER {semester}</p>
               <h2 className="text-sm md:text-xl font-black leading-tight uppercase tracking-tight">{student.namalengkap}</h2>
-              <p className="text-emerald-100 text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis}</p>
+              {/* Added Gender Next to NIS */}
+              <p className="text-emerald-100 text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis} • {student.jeniskelamin}</p>
             </div>
-            <div className="bg-white/10 px-4 py-2 rounded-2xl border border-white/20 text-center shrink-0 ml-2 backdrop-blur-sm relative z-10">
-              <p className="text-[8px] uppercase font-black opacity-80 mb-0.5">Rata-rata</p>
-              <p className="text-lg md:text-2xl font-black">
-                {filteredGrades.length > 0 ? (filteredGrades.reduce((a, b) => a + b.score, 0) / filteredGrades.length).toFixed(1) : '0'}
+            
+            {/* Rata-rata Section with Disclaimer */}
+            <div className="flex flex-col items-end shrink-0 ml-2 relative z-10">
+              <div className="bg-white/10 px-4 py-2 rounded-2xl border border-white/20 text-center backdrop-blur-sm w-full">
+                <p className="text-[8px] uppercase font-black opacity-80 mb-0.5">Rata-rata</p>
+                <p className="text-lg md:text-2xl font-black">
+                  {filteredGrades.length > 0 ? (filteredGrades.reduce((a, b) => a + b.score, 0) / filteredGrades.length).toFixed(1) : '0'}
+                </p>
+              </div>
+              <p className="text-[8px] font-normal text-white text-right italic mt-1 opacity-90">
+                *nilai akan berubah sewaktu-waktu
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
+          <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
             {filteredGrades.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs md:text-sm text-left">
-                  <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                      <th className="px-4 py-4 font-black text-slate-400 uppercase tracking-widest text-[9px]">Penilaian</th>
-                      <th className="px-3 py-4 font-black text-slate-400 uppercase tracking-widest text-[9px] text-center">Nilai</th>
-                      <th className="px-4 py-4 font-black text-slate-400 uppercase tracking-widest text-[9px]">Materi / Ket</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredGrades.map((g) => (
-                      <tr key={g.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-4 font-black text-slate-700 uppercase tracking-tight">{g.subject_type.toUpperCase()}</td>
-                        <td className="px-3 py-4 text-center">
-                          <span className={`px-3 py-1 rounded-xl font-black text-sm ${g.score >= 75 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {g.score}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-slate-500 italic font-medium">{g.description || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="w-full">
+                {/* Header Tabel Sticky */}
+                <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest p-3 md:p-4 sticky top-0 z-10">
+                  <div className="col-span-3">Tanggal</div>
+                  <div className="col-span-3">Penilaian</div>
+                  <div className="col-span-4">Ket</div>
+                  <div className="col-span-2 text-center">Nilai</div>
+                </div>
+
+                {/* Konten Scrollable (Max Height ~10 Baris) */}
+                <div className="max-h-[400px] overflow-y-auto scrollbar-thin">
+                  {filteredGrades.map((g, idx) => (
+                    <div 
+                      key={g.id} 
+                      className={`grid grid-cols-12 items-center p-3 md:p-4 text-[10px] md:text-xs border-b border-slate-50 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                    >
+                      {/* Tanggal (Format Normal) */}
+                      <div className="col-span-3 text-slate-500 font-normal">
+                        {formatDate(g.created_at)}
+                      </div>
+
+                      {/* Tipe Penilaian */}
+                      <div className="col-span-3 font-bold text-slate-700 uppercase tracking-tight truncate pr-1">
+                        {g.subject_type}
+                      </div>
+
+                      {/* Keterangan (Wrap text agar tidak terpotong) */}
+                      <div className="col-span-4 text-slate-500 font-normal italic break-words pr-1 leading-tight">
+                        {g.description || '-'}
+                      </div>
+
+                      {/* Nilai */}
+                      <div className="col-span-2 text-center">
+                        <span className={`inline-block w-8 py-1 rounded-lg font-black text-[10px] md:text-xs ${g.score >= 75 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                          {g.score}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="p-12 text-center space-y-3">

@@ -20,7 +20,7 @@ import * as XLSX from 'xlsx';
 
 // Import Utils
 import { generateExcel } from '../utils/excelGenerator';
-import { downloadAsPdf } from '../utils/pdfGenerator';
+import { generatePDFReport } from '../utils/pdfGenerator';
 import { formatBulan } from '../utils/format';
 
 const TeacherReports: React.FC = () => {
@@ -28,12 +28,12 @@ const TeacherReports: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [availKelas, setAvailKelas] = useState<string[]>([]);
   
-  // States Konfigurasi
+  // States Konfigurasi - Default Kosong untuk Memaksa Pilihan User
   const [kelasNilai, setKelasNilai] = useState('');
-  const [semNilai, setSemNilai] = useState('1');
+  const [semNilai, setSemNilai] = useState('');
   const [kelasAbsen, setKelasAbsen] = useState('');
-  const [semAbsen, setSemAbsen] = useState('1');
-  const [monthAbsen, setMonthAbsen] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
+  const [semAbsen, setSemAbsen] = useState('');
+  const [monthAbsen, setMonthAbsen] = useState('');
   const [yearAbsen, setYearAbsen] = useState(new Date().getFullYear().toString());
 
   useEffect(() => {
@@ -41,9 +41,12 @@ const TeacherReports: React.FC = () => {
   }, []);
 
   // LOGIKA DINAMIS: Bulan ke Semester
-  // Jika bulan 07-12 (Juli-Desember) => Semester 1
-  // Jika bulan 01-06 (Januari-Juni) => Semester 2
+  // Berjalan hanya jika bulan dipilih
   useEffect(() => {
+    if (!monthAbsen) {
+      setSemAbsen('');
+      return;
+    }
     const m = parseInt(monthAbsen);
     if (m >= 7 && m <= 12) {
       setSemAbsen('1');
@@ -57,10 +60,7 @@ const TeacherReports: React.FC = () => {
     if (data) {
       const unique = Array.from(new Set(data.map(i => i.kelas))).sort();
       setAvailKelas(unique);
-      if (unique.length > 0) {
-        setKelasNilai(unique[0]);
-        setKelasAbsen(unique[0]);
-      }
+      // Jangan auto-select kelas agar user memilih sendiri
     }
   };
 
@@ -107,14 +107,22 @@ const TeacherReports: React.FC = () => {
   };
 
   const handleExport = async (type: 'pdf' | 'excel', category: 'nilai' | 'absensi') => {
+    // Validasi Input Kosong
+    if (category === 'nilai') {
+        if (!kelasNilai || !semNilai) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Kolom wajib di pilih!', heightAuto: false });
+            return;
+        }
+    } else {
+        if (!kelasAbsen || !monthAbsen) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Kolom wajib di pilih!', heightAuto: false });
+            return;
+        }
+    }
+
     const targetKelas = category === 'nilai' ? kelasNilai : kelasAbsen;
     const targetSem = category === 'nilai' ? semNilai : semAbsen;
     
-    if (!targetKelas) {
-      Swal.fire({ icon: 'warning', title: 'Pilih Kelas', text: 'Silakan pilih kelas.', heightAuto: false });
-      return;
-    }
-
     Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading(), heightAuto: false, allowOutsideClick: false });
 
     try {
@@ -137,8 +145,11 @@ const TeacherReports: React.FC = () => {
           generateExcel(excelData, `Laporan_Nilai_${targetKelas}`, 'NILAI');
           Swal.close();
         } else {
-          renderPdfTemplate('nilai', data, { kelas: targetKelas, semester: targetSem });
-          await downloadAsPdf('pdf-capture-area', `Laporan_Nilai_${targetKelas}`);
+          // Generate True PDF (Bukan Gambar)
+          generatePDFReport('nilai', data, { 
+              kelas: targetKelas, 
+              semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)' 
+          });
         }
       } else {
         const students = await db.getStudentsByKelas(targetKelas);
@@ -166,95 +177,19 @@ const TeacherReports: React.FC = () => {
           generateExcel(aggregated, `Rekap_Absen_${targetKelas}_${monthAbsen}`, 'ABSEN');
           Swal.close();
         } else {
-          renderPdfTemplate('absensi', aggregated, { 
+          // Generate True PDF (Bukan Gambar)
+          generatePDFReport('absensi', aggregated, { 
             kelas: targetKelas, 
             semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)',
             bulan: formatBulan(monthAbsen),
             tahun: yearAbsen
           });
-          await downloadAsPdf('pdf-capture-area', `Rekap_Absen_${targetKelas}_${monthAbsen}`);
         }
       }
     } catch (err) {
+      console.error(err);
       Swal.fire('Error', 'Gagal memproses laporan.', 'error');
     }
-  };
-
-  const renderPdfTemplate = (type: 'nilai' | 'absensi', data: any[], info: any) => {
-    const area = document.getElementById('pdf-capture-area');
-    if (!area) return;
-
-    let content = '';
-    if (type === 'absensi') {
-      content = `
-        <div class="pdf-header" style="padding: 20px; font-family: sans-serif;">
-          <h2 style="text-align: center; margin-bottom: 5px;">REKAPITULASI ABSENSI SISWA</h2>
-          <table style="width: 100%; margin-top: 20px; border: none;">
-            <tr>
-              <td>KELAS: ${info.kelas}</td>
-              <td style="text-align: center;">BULAN: ${info.bulan} ${info.tahun}</td>
-              <td style="text-align: right;">SEMESTER: ${info.semester}</td>
-            </tr>
-          </table>
-        </div>
-        <table class="pdf-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-          <thead>
-            <tr style="background-color: #f0f0f0;">
-              <th style="border: 1px solid black; padding: 8px;">NO</th>
-              <th style="border: 1px solid black; padding: 8px;">NIS</th>
-              <th style="border: 1px solid black; padding: 8px;">NAMA SISWA</th>
-              <th style="border: 1px solid black; padding: 8px;">H</th>
-              <th style="border: 1px solid black; padding: 8px;">S</th>
-              <th style="border: 1px solid black; padding: 8px;">I</th>
-              <th style="border: 1px solid black; padding: 8px;">A</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map((item, idx) => `
-              <tr>
-                <td style="border: 1px solid black; text-align: center;">${idx + 1}</td>
-                <td style="border: 1px solid black; text-align: center;">${item.NIS || item.nis}</td>
-                <td style="border: 1px solid black; padding-left: 10px; font-weight: bold;">${(item['NAMA SISWA'] || item.namalengkap).toUpperCase()}</td>
-                <td style="border: 1px solid black; text-align: center;">${item.H || item.hadir}</td>
-                <td style="border: 1px solid black; text-align: center;">${item.S || item.sakit}</td>
-                <td style="border: 1px solid black; text-align: center;">${item.I || item.izin}</td>
-                <td style="border: 1px solid black; text-align: center; color: ${(item.A || item.alfa) > 0 ? 'red' : 'black'}">${item.A || item.alfa}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    } else {
-       content = `
-        <div class="pdf-header" style="padding: 20px; text-align: center;">
-          <h2>LAPORAN NILAI SISWA</h2>
-          <p>Kelas: ${info.kelas} | Semester: ${info.semester}</p>
-        </div>
-        <table class="pdf-table" style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="background: #f0f0f0;">
-              <th style="border: 1px solid black; padding: 8px;">NO</th>
-              <th style="border: 1px solid black; padding: 8px;">NIS</th>
-              <th style="border: 1px solid black; padding: 8px;">NAMA SISWA</th>
-              <th style="border: 1px solid black; padding: 8px;">MATERI</th>
-              <th style="border: 1px solid black; padding: 8px;">NILAI</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map((item, idx) => `
-              <tr>
-                <td style="border: 1px solid black; text-align: center;">${idx + 1}</td>
-                <td style="border: 1px solid black; text-align: center;">${item.data_siswa?.nis}</td>
-                <td style="border: 1px solid black; padding-left: 10px;">${item.data_siswa?.namalengkap}</td>
-                <td style="border: 1px solid black; text-align: center;">${item.description}</td>
-                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${item.score}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-       `;
-    }
-    area.innerHTML = content;
   };
 
   const secureReset = async (type: 'absensi' | 'nilai' | 'tugas' | 'siswa' | 'semua') => {
@@ -299,16 +234,18 @@ const TeacherReports: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-3 md:space-y-6 animate-fadeIn pb-24 px-1 no-print">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
+      {/* Header Responsif */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/50 backdrop-blur-sm p-3 md:p-0 rounded-2xl md:bg-transparent">
+        <div className="flex-1">
           <button onClick={() => navigate('/guru')} className="flex items-center gap-1.5 text-slate-800 text-[10px] font-black uppercase py-2 hover:translate-x-[-4px] transition-transform">
             <ArrowLeft size={14} /> Dashboard Utama
           </button>
           <h1 className="text-xl md:text-2xl font-black uppercase tracking-tighter text-slate-800 leading-tight">Laporan & Database</h1>
-          <p className="text-slate-500 text-[9px] md:text-xs font-medium">Panel Pengelolaan Laporan dan Database PAI.</p>
+          <p className="text-slate-500 text-[10px] md:text-sm font-medium leading-tight md:leading-normal max-w-lg">
+            Panel Pengelolaan Laporan dan Database PAI.
+          </p>
         </div>
-        <div className="bg-slate-800 text-white p-2.5 rounded-2xl shadow-lg flex items-center gap-3 self-start md:self-center">
+        <div className="bg-slate-800 text-white p-2.5 rounded-xl md:rounded-2xl shadow-lg flex items-center gap-3 self-start md:self-center">
           <Database size={20} className="opacity-50" />
           <div className="text-[9px] font-bold uppercase tracking-widest">Admin System</div>
         </div>
@@ -324,14 +261,25 @@ const TeacherReports: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-0.5">
               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Kelas</label>
-              <select className="w-full p-2 text-[10px] md:text-xs border border-slate-200 bg-white rounded-xl font-bold outline-none" value={kelasNilai} onChange={(e) => setKelasNilai(e.target.value)}>
+              <select 
+                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                value={kelasNilai} 
+                onChange={(e) => setKelasNilai(e.target.value)}
+              >
+                <option value="">-- Pilih Kelas --</option>
                 {availKelas.map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
             <div className="space-y-0.5">
               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <select className="w-full p-2 text-[10px] md:text-xs border border-slate-200 bg-white rounded-xl font-bold outline-none" value={semNilai} onChange={(e) => setSemNilai(e.target.value)}>
-                <option value="1">1 (Ganjil)</option><option value="2">2 (Genap)</option>
+              <select 
+                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                value={semNilai} 
+                onChange={(e) => setSemNilai(e.target.value)}
+              >
+                <option value="">-- Pilih Semester --</option>
+                <option value="1">1 (Ganjil)</option>
+                <option value="2">2 (Genap)</option>
               </select>
             </div>
           </div>
@@ -350,19 +298,29 @@ const TeacherReports: React.FC = () => {
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-0.5 col-span-1">
               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Kelas</label>
-              <select className="w-full p-2 text-[10px] md:text-xs border border-slate-200 bg-white rounded-xl font-bold outline-none" value={kelasAbsen} onChange={(e) => setKelasAbsen(e.target.value)}>
+              <select 
+                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                value={kelasAbsen} 
+                onChange={(e) => setKelasAbsen(e.target.value)}
+              >
+                <option value="">-- Pilih Kelas --</option>
                 {availKelas.map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
             <div className="space-y-0.5 col-span-1">
               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Bulan</label>
-              <select className="w-full p-2 text-[10px] md:text-xs border border-slate-200 bg-white rounded-xl font-bold outline-none" value={monthAbsen} onChange={(e) => setMonthAbsen(e.target.value)}>
+              <select 
+                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                value={monthAbsen} 
+                onChange={(e) => setMonthAbsen(e.target.value)}
+              >
+                <option value="">-- Pilih Bulan --</option>
                 {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{formatBulan(m)}</option>)}
               </select>
             </div>
             <div className="space-y-0.5 col-span-1">
               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <input type="text" readOnly className="w-full p-2 text-[10px] md:text-xs border border-slate-100 bg-slate-50 text-slate-500 rounded-xl font-black text-center cursor-not-allowed" value={semAbsen} />
+              <input type="text" readOnly className="w-full p-2 text-[10px] md:text-xs border border-slate-100 bg-slate-50 text-slate-500 rounded-xl font-black text-center cursor-not-allowed" value={semAbsen || '-'} placeholder="-" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 pt-1">

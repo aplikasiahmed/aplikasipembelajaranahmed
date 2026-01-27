@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Calendar, UserCheck, Thermometer, FileText, Ban, AlertCircle } from 'lucide-react';
 import { db } from '../services/supabaseMock';
@@ -40,15 +41,18 @@ const PublicAbsensi: React.FC = () => {
     }
   };
 
-  const filteredAttendance = allAttendance.filter(a => String(a.semester) === String(semester));
+  // Filter dan Sort Data berdasarkan Tanggal (Ascending/Berurutan)
+  const filteredAttendance = allAttendance
+    .filter(a => String(a.semester) === String(semester))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const getStatusInitial = (status: string) => {
     switch(status.toLowerCase()) {
-      case 'hadir': return { char: 'H', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
-      case 'sakit': return { char: 'S', color: 'text-amber-600 bg-amber-50 border-amber-100' };
-      case 'izin': return { char: 'I', color: 'text-blue-600 bg-blue-50 border-blue-100' };
-      case 'alfa': return { char: 'A', color: 'text-red-600 bg-red-50 border-red-100' };
-      default: return { char: '?', color: 'text-slate-400 bg-slate-50 border-slate-100' };
+      case 'hadir': return { char: 'H', label: 'Hadir', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' };
+      case 'sakit': return { char: 'S', label: 'Sakit', color: 'text-amber-600 bg-amber-50 border-amber-100' };
+      case 'izin': return { char: 'I', label: 'Izin', color: 'text-blue-600 bg-blue-50 border-blue-100' };
+      case 'alfa': return { char: 'A', label: 'Alfa', color: 'text-red-600 bg-red-50 border-red-100' };
+      default: return { char: '?', label: '-', color: 'text-slate-400 bg-slate-50 border-slate-100' };
     }
   };
 
@@ -102,7 +106,8 @@ const PublicAbsensi: React.FC = () => {
             <div className="space-y-0.5 relative z-10">
               <p className="text-emerald-200 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Info Siswa • Semester {semester}</p>
               <h2 className="text-sm md:text-lg font-black uppercase tracking-tight leading-tight">{student.namalengkap}</h2>
-              <p className="text-emerald-100 text-[9px] md:text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis}</p>
+              {/* Added Gender Next to NIS */}
+              <p className="text-emerald-100 text-[9px] md:text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis} • {student.jeniskelamin}</p>
             </div>
             <div className="bg-white/10 p-2.5 rounded-2xl border border-white/20 ml-2 backdrop-blur-sm z-10">
               <Calendar size={24} className="opacity-70" />
@@ -134,34 +139,41 @@ const PublicAbsensi: React.FC = () => {
 
           <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
             {filteredAttendance.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                      <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">No.</th>
-                      <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Tanggal</th>
-                      <th className="px-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Ket.</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredAttendance.map((record, idx) => {
-                      const statusInfo = getStatusInitial(record.status);
-                      return (
-                        <tr key={record.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3 text-[10px] md:text-xs font-medium text-slate-400">{idx + 1}</td>
-                          <td className="px-4 py-3 text-[11px] md:text-sm font-bold text-slate-800 uppercase">
-                            {new Date(record.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`inline-flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg text-[10px] font-black border ${statusInfo.color}`}>
-                              {statusInfo.char}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="w-full">
+                {/* Sticky Header */}
+                <div className="grid grid-cols-3 bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest p-3 md:p-4 sticky top-0 z-10">
+                  <div className="text-left">No.</div>
+                  <div className="text-center">Tanggal</div>
+                  <div className="text-center">Keterangan</div>
+                </div>
+
+                {/* Scrollable Content (Max Height ~10 Baris) */}
+                <div className="max-h-[400px] overflow-y-auto scrollbar-thin">
+                  {filteredAttendance.map((record, idx) => {
+                    const statusInfo = getStatusInitial(record.status);
+                    return (
+                      <div 
+                        key={record.id} 
+                        className={`grid grid-cols-3 items-center p-3 md:p-4 text-[10px] md:text-xs border-b border-slate-50 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                      >
+                        <div className="text-slate-400 font-medium pl-2">
+                          {idx + 1}
+                        </div>
+                        <div className="text-center text-slate-600 font-normal">
+                          {new Date(record.date).toLocaleDateString('en-GB')}
+                        </div>
+                        <div className="text-center flex justify-center items-center gap-2">
+                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg text-[9px] font-black border ${statusInfo.color}`}>
+                            {statusInfo.char}
+                          </span>
+                          <span className="hidden md:inline font-bold text-slate-600 text-[10px] uppercase">
+                            {statusInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="p-10 text-center space-y-3">
