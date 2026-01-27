@@ -146,8 +146,8 @@ const PublicAbsensi: React.FC = () => {
                   <div className="text-center">Keterangan</div>
                 </div>
 
-                {/* Konten Scrollable (REVISI: max-h-[220px] agar tidak makan tempat) */}
-                <div className="max-h-[220px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
+                {/* Konten Scrollable (REVISI: max-h-[215px] agar tidak makan tempat) */}
+                <div className="max-h-[215px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
                   {filteredAttendance.map((record, idx) => {
                     const statusInfo = getStatusInitial(record.status);
                     return (
