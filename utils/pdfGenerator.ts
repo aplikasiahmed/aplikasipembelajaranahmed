@@ -149,7 +149,7 @@ export const generatePDFReport = (
     
     // Nama Guru (BOLD)
     doc.setFont('helvetica', 'bold');
-    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 35);
+    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 30);
     doc.setFont('helvetica', 'normal'); // Kembalikan ke normal
 
     // 7. Footer Halaman (Looping semua halaman)
@@ -165,7 +165,7 @@ export const generatePDFReport = (
         doc.setTextColor(100); // Abu-abu
 
         // Kiri: Judul Dokumen + Tanggal Download
-        doc.text(`${title} -${subTitle} - ${downloadDate}`, 15, pageHeight - 10);
+        doc.text(`${title} - ${subTitle} - ${downloadDate} - ${meta.semester} `, 15, pageHeight - 10);
 
         // Kanan: Hal x dari y
         doc.text(`Hal ${i} dari ${pageCount}`, pageWidth - 15, pageHeight - 10, { align: 'right' });
@@ -173,8 +173,8 @@ export const generatePDFReport = (
 
     // 8. Simpan File
     const fileName = type === 'nilai' 
-        ? `Laporan_Nilai_${meta.kelas}_Sem${meta.semester}.pdf` 
-        : `Rekap_Absen_${meta.kelas}_${meta.bulan}.pdf`;
+        ? `Laporan_Nilai_${subTitle}_${meta.kelas}_Sem${meta.semester}.pdf` 
+        : `Rekap_Absen_${subTitle}_${meta.kelas}_${meta.bulan}_Sem${meta.semester}.pdf`;
         
     doc.save(fileName);
 
