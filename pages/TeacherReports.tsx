@@ -12,15 +12,16 @@ import {
   Upload,
   Info,
   FileUp,
-  AlertTriangle
+  AlertTriangle,
+  Files
 } from 'lucide-react';
 import { db, supabase } from '../services/supabaseMock';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 
 // Import Utils
-import { generateExcel } from '../utils/excelGenerator';
-import { generatePDFReport } from '../utils/pdfGenerator';
+import { generateExcel, generateBatchExcel } from '../utils/excelGenerator';
+import { generatePDFReport, generateBatchPDFReport } from '../utils/pdfGenerator';
 import { formatBulan } from '../utils/format';
 
 const TeacherReports: React.FC = () => {
@@ -28,20 +29,23 @@ const TeacherReports: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [availKelas, setAvailKelas] = useState<string[]>([]);
   
-  // States Konfigurasi - Default Kosong untuk Memaksa Pilihan User
+  // States Konfigurasi NILAI
   const [kelasNilai, setKelasNilai] = useState('');
   const [semNilai, setSemNilai] = useState('');
+  const [tipeNilai, setTipeNilai] = useState(''); // Filter Jenis Tugas
+
+  // States Konfigurasi ABSENSI
   const [kelasAbsen, setKelasAbsen] = useState('');
   const [semAbsen, setSemAbsen] = useState('');
-  const [monthAbsen, setMonthAbsen] = useState('');
+  const [monthAbsen, setMonthAbsen] = useState(''); // Dari Bulan
+  const [monthAbsenEnd, setMonthAbsenEnd] = useState(''); // Sampai Bulan
   const [yearAbsen, setYearAbsen] = useState(new Date().getFullYear().toString());
 
   useEffect(() => {
     fetchAllKelas();
   }, []);
 
-  // LOGIKA DINAMIS: Bulan ke Semester
-  // Berjalan hanya jika bulan dipilih
+  // Auto-set Semester Absensi berdasarkan Bulan Awal
   useEffect(() => {
     if (!monthAbsen) {
       setSemAbsen('');
@@ -60,7 +64,267 @@ const TeacherReports: React.FC = () => {
     if (data) {
       const unique = Array.from(new Set(data.map(i => i.kelas))).sort();
       setAvailKelas(unique);
-      // Jangan auto-select kelas agar user memilih sendiri
+    }
+  };
+
+  // --- SINGLE EXPORT (PER KELAS) ---
+  const handleExport = async (type: 'pdf' | 'excel', category: 'nilai' | 'absensi') => {
+    if (category === 'nilai') {
+        if (!kelasNilai || !semNilai) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih Kelas dan Semester!', heightAuto: false });
+            return;
+        }
+    } else {
+        if (!kelasAbsen || !monthAbsen || !semAbsen) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih Kelas, Bulan, dan Semester!', heightAuto: false });
+            return;
+        }
+    }
+
+    const targetKelas = category === 'nilai' ? kelasNilai : kelasAbsen;
+    const targetSem = category === 'nilai' ? semNilai : semAbsen;
+    
+    Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading(), heightAuto: false, allowOutsideClick: false });
+
+    try {
+      if (category === 'nilai') {
+        let data = await db.getGradesByKelas(targetKelas, targetSem);
+        
+        // Filter by Tipe Nilai jika dipilih
+        if (tipeNilai) {
+          data = data.filter(item => item.subject_type === tipeNilai);
+        }
+
+        if (!data || data.length === 0) {
+          Swal.fire('Kosong', `Data nilai ${tipeNilai ? tipeNilai.toUpperCase() : ''} Semester ${targetSem} belum tersedia.`, 'info');
+          return;
+        }
+
+        const titleLabel = tipeNilai 
+          ? `LAPORAN NILAI ${tipeNilai.toUpperCase()}` 
+          : 'LAPORAN NILAI SISWA';
+
+        if (type === 'excel') {
+          const excelData = data.map((item, idx) => ({
+            'NO': idx + 1,
+            'NIS': item.data_siswa?.nis,
+            'NAMA SISWA': item.data_siswa?.namalengkap,
+            'MATERI': item.description,
+            'NILAI': item.score,
+            'TIPE': item.subject_type.toUpperCase()
+          }));
+          
+          generateExcel(
+            excelData, 
+            `Laporan_Nilai_${targetKelas}_${tipeNilai || 'Semua'}`, 
+            targetKelas, 
+            {
+              title: titleLabel,
+              kelas: targetKelas,
+              semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)'
+            }
+          );
+          Swal.close();
+        } else {
+          // Pass custom title logic if needed
+          generatePDFReport('nilai', data, { 
+              kelas: targetKelas, 
+              semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)' 
+          });
+        }
+      } else {
+        // ABSENSI SINGLE
+        const students = await db.getStudentsByKelas(targetKelas);
+        // Single export uses strict month (monthAbsen)
+        const attendance = await db.getAttendanceByKelas(targetKelas, targetSem, monthAbsen, yearAbsen);
+
+        if (!attendance || attendance.length === 0) {
+          Swal.fire('Kosong', 'Data absensi bulan ini belum tersedia.', 'info');
+          return;
+        }
+
+        const aggregated = students.map((s, idx) => {
+          const sRecs = attendance.filter(a => a.student_id === s.id);
+          return {
+            'NO': idx + 1,
+            'NIS': s.nis,
+            'NAMA SISWA': s.namalengkap,
+            'H': sRecs.filter(r => r.status?.toLowerCase() === 'hadir').length,
+            'S': sRecs.filter(r => r.status?.toLowerCase() === 'sakit').length,
+            'I': sRecs.filter(r => r.status?.toLowerCase() === 'izin').length,
+            'A': sRecs.filter(r => r.status?.toLowerCase() === 'alfa').length
+          };
+        });
+
+        if (type === 'excel') {
+          generateExcel(
+            aggregated, 
+            `Rekap_Absen_${targetKelas}_${monthAbsen}`, 
+            targetKelas, 
+            {
+              title: 'REKAPITULASI ABSENSI SISWA',
+              kelas: targetKelas,
+              semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)',
+              bulan: formatBulan(monthAbsen),
+              tahun: yearAbsen
+            }
+          );
+          Swal.close();
+        } else {
+          generatePDFReport('absensi', aggregated, { 
+            kelas: targetKelas, 
+            semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)',
+            bulan: formatBulan(monthAbsen),
+            tahun: yearAbsen
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', 'Gagal memproses laporan.', 'error');
+    }
+  };
+
+  // --- BATCH EXPORT (SEMUA KELAS) ---
+  const handleExportAll = async (type: 'pdf' | 'excel', category: 'nilai' | 'absensi') => {
+    // Validasi
+    if (category === 'nilai' && !semNilai) {
+        Swal.fire({ icon: 'warning', title: 'Pilih Semester', text: 'Pilih semester terlebih dahulu!', heightAuto: false });
+        return;
+    }
+    // Validasi Absensi: Perlu minimal "Dari Bulan" dan Semester
+    if (category === 'absensi') {
+        if (!monthAbsen) {
+             Swal.fire({ icon: 'warning', title: 'Pilih Bulan', text: 'Pilih bulan awal terlebih dahulu!', heightAuto: false });
+             return;
+        }
+        if (!semAbsen) {
+             Swal.fire({ icon: 'warning', title: 'Pilih Semester', text: 'Pilih semester terlebih dahulu!', heightAuto: false });
+             return;
+        }
+    }
+
+    const targetSem = category === 'nilai' ? semNilai : semAbsen;
+    const targetSemLabel = targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)';
+
+    Swal.fire({
+        title: `Download Semua Data (${availKelas.length} Kelas)`,
+        text: 'Proses ini mungkin memakan waktu...',
+        didOpen: () => Swal.showLoading(),
+        heightAuto: false,
+        allowOutsideClick: false
+    });
+
+    try {
+        const batchData: any[] = [];
+
+        // Loop semua kelas
+        for (const kelas of availKelas) {
+            if (category === 'nilai') {
+                let data = await db.getGradesByKelas(kelas, targetSem);
+                
+                // Filter Tipe Tugas di Batch
+                if (tipeNilai) {
+                    data = data.filter(item => item.subject_type === tipeNilai);
+                }
+
+                if (data && data.length > 0) {
+                    const excelFormatted = data.map((item, idx) => ({
+                        'NO': idx + 1,
+                        'NIS': item.data_siswa?.nis,
+                        'NAMA SISWA': item.data_siswa?.namalengkap,
+                        'MATERI': item.description,
+                        'NILAI': item.score,
+                        'TIPE': item.subject_type.toUpperCase()
+                    }));
+                    
+                    const titleLabel = tipeNilai 
+                      ? `LAPORAN NILAI ${tipeNilai.toUpperCase()}` 
+                      : 'LAPORAN NILAI SISWA';
+
+                    batchData.push({
+                        data: type === 'excel' ? excelFormatted : data,
+                        sheetName: kelas,
+                        meta: {
+                            title: titleLabel,
+                            kelas: kelas,
+                            semester: targetSemLabel
+                        }
+                    });
+                }
+            } else {
+                // Absensi Batch (Support Range)
+                const students = await db.getStudentsByKelas(kelas);
+                
+                // Fetch FULL semester (pass undefined for month)
+                let attendance = await db.getAttendanceByKelas(kelas, targetSem, undefined, yearAbsen);
+                
+                // Filter by Range (Client Side)
+                if (monthAbsen) {
+                    const startM = parseInt(monthAbsen);
+                    // Jika bulan akhir tidak dipilih, anggap sama dengan bulan awal (single month)
+                    const endM = monthAbsenEnd ? parseInt(monthAbsenEnd) : startM;
+
+                    attendance = attendance.filter(a => {
+                        const recDate = new Date(a.date);
+                        const recMonth = recDate.getMonth() + 1; // 0-11 -> 1-12
+                        return recMonth >= startM && recMonth <= endM;
+                    });
+                }
+
+                if (attendance && attendance.length > 0) {
+                    const aggregated = students.map((s, idx) => {
+                        const sRecs = attendance.filter(a => a.student_id === s.id);
+                        return {
+                            'NO': idx + 1,
+                            'NIS': s.nis,
+                            'NAMA SISWA': s.namalengkap,
+                            'H': sRecs.filter(r => r.status?.toLowerCase() === 'hadir').length,
+                            'S': sRecs.filter(r => r.status?.toLowerCase() === 'sakit').length,
+                            'I': sRecs.filter(r => r.status?.toLowerCase() === 'izin').length,
+                            'A': sRecs.filter(r => r.status?.toLowerCase() === 'alfa').length
+                        };
+                    });
+
+                    // Label Bulan untuk Header
+                    let bulanLabel = formatBulan(monthAbsen);
+                    if (monthAbsenEnd && monthAbsen !== monthAbsenEnd) {
+                        bulanLabel += ` s/d ${formatBulan(monthAbsenEnd)}`;
+                    }
+
+                    batchData.push({
+                        data: aggregated,
+                        sheetName: kelas,
+                        meta: {
+                            title: 'REKAPITULASI ABSENSI SISWA',
+                            kelas: kelas,
+                            semester: targetSemLabel,
+                            bulan: bulanLabel,
+                            tahun: yearAbsen
+                        }
+                    });
+                }
+            }
+        }
+
+        if (batchData.length === 0) {
+            Swal.fire('Data Tidak Ditemukan', 'Tidak ada data di periode yang dipilih untuk semua kelas.', 'info');
+            return;
+        }
+
+        if (type === 'excel') {
+            const labelFile = category === 'nilai' 
+                ? `Laporan_Nilai_${tipeNilai || 'ALL'}_SEMUA_KELAS_Sem${targetSem}` 
+                : `Rekap_Absen_SEMUA_KELAS_${monthAbsen}-${monthAbsenEnd || monthAbsen}`;
+            generateBatchExcel(batchData, labelFile);
+            Swal.close();
+        } else {
+            generateBatchPDFReport(category, batchData);
+        }
+
+    } catch (error) {
+        console.error("Batch Export Error", error);
+        Swal.fire('Gagal', 'Terjadi kesalahan saat memproses data masal.', 'error');
     }
   };
 
@@ -104,92 +368,6 @@ const TeacherReports: React.FC = () => {
       { NO: 1, NIS: '12345', 'NAMA SISWA': 'Nama Siswa Contoh', JK: 'L', KELAS: '7.1' }
     ];
     generateExcel(template, 'Template_Import_Siswa', 'SISWA');
-  };
-
-  const handleExport = async (type: 'pdf' | 'excel', category: 'nilai' | 'absensi') => {
-    // Validasi Input Kosong
-    if (category === 'nilai') {
-        if (!kelasNilai || !semNilai) {
-            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Kolom wajib di pilih!', heightAuto: false });
-            return;
-        }
-    } else {
-        if (!kelasAbsen || !monthAbsen) {
-            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Kolom wajib di pilih!', heightAuto: false });
-            return;
-        }
-    }
-
-    const targetKelas = category === 'nilai' ? kelasNilai : kelasAbsen;
-    const targetSem = category === 'nilai' ? semNilai : semAbsen;
-    
-    Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading(), heightAuto: false, allowOutsideClick: false });
-
-    try {
-      if (category === 'nilai') {
-        const data = await db.getGradesByKelas(targetKelas, targetSem);
-        if (!data || data.length === 0) {
-          Swal.fire('Kosong', `Data nilai Semester ${targetSem} belum tersedia.`, 'info');
-          return;
-        }
-
-        if (type === 'excel') {
-          const excelData = data.map((item, idx) => ({
-            'NO': idx + 1,
-            'NIS': item.data_siswa?.nis,
-            'NAMA SISWA': item.data_siswa?.namalengkap,
-            'MATERI': item.description,
-            'NILAI': item.score,
-            'TIPE': item.subject_type.toUpperCase()
-          }));
-          generateExcel(excelData, `Laporan_Nilai_${targetKelas}`, 'NILAI');
-          Swal.close();
-        } else {
-          // Generate True PDF (Bukan Gambar)
-          generatePDFReport('nilai', data, { 
-              kelas: targetKelas, 
-              semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)' 
-          });
-        }
-      } else {
-        const students = await db.getStudentsByKelas(targetKelas);
-        const attendance = await db.getAttendanceByKelas(targetKelas, targetSem, monthAbsen, yearAbsen);
-
-        if (!attendance || attendance.length === 0) {
-          Swal.fire('Kosong', 'Data absensi bulan ini belum tersedia.', 'info');
-          return;
-        }
-
-        const aggregated = students.map((s, idx) => {
-          const sRecs = attendance.filter(a => a.student_id === s.id);
-          return {
-            'NO': idx + 1,
-            'NIS': s.nis,
-            'NAMA SISWA': s.namalengkap,
-            'H': sRecs.filter(r => r.status?.toLowerCase() === 'hadir').length,
-            'S': sRecs.filter(r => r.status?.toLowerCase() === 'sakit').length,
-            'I': sRecs.filter(r => r.status?.toLowerCase() === 'izin').length,
-            'A': sRecs.filter(r => r.status?.toLowerCase() === 'alfa').length
-          };
-        });
-
-        if (type === 'excel') {
-          generateExcel(aggregated, `Rekap_Absen_${targetKelas}_${monthAbsen}`, 'ABSEN');
-          Swal.close();
-        } else {
-          // Generate True PDF (Bukan Gambar)
-          generatePDFReport('absensi', aggregated, { 
-            kelas: targetKelas, 
-            semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)',
-            bulan: formatBulan(monthAbsen),
-            tahun: yearAbsen
-          });
-        }
-      }
-    } catch (err) {
-      console.error(err);
-      Swal.fire('Error', 'Gagal memproses laporan.', 'error');
-    }
   };
 
   const secureReset = async (type: 'absensi' | 'nilai' | 'tugas' | 'siswa' | 'semua') => {
@@ -282,10 +460,33 @@ const TeacherReports: React.FC = () => {
                 <option value="2">2 (Genap)</option>
               </select>
             </div>
+            <div className="space-y-0.5 col-span-2">
+               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Jenis Tugas (Opsional)</label>
+               <select 
+                 className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                 value={tipeNilai} 
+                 onChange={(e) => setTipeNilai(e.target.value)}
+               >
+                 <option value="">-- Semua Jenis Tugas --</option>
+                 <option value="harian">Harian</option>
+                 <option value="uts">UTS</option>
+                 <option value="uas">UAS</option>
+                 <option value="praktik">Praktik</option>
+               </select>
+            </div>
           </div>
+          {/* Tombol Single Download */}
           <div className="grid grid-cols-2 gap-2 pt-1">
-            <button onClick={() => handleExport('excel', 'nilai')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileDown size={14}/> EXCEL</button>
-            <button onClick={() => handleExport('pdf', 'nilai')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileText size={14}/> PDF NILAI</button>
+            <button onClick={() => handleExport('excel', 'nilai')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileDown size={14}/> Excel Kelas</button>
+            <button onClick={() => handleExport('pdf', 'nilai')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileText size={14}/> PDF Kelas</button>
+          </div>
+          {/* Tombol Batch Download */}
+          <div className="pt-2 border-t border-slate-100 mt-2">
+             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Download Semua Kelas</label>
+             <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => handleExportAll('excel', 'nilai')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> Excel Semua</button>
+                <button onClick={() => handleExportAll('pdf', 'nilai')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> PDF Semua</button>
+             </div>
           </div>
         </div>
 
@@ -295,8 +496,8 @@ const TeacherReports: React.FC = () => {
             <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Download size={18}/></div>
             <h2 className="text-[11px] md:text-sm font-black uppercase tracking-widest text-slate-800">Rekap Absensi</h2>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-0.5 col-span-1">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-0.5">
               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Kelas</label>
               <select 
                 className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
@@ -307,25 +508,54 @@ const TeacherReports: React.FC = () => {
                 {availKelas.map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
-            <div className="space-y-0.5 col-span-1">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Bulan</label>
+            <div className="space-y-0.5">
+              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
+              <select 
+                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                value={semAbsen} 
+                onChange={(e) => setSemAbsen(e.target.value)}
+              >
+                <option value="">-- Pilih Semester --</option>
+                <option value="1">1 (Ganjil)</option>
+                <option value="2">2 (Genap)</option>
+              </select>
+            </div>
+            {/* Range Bulan */}
+            <div className="space-y-0.5">
+              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Dari Bulan</label>
               <select 
                 className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
                 value={monthAbsen} 
                 onChange={(e) => setMonthAbsen(e.target.value)}
               >
-                <option value="">-- Pilih Bulan --</option>
+                <option value="">-- Awal --</option>
                 {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{formatBulan(m)}</option>)}
               </select>
             </div>
-            <div className="space-y-0.5 col-span-1">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <input type="text" readOnly className="w-full p-2 text-[10px] md:text-xs border border-slate-100 bg-slate-50 text-slate-500 rounded-xl font-black text-center cursor-not-allowed" value={semAbsen || '-'} placeholder="-" />
+            <div className="space-y-0.5">
+              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Sampai Bulan</label>
+              <select 
+                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                value={monthAbsenEnd} 
+                onChange={(e) => setMonthAbsenEnd(e.target.value)}
+              >
+                <option value="">-- Akhir (Opsional) --</option>
+                {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{formatBulan(m)}</option>)}
+              </select>
             </div>
           </div>
+          {/* Tombol Single Download */}
           <div className="grid grid-cols-2 gap-2 pt-1">
-            <button onClick={() => handleExport('excel', 'absensi')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileDown size={14}/> EXCEL</button>
-            <button onClick={() => handleExport('pdf', 'absensi')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileText size={14}/> PDF REKAP</button>
+            <button onClick={() => handleExport('excel', 'absensi')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileDown size={14}/> Excel Kelas</button>
+            <button onClick={() => handleExport('pdf', 'absensi')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileText size={14}/> PDF Kelas</button>
+          </div>
+          {/* Tombol Batch Download */}
+          <div className="pt-2 border-t border-slate-100 mt-2">
+             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Download Semua Kelas</label>
+             <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => handleExportAll('excel', 'absensi')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> Excel Semua</button>
+                <button onClick={() => handleExportAll('pdf', 'absensi')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> PDF Semua</button>
+             </div>
           </div>
         </div>
 
