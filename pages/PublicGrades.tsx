@@ -129,7 +129,7 @@ const PublicGrades: React.FC = () => {
                 </div>
 
                 {/* Konten Scrollable (REVISI: max-h-[225px] agar tidak makan tempat) */}
-                <div className="max-h-[225px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
+                <div className="max-h-[218px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
                   {filteredGrades.map((g, idx) => (
                     <div 
                       key={g.id} 
