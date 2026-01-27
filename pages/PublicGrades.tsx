@@ -127,8 +127,8 @@ const PublicGrades: React.FC = () => {
                   <div className="col-span-2 text-center">Nilai</div>
                 </div>
 
-                {/* Konten Scrollable (Tinggi dibatasi untuk Mobile agar ideal) */}
-                <div className="max-h-[250px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
+                {/* Konten Scrollable (REVISI: max-h-[220px] agar tidak makan tempat) */}
+                <div className="max-h-[220px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
                   {filteredGrades.map((g, idx) => (
                     <div 
                       key={g.id} 

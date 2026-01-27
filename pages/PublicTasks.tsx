@@ -483,7 +483,7 @@ const PublicTasks: React.FC = () => {
                       ) : (
                         <div className="space-y-2">
                           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-slate-100">
-                              <Camera size={20} className="text-slate-400" />
+                              <ImageIcon size={20} className="text-slate-400" />
                           </div>
                           <div>
                              <p className="text-[11px] font-black text-slate-600 tracking-tight uppercase">Ambil Foto Tugas</p>
