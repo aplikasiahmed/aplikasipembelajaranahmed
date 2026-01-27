@@ -152,7 +152,6 @@ const PublicTasks: React.FC = () => {
         Swal.fire('Error', 'Gagal memproses gambar.', 'error');
       } finally {
         setProcessingImage(false);
-        // Reset input agar bisa memilih file yang sama jika perlu
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     }
@@ -162,12 +161,10 @@ const PublicTasks: React.FC = () => {
     setPhotos(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // Fungsi menggabungkan banyak gambar menjadi satu gambar panjang (stitching)
   const mergePhotos = async (images: string[]): Promise<string> => {
     if (images.length === 0) return '';
     if (images.length === 1) return images[0];
 
-    // Load semua gambar
     const loadedImages = await Promise.all(images.map(src => {
       return new Promise<HTMLImageElement>((resolve, reject) => {
         const img = new Image();
@@ -177,9 +174,7 @@ const PublicTasks: React.FC = () => {
       });
     }));
 
-    // Hitung dimensi canvas
     const width = Math.max(...loadedImages.map(img => img.width));
-    // Tinggi total = jumlah tinggi semua gambar + padding antar gambar
     const totalHeight = loadedImages.reduce((acc, img) => acc + img.height, 0) + (loadedImages.length - 1) * 20;
 
     const canvas = document.createElement('canvas');
@@ -188,17 +183,14 @@ const PublicTasks: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
 
-    // Background Putih
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, totalHeight);
 
     let currentY = 0;
     loadedImages.forEach((img, index) => {
-      // Gambar di tengah horizontal
       const x = (width - img.width) / 2;
       ctx.drawImage(img, x, currentY);
       
-      // Garis pemisah jika bukan gambar terakhir
       if (index < loadedImages.length - 1) {
           ctx.beginPath();
           ctx.moveTo(0, currentY + img.height + 10);
@@ -208,7 +200,7 @@ const PublicTasks: React.FC = () => {
           ctx.stroke();
       }
 
-      currentY += img.height + 20; // Geser ke bawah untuk gambar berikutnya
+      currentY += img.height + 20;
     });
 
     return canvas.toDataURL('image/jpeg', 0.7);
@@ -216,39 +208,13 @@ const PublicTasks: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 1. VALIDASI DATA TERLEBIH DAHULU (TANPA LOADING)
+    // Pastikan semua field terisi sebelum melakukan proses berat atau loading
+    
     if (!isVerified) { 
       Swal.fire('Ops..', 'Masukkan NIS yang benar agar nama muncul otomatis.', 'warning'); 
       return; 
-    }
-    
-    // Validasi konten berdasarkan tipe
-    let finalContent = formData.content;
-
-    if (formData.submission_type === 'photo') {
-        if (photos.length === 0) { 
-            Swal.fire('Ops..', 'Belum ada foto yang diambil!', 'warning'); 
-            return; 
-        }
-        // Jika foto > 1, gabungkan dulu
-        if (photos.length > 1) {
-            setLoading(true); // Tampilkan loading saat merging
-            try {
-                finalContent = await mergePhotos(photos);
-            } catch (err) {
-                console.error(err);
-                Swal.fire('Gagal', 'Gagal menggabungkan foto.', 'error');
-                setLoading(false);
-                return;
-            }
-        } else {
-            finalContent = photos[0];
-        }
-    } else {
-        // Tipe Link
-        if (!formData.content) {
-            Swal.fire('Ops..', 'Link Drive wajib diisi!', 'warning'); 
-            return;
-        }
     }
 
     if (!formData.task_name) { 
@@ -256,20 +222,54 @@ const PublicTasks: React.FC = () => {
       return; 
     }
 
+    if (formData.submission_type === 'photo') {
+        if (photos.length === 0) { 
+            Swal.fire('Ops..', 'Belum ada foto yang diambil!', 'warning'); 
+            return; 
+        }
+    } else {
+        if (!formData.content) {
+            Swal.fire('Ops..', 'Link Drive wajib diisi!', 'warning'); 
+            return;
+        }
+    }
+
+    // 2. KONFIRMASI USER
     const result = await Swal.fire({ 
       title: 'Kirim Tugas?', 
-      text: `Atas nama ${formData.student_name} dari kelas ${formData.kelas}. ${photos.length > 1 ? `(${photos.length} Foto akan digabung)` : ''}`, 
+      text: `Atas nama ${formData.student_name} dari kelas ${formData.kelas}.`, 
       icon: 'question', 
       showCancelButton: true, 
       confirmButtonColor: '#059669' 
     });
+    
     if (!result.isConfirmed) {
-        setLoading(false);
         return;
     }
 
+    // 3. MULAI PROSES (BARU SET LOADING DI SINI)
     setLoading(true);
+    
     try {
+      let finalContent = formData.content;
+
+      // Proses Merge Foto (Hanya jika tipe foto dan lebih dari 1)
+      if (formData.submission_type === 'photo') {
+          if (photos.length > 1) {
+              try {
+                  finalContent = await mergePhotos(photos);
+              } catch (err) {
+                  console.error(err);
+                  Swal.fire('Gagal', 'Gagal menggabungkan foto.', 'error');
+                  setLoading(false);
+                  return;
+              }
+          } else {
+              finalContent = photos[0];
+          }
+      }
+
+      // Kirim ke Database
       await db.addTaskSubmission({
         nisn: formData.nisn,
         student_name: formData.student_name,
@@ -280,20 +280,18 @@ const PublicTasks: React.FC = () => {
       });
 
       const now = new Date();
-      const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
       await Swal.fire({
         icon: 'success',
         title: 'Tugas Terkirim!',
-        text: `Alhamdulillah... ${formData.student_name} dari kelas ${formData.kelas} sudah mengirim tugas ${formData.task_name}.`,
+        text: `Alhamdulillah... ${formData.student_name} dari kelas ${formData.kelas} sudah mengirim tugas ${formData.task_name}. silahkan screenshot ini sebagai bukti`,
         confirmButtonText: 'OK',
         confirmButtonColor: '#059669',
         customClass: { popup: 'rounded-[2rem]' }
       });
 
+      // Reset Form
       setFormData({ nisn: '', student_name: '', jeniskelamin: '', kelas: '', task_name: '', submission_type: 'photo', content: '' });
-      setPhotos([]); // Reset photos
+      setPhotos([]); 
       setIsVerified(false);
     } catch (err) { 
       Swal.fire('Gagal', 'Sistem error.', 'error'); 
@@ -311,7 +309,6 @@ const PublicTasks: React.FC = () => {
 
       <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* NOMOR NIS */}
           <div>
             <label className="block text-[9px] font-black text-black uppercase tracking-normal ml-1 mb-1 flex justify-between">
               NOMOR NIS {fetchingStudent && <span className="text-emerald-600 text-[8px] animate-pulse font-normal">loading data siswa...</span>}
@@ -332,7 +329,6 @@ const PublicTasks: React.FC = () => {
             </div>
           </div>
 
-          {/* NAMA SISWA */}
           <div>
             <label className="block text-[9px] font-black text-black uppercase tracking-normal ml-1 mb-1">Nama Siswa</label>
             <div className="relative">
@@ -348,7 +344,6 @@ const PublicTasks: React.FC = () => {
             </div>
           </div>
 
-          {/* JK & KELAS */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[9px] font-black text-black uppercase tracking-normal ml-1 mb-1">Jenis Kelamin</label>
@@ -374,7 +369,6 @@ const PublicTasks: React.FC = () => {
             </div>
           </div>
 
-          {/* JUDUL TUGAS */}
           <div>
             <label className="block text-[9px] font-black text-black uppercase tracking-normal ml-1 mb-1">Judul Tugas / Materi</label>
             <div className="relative">
@@ -391,16 +385,12 @@ const PublicTasks: React.FC = () => {
             </div>
           </div>
 
-          {/* METODE PENGUMPULAN */}
           <div>
             <label className="block text-[9px] font-black text-black uppercase tracking-normal ml-1 mb-1">Metode Pengumpulan</label>
             <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 mb-2">
               <button 
                 type="button" 
-                onClick={() => {
-                    setFormData(prev => ({ ...prev, submission_type: 'photo' }));
-                    // Jangan reset photos jika user tidak sengaja klik link lalu balik lagi
-                }} 
+                onClick={() => setFormData(prev => ({ ...prev, submission_type: 'photo' }))} 
                 className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${formData.submission_type === 'photo' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400'}`}
               >
                 <Camera size={12} /> Foto Kamera
@@ -438,7 +428,6 @@ const PublicTasks: React.FC = () => {
               </div>
             ) : (
               <div className="animate-fadeIn">
-                {/* Hidden Input */}
                 <input 
                     type="file" 
                     accept="image/*" 
@@ -448,7 +437,6 @@ const PublicTasks: React.FC = () => {
                     onChange={handleFileChange} 
                 />
 
-                {/* Container Preview & Tombol Upload */}
                 {photos.length > 0 ? (
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -468,7 +456,6 @@ const PublicTasks: React.FC = () => {
                                 </div>
                             ))}
                             
-                            {/* Tombol Tambah Foto Kecil di Grid */}
                             <button 
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
@@ -478,12 +465,11 @@ const PublicTasks: React.FC = () => {
                                 <span className="text-[9px] font-bold uppercase">Tambah</span>
                             </button>
                         </div>
-                        <p className="text-[8px] text-center text-slate-400 italic">
-                             *Foto akan otomatis digabungkan saat dikirim.
+                        <p className="text-[10px] text-center text-slate-400 italic">
+                             *Pastikan semua foto yang dikirim sudah benar!
                         </p>
                     </div>
                 ) : (
-                    // Tampilan Awal (Box Besar)
                     <div 
                       onClick={() => !processingImage && fileInputRef.current?.click()} 
                       className={`border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all bg-slate-50 ${processingImage ? 'opacity-50 pointer-events-none' : ''}`}
@@ -496,21 +482,15 @@ const PublicTasks: React.FC = () => {
                       ) : (
                         <div className="space-y-2">
                           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-slate-100">
-                              <ImageIcon size={20} className="text-slate-400" />
+                              <Camera size={20} className="text-slate-400" />
                           </div>
                           <div>
-                             <p className="text-[10px] font-black text-slate-600 tracking-tight uppercase">Ambil Foto Tugas</p>
-                             <p className="text-[8px] font-normal text-slate-400">Fotolah dengan pencahayaan yang jelas & tidak blur</p>
+                             <p className="text-[11px] font-black text-slate-600 tracking-tight uppercase">Ambil Foto Tugas</p>
+                             <p className="text-[10px] font-normal italic text-slate-400">Foto dengan pencahayaan yang jelas & tidak blur</p>
                           </div>
                         </div>
                       )}
                     </div>
-                )}
-
-                {photos.length === 0 && !processingImage && (
-                    <p className="text-[8px] text-center text-slate-400 mt-2 italic">
-                        *Pastikan semua foto yang dikirim sudah benar !.
-                    </p>
                 )}
               </div>
             )}
@@ -524,7 +504,7 @@ const PublicTasks: React.FC = () => {
             {loading || processingImage ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                {processingImage ? 'Proses Gambar...' : (photos.length > 1 ? 'Gabung & Kirim...' : 'Proses Kirim...')}
+                {processingImage ? 'Proses Kirim...' : 'Kirim Tugas'}
               </>
             ) : (
               <>
