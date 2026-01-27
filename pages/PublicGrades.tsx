@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Award, AlertCircle, Calendar } from 'lucide-react';
 import { db } from '../services/supabaseMock';
@@ -124,12 +123,12 @@ const PublicGrades: React.FC = () => {
                 <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest p-3 md:p-4 sticky top-0 z-10">
                   <div className="col-span-3">Tanggal</div>
                   <div className="col-span-3">Penilaian</div>
-                  <div className="col-span-4">Ket</div>
+                  <div className="col-span-4">Keterangan</div>
                   <div className="col-span-2 text-center">Nilai</div>
                 </div>
 
-                {/* Konten Scrollable (Max Height ~10 Baris) */}
-                <div className="max-h-[400px] overflow-y-auto scrollbar-thin">
+                {/* Konten Scrollable (Tinggi dibatasi untuk Mobile agar ideal) */}
+                <div className="max-h-[250px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
                   {filteredGrades.map((g, idx) => (
                     <div 
                       key={g.id} 

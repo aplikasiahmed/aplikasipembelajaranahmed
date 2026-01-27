@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Calendar, UserCheck, Thermometer, FileText, Ban, AlertCircle } from 'lucide-react';
 import { db } from '../services/supabaseMock';
@@ -147,8 +146,8 @@ const PublicAbsensi: React.FC = () => {
                   <div className="text-center">Keterangan</div>
                 </div>
 
-                {/* Scrollable Content (Max Height ~10 Baris) */}
-                <div className="max-h-[400px] overflow-y-auto scrollbar-thin">
+                {/* Scrollable Content (Tinggi dibatasi untuk Mobile agar ideal) */}
+                <div className="max-h-[250px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
                   {filteredAttendance.map((record, idx) => {
                     const statusInfo = getStatusInitial(record.status);
                     return (
