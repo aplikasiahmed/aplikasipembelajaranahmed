@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -16,7 +15,7 @@ import {
   Files,
   Filter
 } from 'lucide-react';
-import { db, supabase } from '../services/supabaseMock';
+import { db } from '../services/supabaseMock';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 
@@ -61,10 +60,11 @@ const TeacherReports: React.FC = () => {
   }, [monthAbsen]);
 
   const fetchAllKelas = async () => {
-    const { data } = await supabase.from('data_siswa').select('kelas');
-    if (data) {
-      const unique = Array.from(new Set(data.map((i: any) => i.kelas as string))).sort();
-      setAvailKelas(unique);
+    try {
+        const unique = await db.getAvailableKelas();
+        setAvailKelas(unique);
+    } catch (e) {
+        console.error("Gagal mengambil data kelas", e);
     }
   };
 
@@ -127,7 +127,6 @@ const TeacherReports: React.FC = () => {
           );
           Swal.close();
         } else {
-          // Pass custom title logic if needed
           generatePDFReport('nilai', data, { 
               kelas: targetKelas, 
               semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)' 
@@ -263,7 +262,6 @@ const TeacherReports: React.FC = () => {
                 // Filter by Range (Client Side)
                 if (monthAbsen) {
                     const startM = parseInt(monthAbsen);
-                    // Jika bulan akhir tidak dipilih, anggap sama dengan bulan awal (single month)
                     const endM = monthAbsenEnd ? parseInt(monthAbsenEnd) : startM;
 
                     attendance = attendance.filter(a => {
@@ -287,7 +285,6 @@ const TeacherReports: React.FC = () => {
                         };
                     });
 
-                    // Label Bulan untuk Header
                     let bulanLabel = formatBulan(monthAbsen);
                     if (monthAbsenEnd && monthAbsen !== monthAbsenEnd) {
                         bulanLabel += ` s/d ${formatBulan(monthAbsenEnd)}`;
