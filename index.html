@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal PAI & Budi Pekerti</title>
+    <!-- MENGEMBALIKAN TAILWIND CDN AGAR TAMPILAN BAGUS KEMBALI -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
@@ -47,38 +49,20 @@
             padding: 0.6rem 1.5rem !important;
         }
 
-        /* PRINT STYLING (Hanya untuk backup jika dibutuhkan) */
+        /* PRINT STYLING */
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
         }
         
-        /* Elemen rahasia untuk menangkap gambar PDF agar tidak mengganggu UI utama */
         #pdf-capture-area {
             position: absolute;
             left: -9999px;
             top: -9999px;
-            width: 800px; /* Ukuran standar kertas */
+            width: 800px;
             background: white;
             color: black;
             padding: 40px;
-        }
-        
-        .pdf-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 2px solid black;
-        }
-        .pdf-table th, .pdf-table td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: center;
-            font-size: 12px;
-        }
-        .pdf-header {
-            border-bottom: 2px solid black;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
         }
     </style>
 <script type="importmap">
@@ -87,26 +71,23 @@
     "react": "https://esm.sh/react@^19.2.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.93.1",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "sweetalert2": "https://esm.sh/sweetalert2@^11.26.17",
-    "xlsx": "https://esm.sh/xlsx@^0.18.5",
-    "jspdf": "https://esm.sh/jspdf@^4.0.0",
-    "jspdf-autotable": "https://esm.sh/jspdf-autotable@^5.0.7",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@^5.0.7",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "jspdf": "https://esm.sh/jspdf@^4.0.0",
+    "xlsx": "https://esm.sh/xlsx@^0.18.5",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.93.1",
+    "sweetalert2": "https://esm.sh/sweetalert2@^11.26.17",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0"
   }
 }
 </script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
-    <!-- Area tersembunyi untuk proses generate PDF -->
     <div id="pdf-capture-area"></div>
-    
-    <!-- Entry Point untuk Vite -->
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>
