@@ -13,7 +13,8 @@ import {
   Info,
   FileUp,
   AlertTriangle,
-  Files
+  Files,
+  Filter
 } from 'lucide-react';
 import { db, supabase } from '../services/supabaseMock';
 import Swal from 'sweetalert2';
@@ -430,132 +431,174 @@ const TeacherReports: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-        {/* LAPORAN NILAI */}
-        <div className="bg-white p-4 md:p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-3 md:space-y-4">
-          <div className="flex items-center gap-3">
+        
+        {/* =======================
+            KARTU 1: LAPORAN NILAI
+           ======================= */}
+        <div className="bg-white p-4 md:p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+          <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><FileText size={18}/></div>
-            <h2 className="text-[11px] md:text-sm font-black uppercase tracking-widest text-slate-800">Laporan Nilai</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-0.5">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Kelas</label>
-              <select 
-                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                value={kelasNilai} 
-                onChange={(e) => setKelasNilai(e.target.value)}
-              >
-                <option value="">-- Pilih Kelas --</option>
-                {availKelas.map(k => <option key={k} value={k}>{k}</option>)}
-              </select>
-            </div>
-            <div className="space-y-0.5">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <select 
-                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                value={semNilai} 
-                onChange={(e) => setSemNilai(e.target.value)}
-              >
-                <option value="">-- Pilih Semester --</option>
-                <option value="1">1 (Ganjil)</option>
-                <option value="2">2 (Genap)</option>
-              </select>
-            </div>
-            <div className="space-y-0.5 col-span-2">
-               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Jenis Tugas (Opsional)</label>
-               <select 
-                 className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                 value={tipeNilai} 
-                 onChange={(e) => setTipeNilai(e.target.value)}
-               >
-                 <option value="">-- Semua Jenis Tugas --</option>
-                 <option value="harian">Harian</option>
-                 <option value="uts">UTS</option>
-                 <option value="uas">UAS</option>
-                 <option value="praktik">Praktik</option>
-               </select>
+            <div>
+              <h2 className="text-[11px] md:text-sm font-black uppercase tracking-widest text-slate-800">Laporan Nilai</h2>
+              <p className="text-[9px] text-slate-400 font-medium">Download rekap nilai siswa.</p>
             </div>
           </div>
-          {/* Tombol Single Download */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button onClick={() => handleExport('excel', 'nilai')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileDown size={14}/> Excel Kelas</button>
-            <button onClick={() => handleExport('pdf', 'nilai')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileText size={14}/> PDF Kelas</button>
-          </div>
-          {/* Tombol Batch Download */}
-          <div className="pt-2 border-t border-slate-100 mt-2">
-             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Download Semua Kelas</label>
-             <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => handleExportAll('excel', 'nilai')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> Excel Semua</button>
-                <button onClick={() => handleExportAll('pdf', 'nilai')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> PDF Semua</button>
+
+          {/* FILTER UTAMA (Global untuk Nilai) */}
+          <div className="grid grid-cols-2 gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100">
+             <div className="space-y-0.5">
+                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
+                <select 
+                  className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                  value={semNilai} 
+                  onChange={(e) => setSemNilai(e.target.value)}
+                >
+                  <option value="">-- Pilih --</option>
+                  <option value="1">1 (Ganjil)</option>
+                  <option value="2">2 (Genap)</option>
+                </select>
              </div>
+             <div className="space-y-0.5">
+                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Jenis Tugas</label>
+                <select 
+                  className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                  value={tipeNilai} 
+                  onChange={(e) => setTipeNilai(e.target.value)}
+                >
+                  <option value="">-- Semua --</option>
+                  <option value="harian">Harian</option>
+                  <option value="uts">UTS</option>
+                  <option value="uas">UAS</option>
+                  <option value="praktik">Praktik</option>
+                </select>
+             </div>
+          </div>
+
+          {/* SUB-KARTU 1: DOWNLOAD PER KELAS */}
+          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+            <div className="flex items-center gap-2 mb-2">
+                <Filter size={12} className="text-emerald-600" />
+                <h3 className="text-[9px] font-black uppercase text-slate-600">Download Per Kelas</h3>
+            </div>
+            <div className="space-y-2">
+                <select 
+                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                    value={kelasNilai} 
+                    onChange={(e) => setKelasNilai(e.target.value)}
+                >
+                    <option value="">-- Pilih Kelas --</option>
+                    {availKelas.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+                <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => handleExport('excel', 'nilai')} className="p-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileDown size={14}/> Excel</button>
+                    <button onClick={() => handleExport('pdf', 'nilai')} className="p-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileText size={14}/> PDF</button>
+                </div>
+            </div>
+          </div>
+
+          {/* SUB-KARTU 2: DOWNLOAD SEMUA KELAS */}
+          <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100">
+            <div className="flex items-center gap-2 mb-2">
+                <Files size={12} className="text-emerald-700" />
+                <h3 className="text-[9px] font-black uppercase text-emerald-800">Download Semua Kelas</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => handleExportAll('excel', 'nilai')} className="p-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileDown size={14}/> Excel All</button>
+                <button onClick={() => handleExportAll('pdf', 'nilai')} className="p-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileText size={14}/> PDF All</button>
+            </div>
+            <p className="text-[8px] text-emerald-600 mt-2 italic leading-tight">
+                *Menggabungkan data seluruh kelas dalam satu file (Batch).
+            </p>
           </div>
         </div>
 
-        {/* REKAP ABSENSI */}
-        <div className="bg-white p-4 md:p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-3 md:space-y-4">
-          <div className="flex items-center gap-3">
+        {/* =======================
+            KARTU 2: REKAP ABSENSI
+           ======================= */}
+        <div className="bg-white p-4 md:p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+          <div className="flex items-center gap-3 border-b border-slate-50 pb-3">
             <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Download size={18}/></div>
-            <h2 className="text-[11px] md:text-sm font-black uppercase tracking-widest text-slate-800">Rekap Absensi</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-0.5">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Kelas</label>
-              <select 
-                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                value={kelasAbsen} 
-                onChange={(e) => setKelasAbsen(e.target.value)}
-              >
-                <option value="">-- Pilih Kelas --</option>
-                {availKelas.map(k => <option key={k} value={k}>{k}</option>)}
-              </select>
-            </div>
-            <div className="space-y-0.5">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <select 
-                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                value={semAbsen} 
-                onChange={(e) => setSemAbsen(e.target.value)}
-              >
-                <option value="">-- Pilih Semester --</option>
-                <option value="1">1 (Ganjil)</option>
-                <option value="2">2 (Genap)</option>
-              </select>
-            </div>
-            {/* Range Bulan */}
-            <div className="space-y-0.5">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Dari Bulan</label>
-              <select 
-                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                value={monthAbsen} 
-                onChange={(e) => setMonthAbsen(e.target.value)}
-              >
-                <option value="">-- Awal --</option>
-                {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{formatBulan(m)}</option>)}
-              </select>
-            </div>
-            <div className="space-y-0.5">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Sampai Bulan</label>
-              <select 
-                className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                value={monthAbsenEnd} 
-                onChange={(e) => setMonthAbsenEnd(e.target.value)}
-              >
-                <option value="">-- Akhir (Opsional) --</option>
-                {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{formatBulan(m)}</option>)}
-              </select>
+            <div>
+               <h2 className="text-[11px] md:text-sm font-black uppercase tracking-widest text-slate-800">Rekap Absensi</h2>
+               <p className="text-[9px] text-slate-400 font-medium">Download data kehadiran siswa.</p>
             </div>
           </div>
-          {/* Tombol Single Download */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button onClick={() => handleExport('excel', 'absensi')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileDown size={14}/> Excel Kelas</button>
-            <button onClick={() => handleExport('pdf', 'absensi')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><FileText size={14}/> PDF Kelas</button>
-          </div>
-          {/* Tombol Batch Download */}
-          <div className="pt-2 border-t border-slate-100 mt-2">
-             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Download Semua Kelas</label>
+          
+          {/* FILTER UTAMA (Global untuk Absensi) */}
+          <div className="bg-slate-50/50 p-2 rounded-xl border border-slate-100 space-y-2">
              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => handleExportAll('excel', 'absensi')} className="p-2.5 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> Excel Semua</button>
-                <button onClick={() => handleExportAll('pdf', 'absensi')} className="p-2.5 bg-red-600 text-white rounded-2xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"><Files size={14}/> PDF Semua</button>
+                <div className="space-y-0.5">
+                   <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
+                   <select 
+                     className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                     value={semAbsen} 
+                     onChange={(e) => setSemAbsen(e.target.value)}
+                   >
+                     <option value="">-- Pilih --</option>
+                     <option value="1">1 (Ganjil)</option>
+                     <option value="2">2 (Genap)</option>
+                   </select>
+                </div>
+                <div className="space-y-0.5">
+                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Dari Bulan</label>
+                    <select 
+                        className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                        value={monthAbsen} 
+                        onChange={(e) => setMonthAbsen(e.target.value)}
+                    >
+                        <option value="">-- Awal --</option>
+                        {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{formatBulan(m)}</option>)}
+                    </select>
+                </div>
              </div>
+             <div className="space-y-0.5">
+                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Sampai Bulan (Opsional)</label>
+                <select 
+                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                    value={monthAbsenEnd} 
+                    onChange={(e) => setMonthAbsenEnd(e.target.value)}
+                >
+                    <option value="">-- Sama dengan Awal --</option>
+                    {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => <option key={m} value={m}>{formatBulan(m)}</option>)}
+                </select>
+             </div>
+          </div>
+
+          {/* SUB-KARTU 1: DOWNLOAD PER KELAS */}
+          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+             <div className="flex items-center gap-2 mb-2">
+                <Filter size={12} className="text-amber-600" />
+                <h3 className="text-[9px] font-black uppercase text-slate-600">Download Per Kelas</h3>
+             </div>
+             <div className="space-y-2">
+                <select 
+                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                    value={kelasAbsen} 
+                    onChange={(e) => setKelasAbsen(e.target.value)}
+                >
+                    <option value="">-- Pilih Kelas --</option>
+                    {availKelas.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+                <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => handleExport('excel', 'absensi')} className="p-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileDown size={14}/> Excel</button>
+                    <button onClick={() => handleExport('pdf', 'absensi')} className="p-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileText size={14}/> PDF</button>
+                </div>
+             </div>
+          </div>
+
+          {/* SUB-KARTU 2: DOWNLOAD SEMUA KELAS */}
+          <div className="bg-amber-50 p-3 rounded-2xl border border-amber-100">
+             <div className="flex items-center gap-2 mb-2">
+                <Files size={12} className="text-amber-700" />
+                <h3 className="text-[9px] font-black uppercase text-amber-800">Download Semua Kelas</h3>
+             </div>
+             <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => handleExportAll('excel', 'absensi')} className="p-2.5 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileDown size={14}/> Excel All</button>
+                <button onClick={() => handleExportAll('pdf', 'absensi')} className="p-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"><FileText size={14}/> PDF All</button>
+             </div>
+             <p className="text-[8px] text-amber-700 mt-2 italic leading-tight">
+                *Rekap kehadiran seluruh kelas sesuai rentang bulan.
+             </p>
           </div>
         </div>
 
