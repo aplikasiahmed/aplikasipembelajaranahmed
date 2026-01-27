@@ -66,6 +66,7 @@ const PublicGrades: React.FC = () => {
               value={semester}
               onChange={(e) => setSemester(e.target.value)}
             >
+              <option value="0">Pilih Semester</option>
               <option value="1">Semester 1 (Ganjil)</option>
               <option value="2">Semester 2 (Genap)</option>
             </select>
@@ -77,7 +78,7 @@ const PublicGrades: React.FC = () => {
                 inputMode="numeric"
                 pattern="[0-9]*"
                 placeholder="Masukkan nomor NIS siswa" 
-                className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all shadow-sm"
                 value={nis}
                 onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
               />
@@ -97,7 +98,7 @@ const PublicGrades: React.FC = () => {
             </div>
             <div className="space-y-1 relative z-10">
               <p className="text-emerald-200 text-[8px] font-bold uppercase tracking-widest">HASIL PENCARIAN • SEMESTER {semester}</p>
-              <h2 className="text-sm md:text-xl font-black leading-tight uppercase tracking-tight">{student.namalengkap}</h2>
+              <h2 className="text-sm md:text-xl font-bold leading-tight uppercase tracking-tight">{student.namalengkap}</h2>
               {/* Added Gender Next to NIS */}
               <p className="text-emerald-100 text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis} • {student.jeniskelamin}</p>
             </div>

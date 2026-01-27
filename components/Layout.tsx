@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import BottomNav from './BottomNav';
 import TeacherLogin from '../pages/TeacherLogin';
+import Swal from 'sweetalert2';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,8 +30,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isTeacherPage = location.pathname.startsWith('/guru');
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    navigate('/');
+    Swal.fire({
+      title: 'Yakin Ingin Keluar?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#059669',
+      confirmButtonText: 'Yakin',
+      cancelButtonText: 'Tidak',
+      heightAuto: false,
+      customClass: {
+        popup: 'rounded-[2rem]'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem('isLoggedIn');
+        navigate('/');
+      }
+    });
   };
 
   const navLinks = [
