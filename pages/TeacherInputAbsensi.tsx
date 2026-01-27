@@ -149,11 +149,9 @@ const TeacherInputAbsensi: React.FC = () => {
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
             <div className="relative">
-              {/* IKON TANGGAL DIPINDAH KE KIRI */}
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
               <input 
                 type="date" 
-                className="w-full p-1.5 md:p-2 pl-10 pr-3 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none cursor-pointer focus:border-amber-500 text-slate-600 placeholder:text-slate-300" 
+                className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none cursor-pointer focus:border-amber-500 text-slate-600 placeholder:text-slate-300" 
                 value={date} 
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="pilih tanggal"
