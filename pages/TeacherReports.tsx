@@ -101,7 +101,7 @@ const TeacherReports: React.FC = () => {
       });
 
       // 2. Build Final Array
-      return Array.from(studentsMap.values()).map((s, idx) => {
+      const result = Array.from(studentsMap.values()).map((s, idx) => {
           // Hitung Rata-rata
           let totalScore = 0;
           let count = 0;
@@ -133,6 +133,10 @@ const TeacherReports: React.FC = () => {
 
           return row;
       });
+
+      // 3. SORTING ABJAD (A-Z)
+      // Mengurutkan berdasarkan 'NAMA SISWA' agar Excel & PDF rapi
+      return result.sort((a: any, b: any) => a['NAMA SISWA'].localeCompare(b['NAMA SISWA']));
   };
 
   // --- SINGLE EXPORT (PER KELAS) ---
@@ -171,6 +175,8 @@ const TeacherReports: React.FC = () => {
 
         // TRANSFORM DATA MENJADI PIVOT (KOLOM DINAMIS)
         const pivotedData = transformGradesToPivot(rawData);
+        // RE-NUMBERING 'NO' AFTER SORTING
+        pivotedData.forEach((row: any, index: number) => { row['NO'] = index + 1; });
 
         const titleLabel = 'LAPORAN NILAI SISWA';
 
@@ -201,6 +207,9 @@ const TeacherReports: React.FC = () => {
           Swal.fire('Kosong', 'Data absensi bulan ini belum tersedia.', 'info');
           return;
         }
+
+        // Sorting Siswa A-Z untuk Absensi
+        students.sort((a, b) => a.namalengkap.localeCompare(b.namalengkap));
 
         const aggregated = students.map((s, idx) => {
           const sRecs = attendance.filter(a => a.student_id === s.id);
@@ -286,8 +295,10 @@ const TeacherReports: React.FC = () => {
                 }
 
                 if (rawData && rawData.length > 0) {
-                    // TRANSFORM PIVOT UNTUK BATCH JUGA
+                    // TRANSFORM PIVOT UNTUK BATCH JUGA (Sorting sudah include)
                     const pivotedData = transformGradesToPivot(rawData);
+                    // Re-numbering
+                    pivotedData.forEach((row: any, index: number) => { row['NO'] = index + 1; });
                     
                     batchData.push({
                         data: pivotedData,
@@ -302,6 +313,8 @@ const TeacherReports: React.FC = () => {
             } else {
                 // Absensi Batch
                 const students = await db.getStudentsByKelas(kelas);
+                students.sort((a, b) => a.namalengkap.localeCompare(b.namalengkap)); // Sort Siswa Batch
+
                 let attendance = await db.getAttendanceByKelas(kelas, targetSem, undefined, yearAbsen);
                 
                 if (monthAbsen) {

@@ -5,8 +5,6 @@ import Swal from 'sweetalert2';
 // Helper internal untuk menggambar konten halaman
 const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], meta: any) => {
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-
     // Header (Sama seperti sebelumnya)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
@@ -58,33 +56,39 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
             halign: 'center'
         },
         bodyStyles: { fontSize: 8, textColor: 50 },
-        // Kolom Styles: Kita buat semi-dinamis. Kolom 0 (NO), 1 (NIS) fix. Sisanya auto.
+        // Kolom Styles: Kita buat semi-dinamis.
+        // Kolom 0 (NO) -> Center
+        // Kolom 1 (NIS) -> Center
+        // Kolom 2 (NAMA SISWA) -> LEFT (Sesuai Permintaan)
         columnStyles: {
             0: { halign: 'center', cellWidth: 10 },
             1: { halign: 'center', cellWidth: 25 },
-            // Sisanya biar autoTable yang atur
+            2: { halign: 'left' }, // NAMA SISWA RATA KIRI
+            // Sisanya biar autoTable yang atur (default center dari styles)
         },
         styles: { cellPadding: 1, valign: 'middle', halign: 'center' }
     });
 
     // Tanda Tangan (DIPERTAHANKAN PERSIS)
     let finalY = (doc as any).lastAutoTable.finalY + 10;
-    if (finalY > 250) {
-        // Jika mepet bawah, handling sederhana
-    }
+    
+    // Cek jika TTD terpotong halaman, tambahkan halaman baru
+    // Namun untuk sekarang kita biarkan logic sederhana
     
     const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-    const signX = 140;
+    
+    // TTD Posisi dinamis (agak ke kanan)
+    const signX = pageWidth - 60; 
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(0);
     
-    doc.text(`Tangerang, ${currentDate}`, signX, finalY);
-    doc.text('Guru Mata Pelajaran', signX, finalY + 5);
+    doc.text(`Tangerang, ${currentDate}`, signX, finalY, { align: 'center' });
+    doc.text('Guru Mata Pelajaran', signX, finalY + 5, { align: 'center' });
     
     doc.setFont('helvetica', 'bold');
-    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 25);
+    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 25, { align: 'center' });
 };
 
 export const generatePDFReport = (
@@ -93,7 +97,13 @@ export const generatePDFReport = (
   meta: { kelas: string; semester: string; bulan?: string; tahun?: string }
 ) => {
   try {
-    const doc = new jsPDF();
+    // 1. LOGIKA ORIENTASI KERTAS (Sesuai Permintaan 3)
+    // Jika kolom data lebih dari 10 (Indikasi banyak nilai Harian), gunakan LANDSCAPE
+    const keys = data.length > 0 ? Object.keys(data[0]) : [];
+    const orientation = keys.length > 10 ? 'landscape' : 'portrait';
+
+    const doc = new jsPDF({ orientation: orientation });
+    
     drawPageContent(doc, type, data, meta);
     
     // Footer Halaman
@@ -133,7 +143,18 @@ export const generateBatchPDFReport = (
     datasets: { data: any[], meta: any }[]
 ) => {
     try {
-        const doc = new jsPDF();
+        // 1. LOGIKA ORIENTASI KERTAS UNTUK BATCH
+        // Cek apakah ada satupun dataset yang kolomnya > 10. Jika ya, seluruh dokumen jadi Landscape agar aman.
+        let maxCols = 0;
+        datasets.forEach(ds => {
+            if (ds.data.length > 0) {
+                const cols = Object.keys(ds.data[0]).length;
+                if (cols > maxCols) maxCols = cols;
+            }
+        });
+        const orientation = maxCols > 10 ? 'landscape' : 'portrait';
+
+        const doc = new jsPDF({ orientation: orientation });
         
         datasets.forEach((ds, index) => {
             if (index > 0) doc.addPage();
