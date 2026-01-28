@@ -86,29 +86,35 @@ const PublicTasks: React.FC = () => {
     const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Video%20Tutorial%20Upload%20file%20ke%20Link%20Google%20Drive.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9WaWRlbyBUdXRvcmlhbCBVcGxvYWQgZmlsZSBrZSBMaW5rIEdvb2dsZSBEcml2ZS5tcDQiLCJpYXQiOjE3Njk0MTEyODUsImV4cCI6MTgwMDk0NzI4NX0.2w9Ab3WVm34ItTWstBLHPJHsX51D-lBrL0WWqOjOmQI";
     
     Swal.fire({
-      // PERTAHANKAN: Desain Tombol X Merah di Pojok Kanan Atas (Absolute)
+      // REVISI LAYOUT: Tombol X di baris sendiri paling atas, Popup dilebarkan
       html: `
-        <div class="relative">
-          <button 
-            id="close-tutorial-btn"
-            class="absolute right-0 top-0 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md hover:bg-red-600 transition-all active:scale-90 border-2 border-white z-10"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-            </svg>
-          </button>
-
-          <div class="text-center px-8 mb-4 mt-1">
-             <h3 class="text-lg font-bold text-slate-800 leading-tight">Tutorial Upload Drive</h3>
-             <p class="text-gray-400 text-[10px] font-normal mt-0.5">(sinyal harus kuat untuk memutar video)</p>
+        <div class="flex flex-col w-full">
+          <div class="flex justify-end -mt-4 -mr-4 mb-2">
+            <button 
+              id="close-tutorial-btn"
+              class="bg-red-500 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg hover:bg-red-600 transition-all active:scale-90 border-2 border-white z-50"
+              style="outline: none;"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+              </svg>
+            </button>
           </div>
 
-          <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-200">
+          <div class="text-center px-1 mb-4">
+             <h3 class="text-lg md:text-xl font-bold text-slate-800 leading-tight">Tutorial Upload Drive</h3>
+             <p class="text-slate-400 text-[11px] md:text-xs font-normal mt-1 leading-relaxed">
+               (pastikan sinyal internet kuat untuk memutar video)
+             </p>
+          </div>
+
+          <div class="w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
             <video 
               src="${videoUrl}" 
               controls 
               autoplay
-              class="w-full h-auto"
+              class="w-full h-auto aspect-video"
+              style="display: block;"
             >
               Browser Anda tidak mendukung pemutaran video.
             </video>
@@ -116,7 +122,8 @@ const PublicTasks: React.FC = () => {
         </div>
       `,
       showConfirmButton: false, 
-      width: '90%',
+      width: '95%', // Ukuran dilebarkan
+      padding: '1.5rem',
       didOpen: () => {
         const btn = document.getElementById('close-tutorial-btn');
         if (btn) {
@@ -124,7 +131,7 @@ const PublicTasks: React.FC = () => {
         }
       },
       customClass: {
-        popup: 'rounded-[2rem] p-5' 
+        popup: 'rounded-[2rem]' 
       }
     });
   };
@@ -412,7 +419,7 @@ const PublicTasks: React.FC = () => {
               <input 
                 type="text" 
                 name="task_name" 
-                placeholder="Contoh: Bab 2 hal. 20" 
+                placeholder="tulis judul tugas & halamannya" 
                 style={{ colorScheme: 'light' }}
                 className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 !bg-white !text-black outline-none focus:border-emerald-500 font-normal placeholder:font-normal" 
                 value={formData.task_name} 
