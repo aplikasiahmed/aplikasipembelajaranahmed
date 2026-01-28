@@ -133,44 +133,48 @@ const PublicGrades: React.FC = () => {
           <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
             {filteredGrades.length > 0 ? (
               <div className="w-full">
-                {/* Header Tabel Sticky */}
-                <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest p-3 md:p-4 sticky top-0 z-10">
-                  <div className="col-span-3">Tanggal</div>
-                  <div className="col-span-3">Penilaian</div>
-                  <div className="col-span-4">Keterangan</div>
-                  <div className="col-span-2 text-center">Nilai</div>
-                </div>
-
-                {/* Konten Scrollable (REVISI: max-h-[225px] agar tidak makan tempat) */}
+                {/* REVISI: Menggunakan Table untuk Layout Lebih Rapi */}
                 <div className="max-h-[218px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
-                  {filteredGrades.map((g, idx) => (
-                    <div 
-                      key={g.id} 
-                      className={`grid grid-cols-12 items-center p-3 md:p-4 text-[10px] md:text-xs border-b border-slate-50 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
-                    >
-                      {/* Tanggal (Format Normal) */}
-                      <div className="col-span-3 text-slate-500 font-normal">
-                        {formatDate(g.created_at)}
-                      </div>
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 sticky top-0 z-10">
+                      <tr>
+                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pl-4 w-1/5">Tanggal</th>
+                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 w-1/5">Penilaian</th>
+                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 w-2/5">Keterangan</th>
+                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center w-1/5">Nilai</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-[10px] md:text-xs">
+                      {filteredGrades.map((g, idx) => (
+                        <tr 
+                          key={g.id} 
+                          className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                        >
+                          {/* Tanggal (Format Normal) */}
+                          <td className="p-2 md:p-3 text-slate-500 font-normal pl-4">
+                            {formatDate(g.created_at)}
+                          </td>
 
-                      {/* Tipe Penilaian */}
-                      <div className="col-span-3 font-normal text-slate-700 uppercase tracking-tight truncate pr-1">
-                        {g.subject_type}
-                      </div>
+                          {/* Tipe Penilaian */}
+                          <td className="p-2 md:p-3 font-normal text-slate-700 uppercase tracking-tight truncate">
+                            {g.subject_type}
+                          </td>
 
-                      {/* Keterangan (Wrap text agar tidak terpotong) */}
-                      <div className="col-span-4 text-slate-500 font-normal italic break-words pr-1 leading-tight">
-                        {g.description || '-'}
-                      </div>
+                          {/* Keterangan (Wrap text agar tidak terpotong) */}
+                          <td className="p-2 md:p-3 text-slate-500 font-normal italic break-words leading-tight">
+                            {g.description || '-'}
+                          </td>
 
-                      {/* Nilai */}
-                      <div className="col-span-2 text-center">
-                        <span className={`inline-block w-8 py-1 rounded-lg font-black text-[10px] md:text-xs ${g.score >= 75 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                          {g.score}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                          {/* Nilai */}
+                          <td className="p-2 md:p-3 text-center">
+                            <span className={`inline-block w-8 py-1 rounded-lg font-black text-[10px] md:text-xs ${g.score >= 75 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                              {g.score}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             ) : (

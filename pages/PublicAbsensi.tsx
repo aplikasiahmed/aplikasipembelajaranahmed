@@ -153,39 +153,45 @@ const PublicAbsensi: React.FC = () => {
           <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
             {filteredAttendance.length > 0 ? (
               <div className="w-full">
-                {/* Sticky Header */}
-                <div className="grid grid-cols-3 bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest p-3 md:p-4 sticky top-0 z-10">
-                  <div className="text-left">No.</div>
-                  <div className="text-center">Tanggal</div>
-                  <div className="text-center">Keterangan</div>
-                </div>
-
-                {/* Konten Scrollable (REVISI: max-h-[215px] agar tidak makan tempat) */}
+                {/* REVISI: Menggunakan Table untuk Layout Lebih Rapi */}
                 <div className="max-h-[218px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
-                  {filteredAttendance.map((record, idx) => {
-                    const statusInfo = getStatusInitial(record.status);
-                    return (
-                      <div 
-                        key={record.id} 
-                        className={`grid grid-cols-3 items-center p-3 md:p-4 text-[10px] md:text-xs border-b border-slate-50 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
-                      >
-                        <div className="text-slate-400 font-medium pl-2">
-                          {idx + 1}
-                        </div>
-                        <div className="text-center text-slate-600 font-normal">
-                          {new Date(record.date).toLocaleDateString('en-GB')}
-                        </div>
-                        <div className="text-center flex justify-center items-center gap-2">
-                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg text-[9px] font-black border ${statusInfo.color}`}>
-                            {statusInfo.char}
-                          </span>
-                          <span className="hidden md:inline font-bold text-slate-600 text-[10px] uppercase">
-                            {statusInfo.label}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 sticky top-0 z-10">
+                      <tr>
+                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pl-4 w-12">No.</th>
+                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Tanggal</th>
+                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Keterangan</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-[10px] md:text-xs">
+                      {filteredAttendance.map((record, idx) => {
+                        const statusInfo = getStatusInitial(record.status);
+                        return (
+                          <tr 
+                            key={record.id} 
+                            className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}`}
+                          >
+                            <td className="p-2 md:p-3 text-slate-400 font-medium pl-4">
+                              {idx + 1}
+                            </td>
+                            <td className="p-2 md:p-3 text-center text-slate-600 font-normal">
+                              {new Date(record.date).toLocaleDateString('en-GB')}
+                            </td>
+                            <td className="p-2 md:p-3 text-center">
+                              <div className="flex justify-center items-center gap-2">
+                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg text-[9px] font-black border ${statusInfo.color}`}>
+                                  {statusInfo.char}
+                                </span>
+                                <span className="hidden md:inline font-bold text-slate-600 text-[10px] uppercase">
+                                  {statusInfo.label}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             ) : (
