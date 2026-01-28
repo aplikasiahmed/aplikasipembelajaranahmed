@@ -22,7 +22,7 @@ const BottomNav: React.FC = () => {
     { name: 'Beranda', path: '/', icon: Home },
     { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
     { name: 'Materi', path: '/materi', icon: BookOpen },
-    { name: 'Profil Guru', path: '/profil', icon: User },
+    { name: 'Profil', path: '/profil', icon: User },
   ];
 
   return (
