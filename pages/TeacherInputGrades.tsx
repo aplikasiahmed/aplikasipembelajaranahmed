@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, User, Award, CheckCircle2, ArrowLeft, Users, Search, Calendar } from 'lucide-react';
+import { Save, User, Award, CheckCircle2, ArrowLeft, Users, Search, Calendar, FileUp, Download, Upload, Info } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, GradeLevel } from '../types';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
+import { generateExcel } from '../utils/excelGenerator';
 
 const TeacherInputGrades: React.FC = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [grade, setGrade] = useState<GradeLevel>('7');
   const [semester, setSemester] = useState(''); // Default kosong untuk "Pilih Semester"
   const [selectedKelas, setSelectedKelas] = useState('');
@@ -16,13 +20,18 @@ const TeacherInputGrades: React.FC = () => {
   
   // State untuk Data Nilai (Tanggal Manual)
   const [date, setDate] = useState(''); 
-  const [score, setScore] = useState<string>(''); // REVISI: Default string kosong agar tidak ada angka 0
+  const [score, setScore] = useState<string>(''); // Default string kosong agar tidak ada angka 0
   const [type, setType] = useState(''); // Default kosong untuk "Pilih Tugas"
   const [desc, setDesc] = useState('');
   
+  // State Khusus untuk Kartu Import Excel
+  const [importKelas, setImportKelas] = useState('');
+  const [importSemester, setImportSemester] = useState(''); // Tambahan State Semester Import
+  const [allClassesList, setAllClassesList] = useState<string[]>([]); // Semua kelas (7A-9I)
+
   const [status, setStatus] = useState<'idle' | 'saving' | 'success'>('idle');
 
-  // Load Kelas berdasarkan Jenjang
+  // Load Kelas berdasarkan Jenjang (Untuk Form Manual)
   useEffect(() => {
     db.getAvailableKelas(grade).then((data: string[]) => {
       setAvailableKelas(data);
@@ -30,7 +39,15 @@ const TeacherInputGrades: React.FC = () => {
     });
   }, [grade]);
 
-  // Load Siswa berdasarkan Kelas
+  // Load SEMUA Kelas (Untuk Dropdown Import Excel) - Langsung Semua Jenjang
+  useEffect(() => {
+    db.getAvailableKelas().then((data: string[]) => {
+      setAllClassesList(data);
+      if (data.length > 0) setImportKelas(data[0]);
+    });
+  }, []);
+
+  // Load Siswa berdasarkan Kelas (Untuk Form Manual)
   useEffect(() => {
     if (selectedKelas) {
       db.getStudentsByKelas(selectedKelas).then(setStudents);
@@ -43,8 +60,7 @@ const TeacherInputGrades: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 1. Validasi Kolom Kosong menggunakan SweetAlert2
-    // REVISI: Cek score === ''
+    // 1. Validasi Kolom Kosong
     if (!selectedStudentId || !date || !semester || !type || !selectedKelas || score === '' || !desc.trim()) {
       Swal.fire({ 
         icon: 'warning', 
@@ -55,10 +71,9 @@ const TeacherInputGrades: React.FC = () => {
       return;
     }
 
-    // Ambil nama siswa untuk konfirmasi
     const selectedStudentName = students.find(s => s.id === selectedStudentId)?.namalengkap || '-';
 
-    // 2 & 3. Konfirmasi Sebelum Kirim (Detail & Responsif)
+    // 2. Konfirmasi Sebelum Kirim
     const result = await Swal.fire({
       title: 'Konfirmasi Kirim Nilai',
       html: `
@@ -92,7 +107,7 @@ const TeacherInputGrades: React.FC = () => {
       await db.addGrade({ 
         student_id: selectedStudentId, 
         subject_type: type as 'harian' | 'uts' | 'uas' | 'praktik', 
-        score: parseInt(score), // REVISI: Convert string to number saat kirim ke DB
+        score: parseInt(score), 
         description: desc, 
         kelas: selectedKelas, 
         semester,
@@ -103,12 +118,10 @@ const TeacherInputGrades: React.FC = () => {
       
       setTimeout(() => { 
         setStatus('idle'); 
-        setScore(''); // REVISI: Reset ke string kosong
+        setScore(''); 
         setDesc(''); 
-        setType(''); 
-        setSemester(''); 
         setSelectedStudentId('');
-      }, 2000);
+      }, 1500);
 
       Swal.fire({ icon: 'success', title: 'Nilai Berhasil Disimpan', timer: 1500, showConfirmButton: false, heightAuto: false });
     } catch (err: any) {
@@ -117,12 +130,144 @@ const TeacherInputGrades: React.FC = () => {
     }
   };
 
+  // --- FITUR DOWNLOAD & UPLOAD EXCEL ---
+
+  const handleDownloadTemplate = async () => {
+    if (!importKelas) {
+      Swal.fire({ icon: 'warning', title: 'Pilih Kelas', text: 'Pilih kelas di kartu import terlebih dahulu.', heightAuto: false });
+      return;
+    }
+
+    if (!importSemester) {
+      Swal.fire({ icon: 'warning', title: 'Pilih Semester', text: 'Pilih semester di kartu import terlebih dahulu.', heightAuto: false });
+      return;
+    }
+
+    Swal.fire({ title: 'Menyiapkan Template...', didOpen: () => Swal.showLoading(), heightAuto: false });
+
+    // Fetch siswa khusus untuk kelas import
+    const studentsForTemplate = await db.getStudentsByKelas(importKelas);
+
+    if (studentsForTemplate.length === 0) {
+        Swal.fire({ icon: 'error', title: 'Kelas Kosong', text: 'Tidak ada data siswa di kelas ini.', heightAuto: false });
+        return;
+    }
+
+    // Template Data Sesuai Screenshot: NO, NIS, NAMA SISWA, KELAS, SEMESTER, JENIS TUGAS, KET/MATERI, NILAI
+    const templateData = studentsForTemplate.map((s, index) => ({
+      'NO': index + 1,
+      'NIS': s.nis,
+      'NAMA SISWA': s.namalengkap,
+      'KELAS': importKelas, 
+      'SEMESTER': importSemester || '', 
+      'JENIS TUGAS': type || '',  // Kosong jika belum pilih (biar diisi di excel via dropdown)
+      'KET/MATERI': desc || '',
+      'NILAI': ''
+    }));
+
+    // Generate Excel (Async await)
+    await generateExcel(templateData, `Template_Nilai_${importKelas}`, importKelas, {
+        title: 'FORM INPUT NILAI PAI',
+        kelas: importKelas,
+        semester: importSemester || '-', 
+        withValidation: true // Aktifkan Dropdown Excel
+    });
+    
+    Swal.close();
+    Swal.fire({ icon: 'success', title: 'Template Didownload', text: 'Silakan isi nilai menggunakan Excel.', timer: 2000, showConfirmButton: false, heightAuto: false });
+  };
+
+  const handleUploadExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!date || !importKelas) {
+      Swal.fire({ icon: 'warning', title: 'Data Kurang', text: 'Mohon isi Tanggal (di form atas) dan Pilih Kelas (di kartu import).', heightAuto: false });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    if (!importSemester) {
+      Swal.fire({ icon: 'warning', title: 'Pilih Semester', text: 'Pilih semester di kartu import terlebih dahulu.', heightAuto: false });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+        if (data.length === 0) throw new Error("File kosong.");
+
+        Swal.fire({ title: 'Memproses Data...', didOpen: () => Swal.showLoading(), heightAuto: false, allowOutsideClick: false });
+
+        let successCount = 0;
+        const currentClassStudents = await db.getStudentsByKelas(importKelas);
+
+        for (const row of data) {
+          const rowNis = String(row['NIS'] || row['nis'] || '').trim();
+          const rowNilai = row['NILAI'] || row['nilai'];
+          
+          const rowSem = String(row['SEMESTER'] || row['semester'] || importSemester).trim();
+          const rowTypeRaw = String(row['JENIS TUGAS'] || row['jenis tugas'] || type).toLowerCase().trim();
+          const rowKet = row['KET/MATERI'] || row['ket/materi'] || row['KETERANGAN'] || desc || '-';
+          
+          // Ambil kelas dari row excel atau fallback ke dropdown import
+          const rowKelas = row['KELAS'] || row['kelas'] || importKelas;
+
+          let finalType = 'harian';
+          if (rowTypeRaw.includes('uts')) finalType = 'uts';
+          else if (rowTypeRaw.includes('uas')) finalType = 'uas';
+          else if (rowTypeRaw.includes('praktik')) finalType = 'praktik';
+          else if (rowTypeRaw.includes('harian')) finalType = 'harian';
+          else if (type) finalType = type;
+
+          if (rowNis && rowNilai !== undefined && rowNilai !== '') {
+            const student = currentClassStudents.find(s => s.nis === rowNis);
+            
+            if (student && student.id) {
+              await db.addGrade({ 
+                student_id: student.id, 
+                subject_type: finalType as any, 
+                score: parseInt(rowNilai), 
+                description: rowKet, 
+                kelas: rowKelas,
+                semester: rowSem || '1', 
+                created_at: new Date(date).toISOString() 
+              });
+              successCount++;
+            }
+          }
+        }
+
+        Swal.fire({ 
+          icon: 'success', 
+          title: 'Import Berhasil', 
+          text: `${successCount} nilai berhasil disimpan ke Kelas ${importKelas}.`,
+          heightAuto: false 
+        });
+        
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Gagal', 'Format file tidak sesuai atau terjadi kesalahan sistem.', 'error');
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
-    <div className="max-w-2xl mx-auto space-y-2 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
+    <div className="max-w-2xl mx-auto space-y-2 md:space-y-6 animate-fadeIn pb-24 px-1 md:px-0">
       <button onClick={() => navigate('/guru')} className="md:hidden flex items-center gap-1.5 text-slate-800 text-[10px] font-black uppercase tracking-tight py-2 mb-1"><ArrowLeft size={14} /> Kembali ke Dashboard</button>
       <div className="bg-emerald-700 text-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg">
         <h1 className="text-base md:text-2xl font-black leading-tight uppercase tracking-tighter">Input Nilai PAI</h1>
-        <p className="text-emerald-50 text-[9px] md:text-sm mt-0.5 opacity-90">Simpan nilai siswa secara manual.</p>
+        <p className="text-emerald-50 text-[9px] md:text-sm mt-0.5 opacity-90">Simpan nilai siswa secara manual atau via Excel.</p>
       </div>
 
       <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-3xl border border-slate-100 shadow-sm space-y-4">
@@ -142,7 +287,7 @@ const TeacherInputGrades: React.FC = () => {
               <div className="relative">
                 <input 
                   type="date" 
-                  className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-black outline-none focus:border-emerald-500 cursor-pointer text-slate-600 placeholder:text-slate-300" 
+                  className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[8px] md:text-sm font-bold outline-none focus:border-emerald-500 cursor-pointer text-slate-600 placeholder:text-slate-300" 
                   value={date} 
                   onChange={(e) => setDate(e.target.value)} 
                   placeholder="pilih tanggal"
@@ -155,14 +300,14 @@ const TeacherInputGrades: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nama Kelas</label>
-              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-black outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}>
+              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-bold outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}>
                 <option value="">-- Pilih Kelas --</option>
                 {availableKelas.map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
             <div className="space-y-1">
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-black outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
+              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-bold outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
                 <option value="">-- Pilih Semester --</option>
                 <option value="1">Semester 1</option>
                 <option value="2">Semester 2</option>
@@ -174,7 +319,7 @@ const TeacherInputGrades: React.FC = () => {
           <div className="space-y-1">
             <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nama Siswa</label>
             <select 
-              className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-black outline-none" 
+              className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-bold outline-none" 
               value={selectedStudentId} 
               onChange={(e) => setSelectedStudentId(e.target.value)}
             >
@@ -187,7 +332,7 @@ const TeacherInputGrades: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="space-y-1">
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Jenis Tugas</label>
-              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-black outline-none" value={type} onChange={(e: any) => setType(e.target.value)}>
+              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-bold outline-none" value={type} onChange={(e: any) => setType(e.target.value)}>
                 <option value="">-- Pilih Tugas --</option>
                 <option value="harian">Harian</option>
                 <option value="uts">UTS</option>
@@ -202,13 +347,10 @@ const TeacherInputGrades: React.FC = () => {
                 min="0" 
                 max="100" 
                 placeholder="0"
-                className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[11px] md:text-sm font-black outline-none" 
+                className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-bold outline-none" 
                 value={score} 
                 onChange={(e) => {
                   const val = e.target.value;
-                  // REVISI LOGIKA INPUT NILAI:
-                  // 1. Jika kosong, set string kosong (biar placeholder muncul dan tidak ada 0)
-                  // 2. Jika diisi, parse int lalu kembalikan ke string (otomatis hilangkan 0 di depan misal "08" jadi "8")
                   if (val === '') {
                     setScore('');
                   } else {
@@ -225,7 +367,7 @@ const TeacherInputGrades: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Bab/Tugas (min: -)" 
-                className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-medium outline-none" 
+                className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-medium outline-none" 
                 value={desc} 
                 onChange={(e) => setDesc(e.target.value)} 
               />
@@ -236,6 +378,83 @@ const TeacherInputGrades: React.FC = () => {
             {status === 'saving' ? 'Menyimpan...' : status === 'success' ? <><CheckCircle2 size={16} /> Berhasil!</> : <><Save size={16} /> Simpan Nilai</>}
           </button>
         </form>
+      </div>
+
+      {/* KARTU BARU: IMPORT NILAI VIA EXCEL */}
+      <div className="bg-white p-4 md:p-6 rounded-[2rem] border border-slate-200 border-dashed shadow-sm space-y-4">
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+             <div className="bg-blue-50 text-blue-600 p-2 rounded-xl">
+               <FileUp size={20} />
+             </div>
+             <div>
+               <h2 className="text-[11px] md:text-sm font-black uppercase tracking-widest text-slate-800">Import Nilai Excel</h2>
+               <p className="text-[9px] text-slate-400 font-medium">Download template kelas, isi nilai, lalu upload kembali.</p>
+             </div>
+          </div>
+
+          <div className="bg-blue-50 p-3 rounded-2xl flex items-start gap-2 border border-blue-100">
+             <Info size={16} className="text-blue-600 mt-0.5 shrink-0" />
+             <p className="text-[9px] text-blue-800 leading-relaxed font-medium">
+               <strong>Cara Pakai:</strong> <br/>
+               1. Pilih <strong>Kelas & Semester</strong> di bawah.<br/>
+               2. Klik <strong>Download Template</strong> (file berisi nama siswa).<br/>
+               3. Isi kolom <strong>NILAI, SEMESTER, JENIS TUGAS</strong> di Excel (Gunakan Dropdown).<br/>
+               4. Upload file kembali disini.
+             </p>
+          </div>
+
+          <div className="space-y-3">
+             {/* DROPDOWN KELAS IMPORT TERPISAH (SEMUA KELAS) */}
+             <div className="space-y-1">
+                <label className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Pilih Kelas untuk Import/Download</label>
+                <select 
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none text-slate-800 focus:border-blue-500" 
+                  value={importKelas} 
+                  onChange={(e) => setImportKelas(e.target.value)}
+                >
+                  <option value="">-- Pilih Kelas Import --</option>
+                  {allClassesList.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+             </div>
+
+             {/* DROPDOWN SEMESTER IMPORT */}
+             <div className="space-y-1">
+                <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Semester</label>
+                <select 
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-[10px] md:text-xs font-black outline-none text-slate-800 focus:border-blue-500" 
+                  value={importSemester} 
+                  onChange={(e) => setImportSemester(e.target.value)}
+                >
+                  <option value="">-- Pilih Semester --</option>
+                  <option value="1">Semester 1 (Ganjil)</option>
+                  <option value="2">Semester 2 (Genap)</option>
+                </select>
+             </div>
+
+             <div className="grid grid-cols-2 gap-3">
+                <button 
+                  onClick={handleDownloadTemplate}
+                  className="py-3 rounded-xl bg-slate-100 text-slate-700 font-black text-[9px] md:text-xs uppercase flex flex-col items-center justify-center gap-1 hover:bg-slate-200 transition-all border border-slate-200"
+                >
+                  <Download size={16} />
+                  Download Template
+                </button>
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="py-3 rounded-xl bg-emerald-600 text-white font-black text-[9px] md:text-xs uppercase flex flex-col items-center justify-center gap-1 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-95"
+                >
+                  <Upload size={16} />
+                  Upload Excel
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleUploadExcel} 
+                  accept=".xlsx, .xls" 
+                  className="hidden" 
+                />
+             </div>
+          </div>
       </div>
     </div>
   );

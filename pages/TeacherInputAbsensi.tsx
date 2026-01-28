@@ -136,7 +136,7 @@ const TeacherInputAbsensi: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
+            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-bold outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
               <option value="">-- Pilih Semester --</option>
               <option value="1">Semester 1</option>
               <option value="2">Semester 2</option>
@@ -144,14 +144,14 @@ const TeacherInputAbsensi: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Kelas</label>
-            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}><option value="">-- Kelas --</option>{availableKelas.map(k => <option key={k} value={k}>{k}</option>)}</select>
+            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-bold outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}><option value="">-- Kelas --</option>{availableKelas.map(k => <option key={k} value={k}>{k}</option>)}</select>
           </div>
           <div className="space-y-1">
-            <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
+            <label className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
             <div className="relative">
               <input 
                 type="date" 
-                className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none cursor-pointer focus:border-amber-500 text-slate-600 placeholder:text-slate-300" 
+                className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-bold outline-none cursor-pointer focus:border-amber-500 text-slate-600 placeholder:text-slate-300" 
                 value={date} 
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="pilih tanggal"
