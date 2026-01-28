@@ -398,7 +398,7 @@ const TeacherInputGrades: React.FC = () => {
                <strong>Cara Pakai:</strong> <br/>
                1. Pilih <strong>Kelas & Semester</strong> di bawah.<br/>
                2. Klik <strong>Download Template</strong> (file berisi nama siswa).<br/>
-               3. Isi kolom <strong>NILAI, SEMESTER, JENIS TUGAS</strong> di Excel (Gunakan Dropdown).<br/>
+               3. Isi kolom <strong>NILAI, SEMESTER, JENIS TUGAS</strong> <br/>
                4. Upload file kembali disini.
              </p>
           </div>
