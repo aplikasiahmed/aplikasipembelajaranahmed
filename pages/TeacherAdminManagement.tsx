@@ -183,15 +183,15 @@ const TeacherAdminManagement: React.FC = () => {
       </button>
 
       {/* HEADER & TOMBOL TOGGLE */}
-      <div className="bg-blue-500 text-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+      <div className="bg-blue-600 text-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-base md:text-2xl font-black leading-tight uppercase tracking-tighter">Kelola Admin</h1>
-          <p className="text-slate-400 text-[9px] md:text-sm mt-0.5 opacity-80">Manajemen akses guru pengampu PAI.</p>
+          <p className="text-white text-[10px] md:text-sm mt-0.5 opacity-80">Manajemen akses guru pengampu PAI.</p>
         </div>
         
         <button 
           onClick={() => setShowAddForm(!showAddForm)}
-          className={`px-5 py-3 rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest ${showAddForm ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+          className={`px-5 py-3 rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest ${showAddForm ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-blue-800 hover:bg-emerald-700 text-white'}`}
         >
           {showAddForm ? <><X size={18} /> Batal</> : <><UserPlus size={18} /> Tambah Admin</>}
         </button>
@@ -285,7 +285,7 @@ const TeacherAdminManagement: React.FC = () => {
                                 <button 
                                     type="button" 
                                     onClick={() => setFormData({...formData, role: 'Admin'})}
-                                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase border transition-all flex items-center justify-center gap-2 ${formData.role === 'Admin' ? 'bg-slate-800 text-white border-slate-800 shadow-md' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
+                                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase border transition-all flex items-center justify-center gap-2 ${formData.role === 'Admin' ? 'bg-blue-600 text-white border-slate-800 shadow-md' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
                                 >
                                     Admin Biasa
                                 </button>
@@ -328,7 +328,7 @@ const TeacherAdminManagement: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-3 md:gap-4 relative z-10">
-              <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0 ${admin.role === 'Super Admin' ? 'bg-emerald-600' : 'bg-slate-800'}`}>
+              <div className={`w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0 ${admin.role === 'Super Admin' ? 'bg-emerald-600' : 'bg-blue-600'}`}>
                 <UserCog size={24} />
               </div>
               <div className="overflow-hidden">
