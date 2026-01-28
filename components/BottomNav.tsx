@@ -18,7 +18,7 @@ const BottomNav: React.FC = () => {
   const navLinks = [
     { name: 'Nilai', path: '/nilai', icon: Award },
     { name: 'Tugas', path: '/tugas', icon: FileEdit },
-    { name: 'Soal', path: '/kerjakan-tugas', icon: PencilLine },
+    { name: 'Latihan Soal', path: '/kerjakan-tugas', icon: PencilLine },
     { name: 'Beranda', path: '/', icon: Home },
     { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
     { name: 'Materi', path: '/materi', icon: BookOpen },

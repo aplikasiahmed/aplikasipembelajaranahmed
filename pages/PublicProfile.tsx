@@ -57,8 +57,8 @@ const PublicProfile: React.FC = () => {
                 </h2>
                 <div className="p-4 md:p-5 rounded-2xl bg-emerald-50/30 border border-emerald-100/50">
                   <p className="text-slate-600 text-[11px] md:text-base leading-relaxed italic">
-                    "Assalamualaikum Warahmatullahi Wabarakatuh. Saya Ahmad Nawasyi, pengampu mata pelajaran PAI & Budi Pekerti. 
-                    Misi saya adalah membimbing generasi muda untuk memiliki kecerdasan intelektual sekaligus keluhuran budi pekerti."
+                    "Assalamualaikum Warahmatullahi Wabarakatuh. saya adalah pengampu mata pelajaran PAI & Budi Pekerti. yang saat ini 
+                    bertugas pasa sekolah SMP PGRI Jatiuwung Kota Tangerang."
                   </p>
                 </div>
               </section>
@@ -90,11 +90,11 @@ const PublicProfile: React.FC = () => {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2.5 text-[10px] md:text-sm">
                     <MapPin className="text-emerald-600 shrink-0 mt-0.5" size={12} />
-                    <span className="text-slate-600">Unit PAI, Gedung Utama</span>
+                    <span className="text-slate-600">Kp. Teriti Sepatan Kab. Tangerang </span>
                   </li>
                   <li className="flex items-center gap-2.5 text-[10px] md:text-sm">
                     <Mail className="text-emerald-600 shrink-0" size={12} />
-                    <span className="text-slate-600 truncate">ahmad.nawasyi@sekolah.sch.id</span>
+                    <span className="text-slate-600 truncate">ahmadnawasyi36@gmail.com</span>
                   </li>
                 </ul>
               </div>
@@ -106,6 +106,15 @@ const PublicProfile: React.FC = () => {
                 </div>
                 <p className="text-emerald-50 text-[10px] md:text-sm leading-relaxed">
                   Membentuk karakter siswa yang berakhlak karimah melalui teladan dan ilmu.
+                </p>
+              </div>
+              <div className="bg-emerald-600 p-4 md:p-5 rounded-2xl text-white shadow-lg shadow-emerald-200">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Award size={14} />
+                  <h3 className="font-bold text-[9px] uppercase tracking-wider">Misi</h3>
+                </div>
+                <p className="text-emerald-50 text-[10px] md:text-sm leading-relaxed">
+                  Membimbing generasi muda untuk memiliki kecerdasan intelektual sekaligus keluhuran budi pekerti.
                 </p>
               </div>
             </div>
