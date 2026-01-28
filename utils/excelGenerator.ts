@@ -12,71 +12,49 @@ interface ExcelMeta {
 }
 
 const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
-    // 1. Atur Lebar Kolom (Sesuai Screenshot)
-    sheet.columns = [
-        { width: 5 },  // A: NO
-        { width: 15 }, // B: NIS
-        { width: 35 }, // C: NAMA SISWA
-        { width: 10 }, // D: KELAS
-        { width: 12 }, // E: SEMESTER
-        { width: 15 }, // F: JENIS TUGAS
-        { width: 25 }, // G: KET/MATERI
-        { width: 10 }, // H: NILAI
-    ];
-
-    // 2. Header Judul (TANPA MERGE) - Sesuai Permintaan
+    // 1. HEADER JUDUL (Tanpa Merge Cell) - Sesuai Permintaan
     if (meta) {
-        // Row 1
+        const titleFont = { bold: true, name: 'Calibri', size: 11 };
+        const normalFont = { name: 'Calibri', size: 11 };
+
+        // Row 1: Title Utama
         const cellA1 = sheet.getCell('A1');
         cellA1.value = meta.title;
-        cellA1.font = { bold: true, name: 'Calibri', size: 11 };
+        cellA1.font = titleFont;
 
-        // Row 2
+        // Row 2: Subtitle
         const cellA2 = sheet.getCell('A2');
         cellA2.value = 'PENDIDIKAN AGAMA ISLAM DAN BUDI PEKERTI';
-        cellA2.font = { name: 'Calibri', size: 11 };
+        cellA2.font = normalFont;
 
-        // Row 3
+        // Row 3: Kelas
         const cellA3 = sheet.getCell('A3');
         cellA3.value = `KELAS ${meta.kelas}`;
-        cellA3.font = { name: 'Calibri', size: 11 };
+        cellA3.font = normalFont;
 
-        // Row 4
+        // Row 4: Semester/Info
         let infoString = `Semester : ${meta.semester}`;
         if (meta.bulan) {
-            infoString += `  |  Bulan : ${meta.bulan} ${meta.tahun || ''}`;
+            infoString = `Bulan : ${meta.bulan} ${meta.tahun || ''}`;
         }
         const cellA4 = sheet.getCell('A4');
         cellA4.value = infoString;
-        cellA4.font = { name: 'Calibri', size: 11 };
+        cellA4.font = normalFont;
         
-        // Row 5 kosong
+        // Row 5 kosong (Separator)
     }
 
-    // 3. Header Tabel (Mulai Baris 6)
-    const headers = Object.keys(data[0]);
-    const headerRow = sheet.getRow(6);
-    headerRow.values = headers;
-    
-    // Styling Header Tabel
-    headerRow.eachCell((cell: any) => {
-        cell.font = { bold: true };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-        };
-    });
+    // 2. HEADER TABEL DINAMIS (Mulai Baris 6)
+    if (data.length > 0) {
+        // Ambil Keys dari data pertama sebagai Header Kolom
+        const headers = Object.keys(data[0]);
+        const headerRow = sheet.getRow(6);
+        headerRow.values = headers;
 
-    // 4. Isi Data (Mulai Baris 7)
-    data.forEach((row, index) => {
-        const currentRow = sheet.getRow(7 + index);
-        currentRow.values = Object.values(row);
-        
-        // Styling Border Data
-        currentRow.eachCell((cell: any) => {
+        // Styling Header Tabel
+        headerRow.eachCell((cell: any) => {
+            cell.font = { bold: true };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
             cell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
@@ -84,35 +62,48 @@ const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
                 right: { style: 'thin' }
             };
         });
-    });
 
-    // 5. FITUR DATA VALIDATION (DROPDOWN) - PASTI MUNCUL
+        // Setup Lebar Kolom (Auto-adjust sederhana)
+        sheet.columns = headers.map(key => {
+            let width = 12; // Default
+            if (key === 'NO') width = 5;
+            else if (key === 'NIS') width = 15;
+            else if (key === 'NAMA SISWA') width = 35;
+            else if (key.startsWith('HARIAN')) width = 10;
+            return { header: key, key: key, width: width };
+        });
+
+        // 3. ISI DATA (Mulai Baris 7)
+        data.forEach((row, index) => {
+            // Karena kita pakai columns definition di atas, kita bisa pakai addRow atau akses langsung
+            // Tapi karena headerRow manual di row 6, kita pakai manual row 7+
+            const currentRow = sheet.getRow(7 + index);
+            
+            // Map data object ke values array sesuai urutan headers
+            const rowValues: any[] = [];
+            headers.forEach(key => {
+                rowValues.push(row[key]);
+            });
+            currentRow.values = rowValues;
+            
+            // Styling Border Data
+            currentRow.eachCell((cell: any) => {
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+        });
+    }
+
+    // 4. FITUR DATA VALIDATION (Hanya untuk Template Import Siswa/Nilai Manual)
+    // Jika data pivot, validation tidak diperlukan di kolom nilai
     if (meta?.withValidation) {
-        // Asumsi data sampai baris 100
         const startRow = 7;
         const endRow = 100;
-
-        for (let i = startRow; i <= endRow; i++) {
-            // Kolom E (Semester) -> Index 5
-            sheet.getCell(`E${i}`).dataValidation = {
-                type: 'list',
-                allowBlank: true,
-                formulae: ['"1,2"'], // Dropdown Semester
-                showErrorMessage: true,
-                errorTitle: 'Input Salah',
-                error: 'Pilih 1 atau 2'
-            };
-
-            // Kolom F (Jenis Tugas) -> Index 6
-            sheet.getCell(`F${i}`).dataValidation = {
-                type: 'list',
-                allowBlank: true,
-                formulae: ['"Harian,UTS,UAS,Praktik"'], // Dropdown Jenis Tugas
-                showErrorMessage: true,
-                errorTitle: 'Input Salah',
-                error: 'Pilih jenis tugas yang tersedia'
-            };
-        }
+        // Logic validation disesuaikan jika perlu
     }
 };
 
@@ -133,7 +124,6 @@ export const generateExcel = async (
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     
-    // Fix: Handle inconsistent file-saver exports from esm.sh
     const saveAs = (FileSaver as any).saveAs || (FileSaver as any).default || FileSaver;
     saveAs(blob, `${fileName}.xlsx`);
     return true;
@@ -161,7 +151,6 @@ export const generateBatchExcel = async (
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         
-        // Fix: Handle inconsistent file-saver exports from esm.sh
         const saveAs = (FileSaver as any).saveAs || (FileSaver as any).default || FileSaver;
         saveAs(blob, `${fileName}.xlsx`);
         return true;

@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Swal from 'sweetalert2';
@@ -8,7 +7,7 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Header
+    // Header (Sama seperti sebelumnya)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
     doc.setTextColor(0);
@@ -34,30 +33,16 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
        doc.text(`Semester : ${meta.semester}`, 15, 38);
     }
 
+    // DINAMIS TABLE GENERATION
     let head = [];
     let body = [];
 
-    if (type === 'nilai') {
-        head = [['No', 'NIS', 'Nama Siswa', 'Materi / Keterangan', 'Jenis', 'Nilai']];
-        body = data.map((item, index) => [
-            index + 1,
-            item.data_siswa?.nis || '-',
-            item.data_siswa?.namalengkap || 'Siswa',
-            item.description || '-',
-            item.subject_type?.toUpperCase() || '-',
-            item.score
-        ]);
-    } else {
-        head = [['No', 'NIS', 'Nama Siswa', 'Hadir', 'Sakit', 'Izin', 'Alfa']];
-        body = data.map((item, index) => [
-            index + 1,
-            item.NIS,
-            item['NAMA SISWA'],
-            item.H,
-            item.S,
-            item.I,
-            item.A
-        ]);
+    if (data.length > 0) {
+        // Ambil Header dari Keys Data Pertama
+        const keys = Object.keys(data[0]);
+        head = [keys];
+        // Map data ke array values
+        body = data.map(obj => Object.values(obj));
     }
 
     autoTable(doc, {
@@ -73,28 +58,19 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
             halign: 'center'
         },
         bodyStyles: { fontSize: 8, textColor: 50 },
-        columnStyles: type === 'nilai' ? {
-            0: { halign: 'center', cellWidth: 10 },
-            1: { halign: 'center', cellWidth: 20 },
-            4: { halign: 'center', cellWidth: 20 },
-            5: { halign: 'center', cellWidth: 20, fontStyle: 'bold' }
-        } : {
+        // Kolom Styles: Kita buat semi-dinamis. Kolom 0 (NO), 1 (NIS) fix. Sisanya auto.
+        columnStyles: {
             0: { halign: 'center', cellWidth: 10 },
             1: { halign: 'center', cellWidth: 25 },
-            3: { halign: 'center', cellWidth: 15 },
-            4: { halign: 'center', cellWidth: 15 },
-            5: { halign: 'center', cellWidth: 15 },
-            6: { halign: 'center', cellWidth: 15, textColor: [220, 38, 38] }
+            // Sisanya biar autoTable yang atur
         },
-        styles: { cellPadding: 1, valign: 'middle' }
+        styles: { cellPadding: 1, valign: 'middle', halign: 'center' }
     });
 
-    // Tanda Tangan
+    // Tanda Tangan (DIPERTAHANKAN PERSIS)
     let finalY = (doc as any).lastAutoTable.finalY + 10;
     if (finalY > 250) {
-        // Jika mepet bawah, tidak addPage di sini karena konteksnya per halaman, 
-        // tapi secara visual mungkin terpotong. Sederhananya biarkan flow autoTable.
-        // Untuk footer tanda tangan manual:
+        // Jika mepet bawah, handling sederhana
     }
     
     const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -122,7 +98,6 @@ export const generatePDFReport = (
     
     // Footer Halaman
     const pageCount = doc.getNumberOfPages();
-    // PERBAIKAN: Menggunakan Backticks (`) untuk string template agar tidak error syntax
     const title = type === 'nilai' 
       ? `LAPORAN NILAI SISWA ${meta.kelas} semester ${meta.semester}` 
       : `Rekap Absensi Mapel PAI Kelas ${meta.kelas} Bulan ${meta.bulan} semester ${meta.semester}`;

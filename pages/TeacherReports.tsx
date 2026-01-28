@@ -68,6 +68,73 @@ const TeacherReports: React.FC = () => {
     }
   };
 
+  // --- HELPER: TRANSFORM DATA NILAI KE PIVOT (KOLOM DINAMIS) ---
+  const transformGradesToPivot = (data: any[]) => {
+      // 1. Grouping by Student
+      const studentsMap = new Map<string, any>();
+      let maxHarianCount = 0;
+
+      data.forEach(item => {
+          const sid = item.student_id;
+          if (!studentsMap.has(sid)) {
+              studentsMap.set(sid, {
+                  nis: item.data_siswa?.nis || '-',
+                  nama: item.data_siswa?.namalengkap || 'Siswa',
+                  harian: [],
+                  uts: null,
+                  uas: null,
+                  praktik: null
+              });
+          }
+
+          const s = studentsMap.get(sid);
+          if (item.subject_type === 'harian') {
+              s.harian.push(item.score);
+              if (s.harian.length > maxHarianCount) maxHarianCount = s.harian.length;
+          } else if (item.subject_type === 'uts') {
+              s.uts = item.score;
+          } else if (item.subject_type === 'uas') {
+              s.uas = item.score;
+          } else if (item.subject_type === 'praktik') {
+              s.praktik = item.score;
+          }
+      });
+
+      // 2. Build Final Array
+      return Array.from(studentsMap.values()).map((s, idx) => {
+          // Hitung Rata-rata
+          let totalScore = 0;
+          let count = 0;
+          
+          s.harian.forEach((h: number) => { totalScore += h; count++; });
+          if (s.uts !== null) { totalScore += s.uts; count++; }
+          if (s.uas !== null) { totalScore += s.uas; count++; }
+          if (s.praktik !== null) { totalScore += s.praktik; count++; }
+
+          const average = count > 0 ? (totalScore / count).toFixed(1) : '0';
+
+          // Base Object
+          const row: any = {
+              'NO': idx + 1,
+              'NIS': s.nis,
+              'NAMA SISWA': s.nama
+          };
+
+          // Dynamic Harian Columns
+          for (let i = 0; i < maxHarianCount; i++) {
+              row[`HARIAN ${i + 1}`] = s.harian[i] !== undefined ? s.harian[i] : '';
+          }
+
+          // Fixed Columns
+          row['UTS'] = s.uts !== null ? s.uts : '';
+          row['UAS'] = s.uas !== null ? s.uas : '';
+          row['PRAKTIK'] = s.praktik !== null ? s.praktik : '';
+          row['RATA-RATA'] = average;
+
+          return row;
+      });
+  };
+
   // --- SINGLE EXPORT (PER KELAS) ---
   const handleExport = async (type: 'pdf' | 'excel', category: 'nilai' | 'absensi') => {
     if (category === 'nilai') {
@@ -89,35 +156,28 @@ const TeacherReports: React.FC = () => {
 
     try {
       if (category === 'nilai') {
-        let data = await db.getGradesByKelas(targetKelas, targetSem);
+        // Ambil Raw Data
+        let rawData = await db.getGradesByKelas(targetKelas, targetSem);
         
-        // Filter by Tipe Nilai jika dipilih
+        // Filter by Tipe Nilai (Jika user memilih filter, walau defaultnya Semua)
         if (tipeNilai) {
-          data = data.filter(item => item.subject_type === tipeNilai);
+            rawData = rawData.filter(item => item.subject_type === tipeNilai);
         }
 
-        if (!data || data.length === 0) {
-          Swal.fire('Kosong', `Data nilai ${tipeNilai ? tipeNilai.toUpperCase() : ''} Semester ${targetSem} belum tersedia.`, 'info');
+        if (!rawData || rawData.length === 0) {
+          Swal.fire('Kosong', `Data nilai Semester ${targetSem} belum tersedia.`, 'info');
           return;
         }
 
-        const titleLabel = tipeNilai 
-          ? `LAPORAN NILAI ${tipeNilai.toUpperCase()}` 
-          : 'LAPORAN NILAI SISWA';
+        // TRANSFORM DATA MENJADI PIVOT (KOLOM DINAMIS)
+        const pivotedData = transformGradesToPivot(rawData);
+
+        const titleLabel = 'LAPORAN NILAI SISWA';
 
         if (type === 'excel') {
-          const excelData = data.map((item, idx) => ({
-            'NO': idx + 1,
-            'NIS': item.data_siswa?.nis,
-            'NAMA SISWA': item.data_siswa?.namalengkap,
-            'MATERI': item.description,
-            'NILAI': item.score,
-            'TIPE': item.subject_type.toUpperCase()
-          }));
-          
           generateExcel(
-            excelData, 
-            `Laporan_Nilai_${targetKelas}_${tipeNilai || 'Semua'}`, 
+            pivotedData, 
+            `Laporan_Nilai_${targetKelas}`, 
             targetKelas, 
             {
               title: titleLabel,
@@ -127,15 +187,14 @@ const TeacherReports: React.FC = () => {
           );
           Swal.close();
         } else {
-          generatePDFReport('nilai', data, { 
+          generatePDFReport('nilai', pivotedData, { 
               kelas: targetKelas, 
               semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)' 
           });
         }
       } else {
-        // ABSENSI SINGLE
+        // ABSENSI SINGLE (LOGIKA LAMA TETAP DIPERTAHANKAN)
         const students = await db.getStudentsByKelas(targetKelas);
-        // Single export uses strict month (monthAbsen)
         const attendance = await db.getAttendanceByKelas(targetKelas, targetSem, monthAbsen, yearAbsen);
 
         if (!attendance || attendance.length === 0) {
@@ -192,7 +251,6 @@ const TeacherReports: React.FC = () => {
         Swal.fire({ icon: 'warning', title: 'Pilih Semester', text: 'Pilih semester terlebih dahulu!', heightAuto: false });
         return;
     }
-    // Validasi Absensi: Perlu minimal "Dari Bulan" dan Semester
     if (category === 'absensi') {
         if (!monthAbsen) {
              Swal.fire({ icon: 'warning', title: 'Pilih Bulan', text: 'Pilih bulan awal terlebih dahulu!', heightAuto: false });
@@ -221,52 +279,37 @@ const TeacherReports: React.FC = () => {
         // Loop semua kelas
         for (const kelas of availKelas) {
             if (category === 'nilai') {
-                let data = await db.getGradesByKelas(kelas, targetSem);
+                let rawData = await db.getGradesByKelas(kelas, targetSem);
                 
-                // Filter Tipe Tugas di Batch
                 if (tipeNilai) {
-                    data = data.filter(item => item.subject_type === tipeNilai);
+                    rawData = rawData.filter(item => item.subject_type === tipeNilai);
                 }
 
-                if (data && data.length > 0) {
-                    const excelFormatted = data.map((item, idx) => ({
-                        'NO': idx + 1,
-                        'NIS': item.data_siswa?.nis,
-                        'NAMA SISWA': item.data_siswa?.namalengkap,
-                        'MATERI': item.description,
-                        'NILAI': item.score,
-                        'TIPE': item.subject_type.toUpperCase()
-                    }));
+                if (rawData && rawData.length > 0) {
+                    // TRANSFORM PIVOT UNTUK BATCH JUGA
+                    const pivotedData = transformGradesToPivot(rawData);
                     
-                    const titleLabel = tipeNilai 
-                      ? `LAPORAN NILAI ${tipeNilai.toUpperCase()}` 
-                      : 'LAPORAN NILAI SISWA';
-
                     batchData.push({
-                        data: type === 'excel' ? excelFormatted : data,
+                        data: pivotedData,
                         sheetName: kelas,
                         meta: {
-                            title: titleLabel,
+                            title: 'LAPORAN NILAI SISWA',
                             kelas: kelas,
                             semester: targetSemLabel
                         }
                     });
                 }
             } else {
-                // Absensi Batch (Support Range)
+                // Absensi Batch
                 const students = await db.getStudentsByKelas(kelas);
-                
-                // Fetch FULL semester (pass undefined for month)
                 let attendance = await db.getAttendanceByKelas(kelas, targetSem, undefined, yearAbsen);
                 
-                // Filter by Range (Client Side)
                 if (monthAbsen) {
                     const startM = parseInt(monthAbsen);
                     const endM = monthAbsenEnd ? parseInt(monthAbsenEnd) : startM;
-
                     attendance = attendance.filter(a => {
                         const recDate = new Date(a.date);
-                        const recMonth = recDate.getMonth() + 1; // 0-11 -> 1-12
+                        const recMonth = recDate.getMonth() + 1;
                         return recMonth >= startM && recMonth <= endM;
                     });
                 }
@@ -312,7 +355,7 @@ const TeacherReports: React.FC = () => {
 
         if (type === 'excel') {
             const labelFile = category === 'nilai' 
-                ? `Laporan_Nilai_${tipeNilai || 'ALL'}_SEMUA_KELAS_Sem${targetSem}` 
+                ? `Laporan_Nilai_SEMUA_KELAS_Sem${targetSem}` 
                 : `Rekap_Absen_SEMUA_KELAS_${monthAbsen}-${monthAbsenEnd || monthAbsen}`;
             generateBatchExcel(batchData, labelFile);
             Swal.close();
@@ -443,7 +486,7 @@ const TeacherReports: React.FC = () => {
 
           {/* FILTER UTAMA (Global untuk Nilai) */}
           <div className="grid grid-cols-2 gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100">
-             <div className="space-y-0.5">
+             <div className="space-y-0.5 col-span-2">
                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
                 <select 
                   className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
@@ -455,20 +498,7 @@ const TeacherReports: React.FC = () => {
                   <option value="2">2 (Genap)</option>
                 </select>
              </div>
-             <div className="space-y-0.5">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Jenis Tugas</label>
-                <select 
-                  className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
-                  value={tipeNilai} 
-                  onChange={(e) => setTipeNilai(e.target.value)}
-                >
-                  <option value="">-- Semua --</option>
-                  <option value="harian">Harian</option>
-                  <option value="uts">UTS</option>
-                  <option value="uas">UAS</option>
-                  <option value="praktik">Praktik</option>
-                </select>
-             </div>
+             {/* Filter Tipe Nilai dihapus agar otomatis menampilkan semua kolom */}
           </div>
 
           {/* SUB-KARTU 1: DOWNLOAD PER KELAS */}
