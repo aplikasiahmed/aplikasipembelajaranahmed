@@ -57,7 +57,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Nilai Siswa', path: '/nilai', icon: Award },
     { name: 'Tugas PAI', path: '/tugas', icon: FileEdit },
     { name: 'Latihan Soal', path: '/kerjakan-tugas', icon: PencilLine },
-    { name: 'Profil Guru', path: '/profil', icon: User },
+    { name: 'Profil', path: '/profil', icon: User },
   ];
 
   const teacherLinks = [
@@ -143,7 +143,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="bg-emerald-600 p-1.5 rounded-lg text-white shrink-0">
               <BookOpen size={20} />
             </div>
-            <span className="font-bold text-[13px] sm:text-lg text-slate-800 whitespace-nowrap">PAI & Budi Pekerti</span>
+            <span className="font-bold text-[13px] sm:text-lg text-slate-800 whitespace-nowrap">Pend. Agama Islam</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-2 lg:gap-4">
