@@ -477,7 +477,7 @@ const TeacherReports: React.FC = () => {
             Panel Pengelolaan Laporan dan Database PAI.
           </p>
         </div>
-        <div className="bg-slate-800 text-white p-2.5 rounded-xl md:rounded-2xl shadow-lg flex items-center gap-3 self-start md:self-center">
+        <div className="bg-red-600 text-white p-2.5 rounded-xl md:rounded-2xl shadow-lg flex items-center gap-3 self-start md:self-center">
           <Database size={20} className="opacity-50" />
           <div className="text-[9px] font-bold uppercase tracking-widest">Admin System</div>
         </div>
