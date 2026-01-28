@@ -207,7 +207,7 @@ const TeacherInputGrades: React.FC = () => {
         title: 'Yakin kirim nilai?',
         html: `<p class="text-sm">Anda akan mengimport data nilai untuk:</p>
                <p class="font-bold text-lg mt-2 text-emerald-600">Kelas: ${importKelas}</p>
-               <p class="text-lg text-slate-500 mt-1">Pastikan file excel sudah sesuai template.</p>`,
+               <p class="text-sm text-slate-500 mt-1">Pastikan file excel sudah sesuai template.</p>`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#059669',
