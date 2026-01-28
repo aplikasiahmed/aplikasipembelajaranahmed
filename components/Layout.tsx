@@ -34,10 +34,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       title: 'Yakin Ingin Keluar?',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '##059669',
+      confirmButtonColor: '#059669',
       cancelButtonColor: '#dc2626',
-      cancelButtonText: 'Tidak',
       confirmButtonText: 'Yakin',
+      cancelButtonText: 'Tidak',
       heightAuto: false,
       customClass: {
         popup: 'rounded-[2rem]'
