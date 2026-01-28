@@ -20,7 +20,7 @@ const Home: React.FC = () => {
             Cerdas Berilmu, Mulia Berakhlak
           </h1>
           <p className="text-emerald-50 text-sm md:text-base max-w-lg leading-relaxed opacity-90">
-            Portal pembelajaran terpadu Pendidikan Agama Islam.
+            Portal pembelajaran terpadu Pendidikan Agama Islam
           </p>
           <div className="pt-2 flex flex-wrap gap-3">
             <button 
