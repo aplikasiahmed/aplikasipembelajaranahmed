@@ -78,17 +78,17 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
     const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     
     // TTD Posisi dinamis (agak ke kanan)
-    const signX = pageWidth - 60; 
+    const signX = pageWidth - 80; 
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(0);
     
-    doc.text(`Tangerang, ${currentDate}`, signX, finalY, { align: 'center' });
-    doc.text('Guru Mata Pelajaran', signX, finalY + 5, { align: 'center' });
+    doc.text(`Tangerang, ${currentDate}`, signX, finalY, { align: 'left' });
+    doc.text('Guru Mata Pelajaran', signX, finalY + 5, { align: 'left' });
     
     doc.setFont('helvetica', 'bold');
-    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 25, { align: 'center' });
+    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 25, { align: 'left' });
 };
 
 export const generatePDFReport = (
