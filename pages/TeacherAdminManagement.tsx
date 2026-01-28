@@ -1,7 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ShieldCheck, Mail, Lock, Plus, UserCog, ArrowLeft, Trash2, Loader2, UserPlus, AlertCircle } from 'lucide-react';
+import { 
+  User, 
+  ShieldCheck, 
+  Lock, 
+  UserCog, 
+  ArrowLeft, 
+  Trash2, 
+  Loader2, 
+  UserPlus, 
+  AlertCircle,
+  Save,
+  X,
+  KeyRound,
+  CheckCircle2
+} from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { AdminUser } from '../types';
 import Swal from 'sweetalert2';
@@ -10,6 +23,19 @@ const TeacherAdminManagement: React.FC = () => {
   const navigate = useNavigate();
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // State untuk Toggle Form Tambah Admin
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // State Form Data
+  const [formData, setFormData] = useState({
+    fullname: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    role: 'Admin'
+  });
 
   useEffect(() => {
     fetchAdmins();
@@ -22,72 +48,128 @@ const TeacherAdminManagement: React.FC = () => {
     setLoading(false);
   };
 
-  const handleAddAdmin = async () => {
-    const { value: formValues } = await Swal.fire({
-      title: 'Tambah Admin Baru',
-      html:
-        '<div class="space-y-3">' +
-        '<input id="swal-fullname" class="swal2-input" placeholder="Nama Lengkap">' +
-        '<input id="swal-username" class="swal2-input" placeholder="Username Login">' +
-        '<input id="swal-password" type="password" class="swal2-input" placeholder="Password Login">' +
-        '<select id="swal-role" class="swal2-select" style="margin-top: 15px">' +
-        '<option value="Admin">Admin</option>' +
-        '<option value="Super Admin">Super Admin</option>' +
-        '</select>' +
-        '</div>',
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: 'Simpan',
-      confirmButtonColor: '#059669',
-      preConfirm: () => {
-        return {
-          fullname: (document.getElementById('swal-fullname') as HTMLInputElement).value,
-          username: (document.getElementById('swal-username') as HTMLInputElement).value,
-          password: (document.getElementById('swal-password') as HTMLInputElement).value,
-          role: (document.getElementById('swal-role') as HTMLSelectElement).value,
-        }
-      }
-    });
-
-    if (formValues) {
-      if (!formValues.fullname || !formValues.username || !formValues.password) {
-        Swal.fire('Error', 'Semua kolom wajib diisi!', 'error');
-        return;
-      }
-
-      try {
-        await db.addAdmin(formValues as any);
-        Swal.fire('Berhasil', 'Admin baru telah ditambahkan.', 'success');
-        fetchAdmins();
-      } catch (err: any) {
-        Swal.fire('Gagal', err.message || 'Username mungkin sudah digunakan.', 'error');
-      }
-    }
+  // Handle Input Change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleDeleteAdmin = async (id: string, name: string) => {
-    if (admins.length <= 1) {
-      Swal.fire('Peringatan', 'Minimal harus ada 1 Admin di sistem.', 'warning');
+  // Handle Submit Tambah Admin (Gantikan Popup Lama)
+  const handleSaveAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // 1. Validasi Kolom Kosong
+    if (!formData.fullname || !formData.username || !formData.password || !formData.confirmPassword) {
+      Swal.fire({ icon: 'warning', title: 'Data Belum Lengkap', text: 'Semua kolom wajib diisi!', heightAuto: false });
       return;
     }
 
-    const res = await Swal.fire({
+    // 2. Validasi Password Match
+    if (formData.password !== formData.confirmPassword) {
+      Swal.fire({ icon: 'error', title: 'Password Tidak Cocok', text: 'Konfirmasi password harus sama dengan password baru.', heightAuto: false });
+      return;
+    }
+
+    // 3. Cek Username Duplikat (Simple Check di Frontend dari data yang sudah di-fetch)
+    const isDuplicate = admins.some(a => a.username.toLowerCase() === formData.username.toLowerCase());
+    if (isDuplicate) {
+       Swal.fire({ icon: 'error', title: 'Username Terpakai', text: 'Username ini sudah digunakan admin lain.', heightAuto: false });
+       return;
+    }
+
+    setIsSaving(true);
+    try {
+      await db.addAdmin({
+        fullname: formData.fullname,
+        username: formData.username,
+        password: formData.password,
+        role: formData.role as any
+      });
+
+      Swal.fire({ icon: 'success', title: 'Admin Ditambahkan', text: 'Data admin baru berhasil disimpan.', timer: 1500, showConfirmButton: false, heightAuto: false });
+      
+      // Reset Form & Refresh Data
+      setFormData({ fullname: '', username: '', password: '', confirmPassword: '', role: 'Admin' });
+      setShowAddForm(false);
+      fetchAdmins();
+
+    } catch (err: any) {
+      Swal.fire('Gagal', 'Terjadi kesalahan sistem saat menyimpan.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle Hapus Admin dengan 2x Validasi (Token Server)
+  const handleDeleteAdmin = async (id: string, name: string) => {
+    // Cek jumlah admin (min 1)
+    if (admins.length <= 1) {
+      Swal.fire('Ditolak', 'Minimal harus ada 1 Admin di sistem.', 'warning');
+      return;
+    }
+
+    // VALIDASI 1: Konfirmasi Biasa
+    const confirmResult = await Swal.fire({
       title: 'Hapus Admin?',
-      text: `Akun ${name} akan dihapus secara permanen.`,
+      html: `Apakah Anda yakin ingin menghapus akun <b>${name}</b>?<br/>Tindakan ini tidak dapat dibatalkan.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#dc2626',
-      confirmButtonText: 'Ya, Hapus'
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Lanjut Hapus',
+      cancelButtonText: 'Batal',
+      reverseButtons: true,
+      heightAuto: false
     });
 
-    if (res.isConfirmed) {
-      try {
-        await db.deleteAdmin(id);
-        Swal.fire('Terhapus', 'Akun admin telah dihapus.', 'success');
-        fetchAdmins();
-      } catch (err) {
-        Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus.', 'error');
-      }
+    if (!confirmResult.isConfirmed) return;
+
+    // VALIDASI 2: Token ID Server
+    const { value: token } = await Swal.fire({
+      title: 'Verifikasi Keamanan',
+      text: 'Masukkan Token ID Server',
+      input: 'password',
+      inputPlaceholder: 'Token ID Server',
+      inputAttributes: {
+        autocapitalize: 'off',
+        autocorrect: 'off'
+      },
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      confirmButtonText: 'Verifikasi & Hapus',
+      cancelButtonText: 'Batal',
+      heightAuto: false
+    });
+
+    if (token) {
+        if (token === "PAI_ADMIN_GURU") {
+            // Token Benar -> Eksekusi Hapus
+            try {
+                Swal.fire({ title: 'Menghapus...', didOpen: () => Swal.showLoading(), heightAuto: false });
+                await db.deleteAdmin(id);
+                
+                await Swal.fire({ 
+                    icon: 'success', 
+                    title: 'Terhapus!', 
+                    text: `Akun admin ${name} berhasil dihapus.`, 
+                    timer: 1500, 
+                    showConfirmButton: false,
+                    heightAuto: false 
+                });
+                
+                fetchAdmins();
+            } catch (err) {
+                Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');
+            }
+        } else {
+            // Token Salah
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Token Salah!', 
+                text: 'Token ID Server tidak valid. Penghapusan dibatalkan.', 
+                heightAuto: false 
+            });
+        }
     }
   };
 
@@ -100,20 +182,139 @@ const TeacherAdminManagement: React.FC = () => {
         <ArrowLeft size={14} className="text-slate-900" /> Kembali ke Dashboard
       </button>
 
-      <div className="bg-slate-900 text-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg flex justify-between items-center">
+      {/* HEADER & TOMBOL TOGGLE */}
+      <div className="bg-blue-500 text-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-lg flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-base md:text-2xl font-black leading-tight uppercase tracking-tighter">Kelola Admin</h1>
           <p className="text-slate-400 text-[9px] md:text-sm mt-0.5 opacity-80">Manajemen akses guru pengampu PAI.</p>
         </div>
+        
         <button 
-          onClick={handleAddAdmin}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 md:px-5 md:py-3 rounded-xl md:rounded-2xl shadow-xl shadow-emerald-900/40 transition-all active:scale-95 flex items-center gap-2"
+          onClick={() => setShowAddForm(!showAddForm)}
+          className={`px-5 py-3 rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest ${showAddForm ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
         >
-          <UserPlus size={18} />
-          <span className="hidden md:inline font-black text-xs uppercase tracking-widest">Tambah Guru</span>
+          {showAddForm ? <><X size={18} /> Batal</> : <><UserPlus size={18} /> Tambah Admin</>}
         </button>
       </div>
 
+      {/* CARD FORM TAMBAH ADMIN (KARTU BARU SESUAI PERMINTAAN) */}
+      {showAddForm && (
+        <div className="animate-slideDown">
+            <div className="bg-white p-5 md:p-8 rounded-[2rem] border border-emerald-100 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                   <UserCog size={120} className="text-emerald-800" />
+                </div>
+                
+                <div className="flex items-center gap-2 mb-6 relative z-10">
+                   <div className="bg-emerald-100 text-emerald-700 p-2 rounded-xl">
+                      <UserPlus size={20} />
+                   </div>
+                   <h2 className="text-sm md:text-lg font-black text-slate-800 uppercase tracking-tight">Form Admin Baru</h2>
+                </div>
+
+                <form onSubmit={handleSaveAdmin} className="space-y-4 md:space-y-6 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Nama Lengkap */}
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Nama Lengkap</label>
+                            <div className="relative">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input 
+                                    type="text" 
+                                    name="fullname"
+                                    placeholder="Contoh: Ahmad Nawasyi, S.Pd"
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:font-normal"
+                                    value={formData.fullname}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        </div>
+
+                         {/* Username */}
+                         <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Username Login</label>
+                            <div className="relative">
+                                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input 
+                                    type="text" 
+                                    name="username"
+                                    placeholder="Username tanpa spasi"
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:font-normal"
+                                    value={formData.username}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        </div>
+
+                         {/* Password */}
+                         <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Password Baru</label>
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input 
+                                    type="password" 
+                                    name="password"
+                                    placeholder="******"
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:font-normal"
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        </div>
+
+                         {/* Konfirmasi Password (BARU) */}
+                         <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Konfirmasi Password</label>
+                            <div className="relative">
+                                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input 
+                                    type="password" 
+                                    name="confirmPassword"
+                                    placeholder="Ulangi password..."
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:font-normal"
+                                    value={formData.confirmPassword}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                        </div>
+                        
+                        {/* Role Selection */}
+                         <div className="space-y-1 md:col-span-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Level Akses</label>
+                            <div className="flex gap-2">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setFormData({...formData, role: 'Admin'})}
+                                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase border transition-all flex items-center justify-center gap-2 ${formData.role === 'Admin' ? 'bg-slate-800 text-white border-slate-800 shadow-md' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
+                                >
+                                    Admin Biasa
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => setFormData({...formData, role: 'Super Admin'})}
+                                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase border transition-all flex items-center justify-center gap-2 ${formData.role === 'Super Admin' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white text-slate-400 border-slate-200 hover:bg-emerald-50'}`}
+                                >
+                                    <ShieldCheck size={14} /> Super Admin
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-2">
+                        <button 
+                            type="submit" 
+                            disabled={isSaving}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            {isSaving ? <><Loader2 size={16} className="animate-spin" /> Menyimpan...</> : <><Save size={16} /> Simpan Data Admin</>}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
+
+      {/* LIST ADMIN */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
         {loading ? (
           <div className="md:col-span-2 p-10 flex flex-col items-center justify-center space-y-3 bg-white rounded-3xl border border-slate-100">
@@ -143,7 +344,7 @@ const TeacherAdminManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-5 md:mt-8 flex gap-2">
+            <div className="mt-5 md:mt-8 flex gap-2 relative z-10">
               <div className="flex-1 p-2 md:p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Terdaftar Sejak</p>
                 <p className="text-[9px] font-bold text-slate-600">{new Date(admin.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
