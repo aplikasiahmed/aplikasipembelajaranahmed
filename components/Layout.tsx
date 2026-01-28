@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Materi PAI', path: '/materi', icon: BookOpen },
     { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
     { name: 'Nilai Siswa', path: '/nilai', icon: Award },
-    { name: 'Tugas Tugas', path: '/tugas', icon: FileEdit },
+    { name: 'Tugas PAI', path: '/tugas', icon: FileEdit },
     { name: 'Latihan Soal', path: '/kerjakan-tugas', icon: PencilLine },
     { name: 'Profil Guru', path: '/profil', icon: User },
   ];
