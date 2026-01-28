@@ -16,7 +16,7 @@ const TeacherInputGrades: React.FC = () => {
   
   // State untuk Data Nilai (Tanggal Manual)
   const [date, setDate] = useState(''); 
-  const [score, setScore] = useState(0); // Default 0
+  const [score, setScore] = useState<string>(''); // REVISI: Default string kosong agar tidak ada angka 0
   const [type, setType] = useState(''); // Default kosong untuk "Pilih Tugas"
   const [desc, setDesc] = useState('');
   
@@ -44,7 +44,8 @@ const TeacherInputGrades: React.FC = () => {
     e.preventDefault();
     
     // 1. Validasi Kolom Kosong menggunakan SweetAlert2
-    if (!selectedStudentId || !date || !semester || !type || !selectedKelas || score === undefined || score === null || isNaN(score) || !desc.trim()) {
+    // REVISI: Cek score === ''
+    if (!selectedStudentId || !date || !semester || !type || !selectedKelas || score === '' || !desc.trim()) {
       Swal.fire({ 
         icon: 'warning', 
         title: 'Perhatian', 
@@ -91,7 +92,7 @@ const TeacherInputGrades: React.FC = () => {
       await db.addGrade({ 
         student_id: selectedStudentId, 
         subject_type: type as 'harian' | 'uts' | 'uas' | 'praktik', 
-        score, 
+        score: parseInt(score), // REVISI: Convert string to number saat kirim ke DB
         description: desc, 
         kelas: selectedKelas, 
         semester,
@@ -102,7 +103,7 @@ const TeacherInputGrades: React.FC = () => {
       
       setTimeout(() => { 
         setStatus('idle'); 
-        setScore(0); 
+        setScore(''); // REVISI: Reset ke string kosong
         setDesc(''); 
         setType(''); 
         setSemester(''); 
@@ -200,9 +201,23 @@ const TeacherInputGrades: React.FC = () => {
                 type="number" 
                 min="0" 
                 max="100" 
+                placeholder="0"
                 className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[11px] md:text-sm font-black outline-none" 
                 value={score} 
-                onChange={(e) => setScore(e.target.value ? parseInt(e.target.value) : 0)} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // REVISI LOGIKA INPUT NILAI:
+                  // 1. Jika kosong, set string kosong (biar placeholder muncul dan tidak ada 0)
+                  // 2. Jika diisi, parse int lalu kembalikan ke string (otomatis hilangkan 0 di depan misal "08" jadi "8")
+                  if (val === '') {
+                    setScore('');
+                  } else {
+                    const num = parseInt(val);
+                    if (!isNaN(num) && num >= 0 && num <= 100) {
+                      setScore(num.toString());
+                    }
+                  }
+                }} 
               />
             </div>
             <div className="space-y-1">
