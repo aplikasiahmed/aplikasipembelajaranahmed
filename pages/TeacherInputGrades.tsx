@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, User, Award, CheckCircle2, ArrowLeft, Users, Search, Calendar, FileUp, Download, Upload, Info, FileCheck } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, GradeLevel } from '../types';
@@ -9,6 +9,7 @@ import { generateExcel } from '../utils/excelGenerator';
 
 const TeacherInputGrades: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Hook untuk menangkap data kiriman
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [grade, setGrade] = useState<GradeLevel>('7');
@@ -37,7 +38,9 @@ const TeacherInputGrades: React.FC = () => {
   useEffect(() => {
     db.getAvailableKelas(grade).then((data: string[]) => {
       setAvailableKelas(data);
-      setSelectedKelas(data[0] || '');
+      if (!selectedKelas) {
+          setSelectedKelas(data[0] || '');
+      }
     });
   }, [grade]);
 
@@ -49,15 +52,61 @@ const TeacherInputGrades: React.FC = () => {
     });
   }, []);
 
+  // --- LOGIKA AUTO-FILL DARI CEK TUGAS ---
+  useEffect(() => {
+      const state = location.state as any;
+      if (state?.prefill) {
+          const p = state.prefill;
+          
+          // 1. Set Kelas & Jenjang
+          if (p.kelas) {
+             const gChar = p.kelas.charAt(0);
+             if (['7','8','9'].includes(gChar)) {
+                 setGrade(gChar as GradeLevel);
+             }
+             setSelectedKelas(p.kelas);
+          }
+
+          // 2. Set Tanggal (Convert ISO to YYYY-MM-DD)
+          if (p.date) {
+             try {
+                const d = new Date(p.date);
+                const dateStr = d.toISOString().split('T')[0];
+                setDate(dateStr);
+             } catch (e) { console.error("Invalid date", e); }
+          }
+
+          // 3. Set Keterangan (Dari Judul Tugas)
+          if (p.task_name) {
+              setDesc(p.task_name);
+          }
+      }
+  }, [location.state]);
+
   // Load Siswa berdasarkan Kelas (Untuk Form Manual)
   useEffect(() => {
     if (selectedKelas) {
-      db.getStudentsByKelas(selectedKelas).then(setStudents);
-      setSelectedStudentId('');
+      db.getStudentsByKelas(selectedKelas).then(data => {
+          setStudents(data);
+          
+          // --- AUTO SELECT SISWA JIKA ADA DATA KIRIMAN ---
+          const state = location.state as any;
+          if (state?.prefill && state.prefill.student_name && state.prefill.kelas === selectedKelas) {
+              const target = data.find(s => s.namalengkap === state.prefill.student_name);
+              if (target && target.id) {
+                  setSelectedStudentId(target.id);
+              } else {
+                  setSelectedStudentId('');
+              }
+          } else {
+              // Reset jika bukan mode prefill atau kelas berubah manual
+              setSelectedStudentId('');
+          }
+      });
     } else {
       setStudents([]);
     }
-  }, [selectedKelas]);
+  }, [selectedKelas, location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,13 +255,13 @@ const TeacherInputGrades: React.FC = () => {
     const confirmResult = await Swal.fire({
         title: 'Yakin kirim nilai?',
         html: `<p class="text-sm">Anda akan mengimport data nilai untuk:</p>
-               <p class="font-bold text-lg mt-2 text-emerald-600">Kelas: ${importKelas}</p>
-               <p class="text-sm text-slate-500 mt-1">Pastikan file excel sudah sesuai template.</p>`,
+               <p class="font-bold text-lg mt-2 text-emerald-600">Nama Kelas: ${importKelas}</p>
+               <p class="text-xs text-slate-500 mt-1">Pastikan file excel sudah sesuai template.</p>`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#059669',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'KIRIM NILAI',
+        confirmButtonText: 'Konfirmasi',
         cancelButtonText: 'Cancel',
         reverseButtons: true, // Tombol Cancel di kiri
         heightAuto: false,
@@ -529,7 +578,7 @@ const TeacherInputGrades: React.FC = () => {
                   className="w-full py-4 rounded-xl bg-emerald-600 text-white font-black text-[10px] md:text-sm uppercase flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-95 animate-fadeIn"
                 >
                   <FileCheck size={18} />
-                  KIRIM NILAI
+                  Proses Import Data
                 </button>
              )}
           </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ExternalLink, Image as ImageIcon, Link as LinkIcon, Trash2, Loader2, Calendar, FileText, ArrowLeft } from 'lucide-react';
@@ -42,18 +41,48 @@ const TeacherTaskCheck: React.FC = () => {
     setLoading(false);
   };
 
-  const viewContent = (task: TaskSubmission) => {
+  const viewContent = async (task: TaskSubmission) => {
     if (task.submission_type === 'link') {
       window.open(task.content, '_blank');
     } else {
-      Swal.fire({
+      // Format Tanggal untuk ditampilkan di popup
+      const dateStr = new Date(task.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric', month: 'long', year: 'numeric'
+      });
+
+      // MODIFIKASI POPUP SESUAI PERMINTAAN
+      const result = await Swal.fire({
         title: `Tugas: ${task.task_name}`,
-        text: `Dari: ${task.student_name} (${task.kelas})`,
+        // Tambahkan informasi Tanggal di sini
+        text: `Dari: ${task.student_name} (${task.kelas}) • Tanggal: ${dateStr}`,
         imageUrl: task.content,
         imageAlt: 'Tugas Siswa',
-        confirmButtonColor: '#059669',
+        
+        // Konfigurasi Tombol
+        showCancelButton: true,
+        confirmButtonText: 'INPUT NILAI', // Tombol Hijau
+        cancelButtonText: 'TUTUP',        // Tombol Merah
+        
+        confirmButtonColor: '#059669',    // Emerald-600 (Hijau)
+        cancelButtonColor: '#dc2626',     // Red-600 (Merah)
+        
+        reverseButtons: true, // Agar tombol Input Nilai di kanan (biasanya UX lebih baik, atau sesuaikan selera)
         customClass: { popup: 'rounded-3xl' }
       });
+
+      // AKSI JIKA KLIK "INPUT NILAI"
+      if (result.isConfirmed) {
+         navigate('/guru/nilai', {
+             state: {
+                 prefill: {
+                     student_name: task.student_name,
+                     kelas: task.kelas,
+                     task_name: task.task_name, // Untuk Deskripsi/Ket
+                     date: task.created_at
+                 }
+             }
+         });
+      }
     }
   };
 
