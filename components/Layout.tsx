@@ -136,7 +136,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-[80px] md:pb-0">
+    <div className="min-h-screen bg-slate-50 pb-[80px] md:pb-0 overflow-x-hidden">
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">

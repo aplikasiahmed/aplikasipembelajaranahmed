@@ -68,7 +68,7 @@ const TeacherLogin: React.FC<TeacherLoginProps> = ({ onClose }) => {
             <BookOpen size={20} />
           </div>
           <h1 className="text-sm font-bold uppercase tracking-tighter">Masuk Dashboard Guru</h1>
-          <p className="text-emerald-100 text-[8px] mt-0.5 font-normal opacity-80 tracking-widest">Akses Khusus Pengajar</p>
+          <p className="text-emerald-100 text-[8px] mt-0.5 font-normal opacity-80 tracking-widest">Akses Khusus Guru</p>
         </div>
         
         <form onSubmit={handleLogin} className="p-5 space-y-3">

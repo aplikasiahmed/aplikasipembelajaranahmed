@@ -154,7 +154,7 @@ const PublicAbsensi: React.FC = () => {
             {filteredAttendance.length > 0 ? (
               <div className="w-full">
                 {/* REVISI: Menggunakan Table untuk Layout Lebih Rapi */}
-                <div className="max-h-[218px] md:max-h-[400px] overflow-y-auto scrollbar-thin">
+                <div className="w-full max-h-[218px] md:max-h-[400px] overflow-y-auto overflow-x-auto scrollbar-thin">
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-slate-50 sticky top-0 z-10">
                       <tr>
