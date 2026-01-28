@@ -192,7 +192,7 @@ const TeacherInputGrades: React.FC = () => {
       setTimeout(() => { 
         setStatus('idle'); 
         setScore(''); 
-        setDesc(''); 
+        setDesc(''); // Clear content description (Sesuai Permintaan)
         setSelectedStudentId('');
       }, 1500);
 
@@ -234,7 +234,7 @@ const TeacherInputGrades: React.FC = () => {
       'KELAS': importKelas, 
       'SEMESTER': importSemester || '', 
       'JENIS TUGAS': type || '',  // Kosong jika belum pilih (biar diisi di excel via dropdown)
-      'KET/MATERI': desc || '',
+      'KET/MATERI': '', // DIKOSONGKAN (Sesuai Permintaan: Jangan diisi ada)
       'NILAI': ''
     }));
 
@@ -322,6 +322,8 @@ const TeacherInputGrades: React.FC = () => {
           
           const rowSem = String(row['SEMESTER'] || row['semester'] || importSemester).trim();
           const rowTypeRaw = String(row['JENIS TUGAS'] || row['jenis tugas'] || type).toLowerCase().trim();
+          
+          // Fallback: Jika Excel kosong, ambil dari State desc, tapi untuk template download dipastikan kosong.
           const rowKet = row['KET/MATERI'] || row['ket/materi'] || row['KETERANGAN'] || desc || '-';
           
           // Ambil kelas dari row excel atau fallback ke dropdown import
