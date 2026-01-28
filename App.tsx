@@ -56,7 +56,7 @@ const App: React.FC = () => {
           <Route path="/nilai" element={<PublicGrades />} />
           <Route path="/absensi" element={<PublicAbsensi />} />
           <Route path="/tugas" element={<PublicTasks />} />
-          <Route path="/kerjakan-tugas" element={<PlaceholderPage title="Kerjakan Tugas PAI" />} />
+          <Route path="/kerjakan-tugas" element={<PlaceholderPage title="Kerjakan Soal" />} />
           <Route path="/materi" element={<PublicMaterials />} />
           
           {/* Protected Teacher Routes */}

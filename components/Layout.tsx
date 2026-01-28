@@ -165,7 +165,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowLoginModal(true)}
-              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold hover:bg-slate-700 transition-all"
+              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold hover:bg-blue-900 transition-all"
             >
               Masuk
             </button>
