@@ -502,7 +502,7 @@ const PublicTasks: React.FC = () => {
                             </button>
                         </div>
                         <p className="text-[10px] text-center text-slate-400 italic">
-                             *sebelum di kirim pastikan foto sudah benar.
+                             *pastikan foto sudah benar sebelum di kirim !.
                         </p>
                     </div>
                 ) : (
@@ -510,7 +510,7 @@ const PublicTasks: React.FC = () => {
                       // FITUR BARU 2: Proteksi Tombol Foto
                       onClick={() => {
                         if (!isVerified) {
-                           Swal.fire({ icon: 'warning', title: 'NIS Belum Diisi', text: 'Silakan masukkan nomor NIS terlebih dahulu.', timer: 1000, showConfirmButton: false });
+                           Swal.fire({ icon: 'warning', title: 'NIS Belum Diisi', text: 'Silakan masukkan nomor NIS terlebih dahulu.', timer: 2000, showConfirmButton: false });
                            return;
                         }
                         if (!processingImage) fileInputRef.current?.click();
