@@ -105,10 +105,10 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
     doc.setTextColor(0);
     
     doc.text(`Tangerang, ${currentDate}`, signX, finalY);
-    doc.text('Guru Mata Pelajaran', signX, finalY + 10);
+    doc.text('Guru Mata Pelajaran', signX, finalY + 5);
     
     doc.setFont('helvetica', 'bold');
-    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 28);
+    doc.text('Ahmad Nawasyi, S.Pd', signX, finalY + 25);
 };
 
 export const generatePDFReport = (
