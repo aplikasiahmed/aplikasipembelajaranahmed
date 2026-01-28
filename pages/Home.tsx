@@ -6,9 +6,9 @@ import { Users, Calendar, Quote } from 'lucide-react';
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const features = [
-    { title: 'Kelas 7', desc: 'Siswa baru mengenal dasar-dasar PAI & Budi Pekerti.', color: 'bg-blue-500' },
-    { title: 'Kelas 8', desc: 'Pendalaman materi Aqidah, Fiqih, dan Sejarah Islam.', color: 'bg-emerald-500' },
-    { title: 'Kelas 9', desc: 'Persiapan akhir dan implementasi Akhlak Mulia.', color: 'bg-amber-500' },
+    { title: 'Kelas 7', desc: 'Materi dalam tahap pengembangan konten', color: 'bg-blue-500' },
+    { title: 'Kelas 8', desc: 'Materi dalam tahap pengembangan konten', color: 'bg-emerald-500' },
+    { title: 'Kelas 9', desc: 'Materi dalam tahap pengembangan konten', color: 'bg-amber-500' },
   ];
 
   return (
