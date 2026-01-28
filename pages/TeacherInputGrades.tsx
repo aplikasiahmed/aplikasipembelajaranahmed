@@ -506,7 +506,7 @@ const TeacherInputGrades: React.FC = () => {
              <p className="text-[9px] text-blue-800 leading-relaxed font-medium">
                <strong>Cara Pakai:</strong> <br/>
                1. Pilih <strong>Kelas, Tanggal & Semester</strong>.<br/>
-               2. Klik <strong>Download Template</strong> (file berisi nama siswa).<br/>
+               2. Klik <strong>Download Template</strong>.<br/>
                3. Isi kolom <strong>NILAI</strong> di Excel.<br/>
                4. Pilih File lalu Klik <strong>Proses Import</strong>.
              </p>
@@ -579,7 +579,7 @@ const TeacherInputGrades: React.FC = () => {
                 {/* TOMBOL PILIH FILE (Hanya Trigger Input) */}
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="py-3 rounded-xl bg-slate-800 text-white font-black text-[9px] md:text-xs uppercase flex flex-col items-center justify-center gap-1 hover:bg-slate-700 transition-all active:scale-95"
+                  className="py-3 rounded-xl bg-blue-500 text-white font-black text-[9px] md:text-xs uppercase flex flex-col items-center justify-center gap-1 hover:bg-slate-700 transition-all active:scale-95"
                 >
                   <Upload size={16} />
                   Pilih File Excel
