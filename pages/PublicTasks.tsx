@@ -54,7 +54,7 @@ const PublicTasks: React.FC = () => {
           setIsVerified(false);
           setFormData(prev => ({ ...prev, student_name: '', kelas: '', jeniskelamin: '' }));
           
-          // FITUR BARU 1: Notifikasi jika NIS Salah
+          // FITUR: Notifikasi jika NIS Salah
           Swal.fire({ 
             toast: true, 
             position: 'top-end', 
@@ -86,13 +86,18 @@ const PublicTasks: React.FC = () => {
     const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Video%20Tutorial%20Upload%20file%20ke%20Link%20Google%20Drive.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9WaWRlbyBUdXRvcmlhbCBVcGxvYWQgZmlsZSBrZSBMaW5rIEdvb2dsZSBEcml2ZS5tcDQiLCJpYXQiOjE3Njk0MTEyODUsImV4cCI6MTgwMDk0NzI4NX0.2w9Ab3WVm34ItTWstBLHPJHsX51D-lBrL0WWqOjOmQI";
     
     Swal.fire({
-      // REVISI LAYOUT: Tombol X di baris sendiri paling atas, Popup dilebarkan
+      // REVISI LAYOUT TOTAL:
+      // 1. Tombol X berada di container sendiri paling atas (flex-end).
+      // 2. Judul berada di bawahnya (Center).
+      // 3. Video di bawah judul.
+      // Ini menjamin judul tidak tertutup tombol X dan subjudul tidak terpotong.
       html: `
         <div class="flex flex-col w-full">
-          <div class="flex justify-end -mt-4 -mr-4 mb-2">
+          <!-- ROW 1: TOMBOL X -->
+          <div class="flex justify-end mb-1">
             <button 
               id="close-tutorial-btn"
-              class="bg-red-500 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg hover:bg-red-600 transition-all active:scale-90 border-2 border-white z-50"
+              class="bg-red-500 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-md hover:bg-red-600 transition-all active:scale-90 border-2 border-white"
               style="outline: none;"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -101,6 +106,7 @@ const PublicTasks: React.FC = () => {
             </button>
           </div>
 
+          <!-- ROW 2: JUDUL & SUBJUDUL -->
           <div class="text-center px-1 mb-4">
              <h3 class="text-lg md:text-xl font-bold text-slate-800 leading-tight">Tutorial Upload Drive</h3>
              <p class="text-slate-400 text-[11px] md:text-xs font-normal mt-1 leading-relaxed">
@@ -108,7 +114,8 @@ const PublicTasks: React.FC = () => {
              </p>
           </div>
 
-          <div class="w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
+          <!-- ROW 3: VIDEO PLAYER -->
+          <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-200">
             <video 
               src="${videoUrl}" 
               controls 
@@ -122,8 +129,8 @@ const PublicTasks: React.FC = () => {
         </div>
       `,
       showConfirmButton: false, 
-      width: '95%', // Ukuran dilebarkan
-      padding: '1.5rem',
+      width: '95%', // POPUP LEBIH LEBAR AGAR VIDEO JELAS
+      padding: '1.25rem',
       didOpen: () => {
         const btn = document.getElementById('close-tutorial-btn');
         if (btn) {
@@ -250,8 +257,7 @@ const PublicTasks: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 1. VALIDASI DATA TERLEBIH DAHULU (TANPA LOADING)
-    // Pastikan semua field terisi sebelum melakukan proses berat atau loading
+    // 1. VALIDASI DATA TERLEBIH DAHULU
     
     if (!isVerified) { 
       Swal.fire('Ops..', 'Masukkan NIS yang benar agar nama muncul otomatis.', 'warning'); 
@@ -288,7 +294,7 @@ const PublicTasks: React.FC = () => {
         return;
     }
 
-    // 3. MULAI PROSES (BARU SET LOADING DI SINI)
+    // 3. MULAI PROSES
     setLoading(true);
     
     try {
@@ -514,7 +520,7 @@ const PublicTasks: React.FC = () => {
                     </div>
                 ) : (
                     <div 
-                      // FITUR BARU 2: Proteksi Tombol Foto
+                      // FITUR: Proteksi Tombol Foto
                       onClick={() => {
                         if (!isVerified) {
                            Swal.fire({ icon: 'warning', title: 'NIS Belum Diisi', text: 'Silakan masukkan nomor NIS terlebih dahulu.', timer: 2000, showConfirmButton: false });
