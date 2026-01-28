@@ -55,8 +55,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Materi PAI', path: '/materi', icon: BookOpen },
     { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
     { name: 'Nilai Siswa', path: '/nilai', icon: Award },
-    { name: 'Kumpulkan', path: '/tugas', icon: FileEdit },
-    { name: 'Tugas PAI', path: '/kerjakan-tugas', icon: PencilLine },
+    { name: 'Tugas Tugas', path: '/tugas', icon: FileEdit },
+    { name: 'Latihan Soal', path: '/kerjakan-tugas', icon: PencilLine },
     { name: 'Profil Guru', path: '/profil', icon: User },
   ];
 
@@ -79,8 +79,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Settings size={18} />
               </div>
               <div>
-                <h1 className="font-bold text-slate-800 text-sm leading-tight">Admin PAI</h1>
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">Panel Pengajar</p>
+                <h1 className="font-bold text-slate-800 text-sm leading-tight">Admin Guru</h1>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">Dashbord Guru</p>
               </div>
             </div>
           </div>
@@ -165,7 +165,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowLoginModal(true)}
-              className="bg-slate-800 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold hover:bg-slate-700 transition-all"
+              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold hover:bg-slate-700 transition-all"
             >
               Masuk
             </button>

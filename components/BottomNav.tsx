@@ -17,12 +17,12 @@ const BottomNav: React.FC = () => {
   // Urutan Mobile (7 menu): Nilai, Kumpulkan, Tugas, [Beranda], Materi, Absen, Profil
   const navLinks = [
     { name: 'Nilai', path: '/nilai', icon: Award },
-    { name: 'Kumpulkan', path: '/tugas', icon: FileEdit },
-    { name: 'Tugas', path: '/kerjakan-tugas', icon: PencilLine },
+    { name: 'Tugas', path: '/tugas', icon: FileEdit },
+    { name: 'Soal', path: '/kerjakan-tugas', icon: PencilLine },
     { name: 'Beranda', path: '/', icon: Home },
     { name: 'Materi', path: '/materi', icon: BookOpen },
-    { name: 'Absen', path: '/absensi', icon: ClipboardCheck },
-    { name: 'Profil', path: '/profil', icon: User },
+    { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
+    { name: 'Profil Guru', path: '/profil', icon: User },
   ];
 
   return (

@@ -30,7 +30,7 @@ const PlaceholderPage = ({ title }: { title: string }) => (
     <div className="bg-slate-200/50 p-3 md:p-4 rounded-full mb-2">
       <div className="w-8 h-8 md:w-12 md:h-12 border-4 border-slate-300 border-t-emerald-600 rounded-full animate-spin"></div>
     </div>
-    <h1 className="text-lg md:text-3xl font-bold text-slate-800">{title}</h1>
+    <h1 className="text-lg md:text-2xl font-bold text-slate-800">{title}</h1>
     <p className="text-[10px] md:text-sm text-slate-500 max-w-xs">Halaman ini sedang dalam tahap pengembangan konten oleh guru</p>
   </div>
 );
