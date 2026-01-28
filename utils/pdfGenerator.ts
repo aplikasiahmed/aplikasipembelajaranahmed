@@ -78,7 +78,7 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
     const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     
     // TTD Posisi dinamis (agak ke kanan)
-    const signX = pageWidth - 80; 
+    const signX = pageWidth - 50; 
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
