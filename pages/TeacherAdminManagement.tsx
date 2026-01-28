@@ -191,7 +191,7 @@ const TeacherAdminManagement: React.FC = () => {
         
         <button 
           onClick={() => setShowAddForm(!showAddForm)}
-          className={`px-5 py-3 rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest ${showAddForm ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-blue-800 hover:bg-emerald-700 text-white'}`}
+          className={`px-5 py-3 rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest ${showAddForm ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-blue-700 hover:bg-blue-900 text-white'}`}
         >
           {showAddForm ? <><X size={18} /> Batal</> : <><UserPlus size={18} /> Tambah Admin</>}
         </button>
