@@ -53,6 +53,16 @@ const PublicTasks: React.FC = () => {
         } else {
           setIsVerified(false);
           setFormData(prev => ({ ...prev, student_name: '', kelas: '', jeniskelamin: '' }));
+          
+          // FITUR BARU 1: Notifikasi jika NIS Salah
+          Swal.fire({ 
+            toast: true, 
+            position: 'top-end', 
+            icon: 'error', 
+            title: 'Nomor NIS Salah, Siswa tidak di temukan', 
+            showConfirmButton: false, 
+            timer: 2000 
+          });
         }
       } catch (error) { 
         console.error(error); 
@@ -76,26 +86,45 @@ const PublicTasks: React.FC = () => {
     const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Video%20Tutorial%20Upload%20file%20ke%20Link%20Google%20Drive.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9WaWRlbyBUdXRvcmlhbCBVcGxvYWQgZmlsZSBrZSBMaW5rIEdvb2dsZSBEcml2ZS5tcDQiLCJpYXQiOjE3Njk0MTEyODUsImV4cCI6MTgwMDk0NzI4NX0.2w9Ab3WVm34ItTWstBLHPJHsX51D-lBrL0WWqOjOmQI";
     
     Swal.fire({
-      title: 'Tutorial Upload Drive',
+      // PERTAHANKAN: Desain Tombol X Merah di Pojok Kanan Atas (Absolute)
       html: `
-        <p class="text-gray-400 text-[10px] font-normal mb-3 -mt-4">(sinyal harus kuat untuk memutar video)</p>
-        <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl">
-          <video 
-            src="${videoUrl}" 
-            controls 
-            autoplay
-            class="w-full h-auto"
+        <div class="relative">
+          <button 
+            id="close-tutorial-btn"
+            class="absolute right-0 top-0 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md hover:bg-red-600 transition-all active:scale-90 border-2 border-white z-10"
           >
-            Browser Anda tidak mendukung pemutaran video.
-          </video>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+          </button>
+
+          <div class="text-center px-8 mb-4 mt-1">
+             <h3 class="text-lg font-bold text-slate-800 leading-tight">Tutorial Upload Drive</h3>
+             <p class="text-gray-400 text-[10px] font-normal mt-0.5">(sinyal harus kuat untuk memutar video)</p>
+          </div>
+
+          <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-200">
+            <video 
+              src="${videoUrl}" 
+              controls 
+              autoplay
+              class="w-full h-auto"
+            >
+              Browser Anda tidak mendukung pemutaran video.
+            </video>
+          </div>
         </div>
       `,
-      showConfirmButton: true,
-      confirmButtonText: 'Tutup',
-      confirmButtonColor: '#059669',
-      width: '95%',
+      showConfirmButton: false, 
+      width: '90%',
+      didOpen: () => {
+        const btn = document.getElementById('close-tutorial-btn');
+        if (btn) {
+          btn.onclick = () => Swal.close();
+        }
+      },
       customClass: {
-        popup: 'rounded-[2rem] p-4'
+        popup: 'rounded-[2rem] p-5' 
       }
     });
   };
@@ -109,7 +138,7 @@ const PublicTasks: React.FC = () => {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          // REVISI SUPER AGRESIF: Max Width 480px (Ukuran WA Low Quality)
+          // PERTAHANKAN: Max Width 480px (Ukuran WA Low Quality)
           const MAX_WIDTH = 480; 
           let width = img.width;
           let height = img.height;
@@ -130,7 +159,7 @@ const PublicTasks: React.FC = () => {
           
           ctx.drawImage(img, 0, 0, width, height);
           
-          // REVISI SUPER AGRESIF: Quality 0.4 (40%) - Hasil Base64 sangat kecil
+          // PERTAHANKAN: Quality 0.4 (40%) - Hasil Base64 sangat kecil
           const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
           resolve(dataUrl);
         };
@@ -207,7 +236,7 @@ const PublicTasks: React.FC = () => {
       currentY += img.height + 20;
     });
 
-    // REVISI SUPER AGRESIF: Hasil Merge dikompres lagi ke 40%
+    // PERTAHANKAN: Hasil Merge dikompres lagi ke 40%
     return canvas.toDataURL('image/jpeg', 0.4);
   };
 
@@ -265,7 +294,7 @@ const PublicTasks: React.FC = () => {
                   finalContent = await mergePhotos(photos);
               } catch (err) {
                   console.error(err);
-                  Swal.fire('Gagal', 'Gagal menggabungkan foto.', 'error');
+                  Swal.fire('Gagal', 'Gagal Proses foto.', 'error');
                   setLoading(false);
                   return;
               }
@@ -325,7 +354,9 @@ const PublicTasks: React.FC = () => {
                 name="nisn" 
                 inputMode="numeric" 
                 placeholder="masukkan nomor NIS siswa" 
-                className={`w-full pl-10 pr-10 py-3 text-xs rounded-xl border bg-white outline-none transition-all placeholder:font-normal font-normal ${isVerified ? 'border-emerald-500 ring-4 ring-emerald-500/5' : 'border-slate-200 focus:border-emerald-500'}`} 
+                style={{ colorScheme: 'light' }}
+                // PERTAHANKAN: Style Putih Bersih
+                className={`w-full pl-10 pr-10 py-3 text-xs rounded-xl border !bg-white !text-black outline-none transition-all placeholder:font-normal font-normal ${isVerified ? 'border-emerald-500 ring-4 ring-emerald-500/5' : 'border-slate-200 focus:border-emerald-500'}`} 
                 value={formData.nisn} 
                 onChange={handleInputChange} 
                 maxLength={10} 
@@ -471,18 +502,28 @@ const PublicTasks: React.FC = () => {
                             </button>
                         </div>
                         <p className="text-[10px] text-center text-slate-400 italic">
-                             *Pastikan foto sudah benar sebelum di kirim!
+                             *sebelum di kirim pastikan foto sudah benar.
                         </p>
                     </div>
                 ) : (
                     <div 
-                      onClick={() => !processingImage && fileInputRef.current?.click()} 
-                      className={`border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all bg-slate-50 ${processingImage ? 'opacity-50 pointer-events-none' : ''}`}
+                      // FITUR BARU 2: Proteksi Tombol Foto
+                      onClick={() => {
+                        if (!isVerified) {
+                           Swal.fire({ icon: 'warning', title: 'NIS Belum Diisi', text: 'Silakan masukkan nomor NIS terlebih dahulu.', timer: 1000, showConfirmButton: false });
+                           return;
+                        }
+                        if (!processingImage) fileInputRef.current?.click();
+                      }} 
+                      className={`border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center transition-all bg-slate-50
+                        ${!isVerified ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-emerald-50 hover:border-emerald-200'}
+                        ${processingImage ? 'opacity-50 pointer-events-none' : ''}
+                      `}
                     >
                       {processingImage ? (
                         <div className="space-y-2">
                            <Loader2 size={24} className="mx-auto text-emerald-600 animate-spin" />
-                           <p className="text-[10px] font-bold text-emerald-600">Proses Foto...</p>
+                           <p className="text-[10px] font-bold text-emerald-600">Tunggu Sebentar...</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -491,7 +532,7 @@ const PublicTasks: React.FC = () => {
                           </div>
                           <div>
                              <p className="text-[11px] font-black text-slate-600 tracking-tight uppercase">Ambil Foto Tugas</p>
-                             <p className="text-[10px] font-normal italic text-slate-400">Fotolah dengan Pencahayaan Jelas & Tidak Blur</p>
+                             <p className="text-[10px] font-normal italic text-slate-400">Pastikan Pencahayaan Foto Jelas & Tidak Blur </p>
                           </div>
                         </div>
                       )}
