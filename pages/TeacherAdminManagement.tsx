@@ -285,7 +285,7 @@ const TeacherAdminManagement: React.FC = () => {
                                 <button 
                                     type="button" 
                                     onClick={() => setFormData({...formData, role: 'Admin'})}
-                                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase border transition-all flex items-center justify-center gap-2 ${formData.role === 'Admin' ? 'bg-blue-600 text-white border-slate-800 shadow-md' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
+                                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase border transition-all flex items-center justify-center gap-2 ${formData.role === 'Admin' ? 'bg-blue-600 text-white border-blue-800 shadow-md' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
                                 >
                                     Admin Biasa
                                 </button>
@@ -304,7 +304,7 @@ const TeacherAdminManagement: React.FC = () => {
                         <button 
                             type="submit" 
                             disabled={isSaving}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                             {isSaving ? <><Loader2 size={16} className="animate-spin" /> Menyimpan...</> : <><Save size={16} /> Simpan Data Admin</>}
                         </button>
