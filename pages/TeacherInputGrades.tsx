@@ -35,14 +35,29 @@ const TeacherInputGrades: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'saving' | 'success'>('idle');
 
   // Load Kelas berdasarkan Jenjang (Untuk Form Manual)
+  // FIX: Tambahkan logika cek prefill agar tidak menimpa kelas yang dikirim
   useEffect(() => {
+    let isMounted = true;
     db.getAvailableKelas(grade).then((data: string[]) => {
+      if (!isMounted) return;
       setAvailableKelas(data);
-      if (!selectedKelas) {
-          setSelectedKelas(data[0] || '');
+
+      const state = location.state as any;
+      const prefillKelas = state?.prefill?.kelas;
+
+      // Jika ada kiriman kelas yang valid untuk jenjang ini, JANGAN reset ke data[0]
+      if (prefillKelas && data.includes(prefillKelas)) {
+          // Biarkan logika prefill yang mengatur selectedKelas
+          if (selectedKelas !== prefillKelas) setSelectedKelas(prefillKelas);
+      } else {
+          // Behavior standar: jika selectedKelas kosong atau tidak ada di list baru, pilih yang pertama
+          if (!selectedKelas || !data.includes(selectedKelas)) {
+             setSelectedKelas(data[0] || '');
+          }
       }
     });
-  }, [grade]);
+    return () => { isMounted = false; };
+  }, [grade, location.state]); 
 
   // Load SEMUA Kelas (Untuk Dropdown Import Excel) - Langsung Semua Jenjang
   useEffect(() => {
@@ -52,27 +67,30 @@ const TeacherInputGrades: React.FC = () => {
     });
   }, []);
 
-  // --- LOGIKA AUTO-FILL DARI CEK TUGAS ---
+  // --- LOGIKA AUTO-FILL DARI CEK TUGAS (FIXED) ---
   useEffect(() => {
       const state = location.state as any;
       if (state?.prefill) {
           const p = state.prefill;
           
-          // 1. Set Kelas & Jenjang
+          // 1. Set Kelas & Jenjang (Prioritas Utama)
           if (p.kelas) {
              const gChar = p.kelas.charAt(0);
              if (['7','8','9'].includes(gChar)) {
                  setGrade(gChar as GradeLevel);
              }
+             // Paksa set selectedKelas agar trigger useEffect load siswa
              setSelectedKelas(p.kelas);
           }
 
-          // 2. Set Tanggal (Convert ISO to YYYY-MM-DD)
+          // 2. Set Tanggal (FIX: Gunakan format lokal YYYY-MM-DD agar tidak mundur sehari)
           if (p.date) {
              try {
                 const d = new Date(p.date);
-                const dateStr = d.toISOString().split('T')[0];
-                setDate(dateStr);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                setDate(`${year}-${month}-${day}`);
              } catch (e) { console.error("Invalid date", e); }
           }
 
@@ -89,17 +107,21 @@ const TeacherInputGrades: React.FC = () => {
       db.getStudentsByKelas(selectedKelas).then(data => {
           setStudents(data);
           
-          // --- AUTO SELECT SISWA JIKA ADA DATA KIRIMAN ---
+          // --- AUTO SELECT SISWA (FIXED: Case Insensitive & Trim) ---
           const state = location.state as any;
           if (state?.prefill && state.prefill.student_name && state.prefill.kelas === selectedKelas) {
-              const target = data.find(s => s.namalengkap === state.prefill.student_name);
+              const targetName = state.prefill.student_name.toLowerCase().trim();
+              
+              // Cari siswa dengan nama yang cocok (abaikan huruf besar/kecil)
+              const target = data.find(s => s.namalengkap.toLowerCase().trim() === targetName);
+              
               if (target && target.id) {
                   setSelectedStudentId(target.id);
               } else {
                   setSelectedStudentId('');
               }
           } else {
-              // Reset jika bukan mode prefill atau kelas berubah manual
+              // Reset jika ganti kelas manual
               setSelectedStudentId('');
           }
       });
