@@ -200,7 +200,7 @@ const TeacherAdminManagement: React.FC = () => {
       {/* CARD FORM TAMBAH ADMIN (KARTU BARU SESUAI PERMINTAAN) */}
       {showAddForm && (
         <div className="animate-slideDown">
-            <div className="bg-white p-5 md:p-8 rounded-[2rem] border border-emerald-100 shadow-xl relative overflow-hidden">
+            <div className="bg-white p-5 md:p-8 rounded-[2rem] border border-blue-300 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                    <UserCog size={120} className="text-emerald-800" />
                 </div>
@@ -304,7 +304,7 @@ const TeacherAdminManagement: React.FC = () => {
                         <button 
                             type="submit" 
                             disabled={isSaving}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full bg-blue-900 hover:bg-blue-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                             {isSaving ? <><Loader2 size={16} className="animate-spin" /> Menyimpan...</> : <><Save size={16} /> Simpan Data Admin</>}
                         </button>
