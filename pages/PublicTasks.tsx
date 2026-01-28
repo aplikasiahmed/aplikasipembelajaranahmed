@@ -109,7 +109,8 @@ const PublicTasks: React.FC = () => {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1000;
+          // REVISI SUPER AGRESIF: Max Width 480px (Ukuran WA Low Quality)
+          const MAX_WIDTH = 480; 
           let width = img.width;
           let height = img.height;
 
@@ -128,7 +129,9 @@ const PublicTasks: React.FC = () => {
           }
           
           ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          
+          // REVISI SUPER AGRESIF: Quality 0.4 (40%) - Hasil Base64 sangat kecil
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
           resolve(dataUrl);
         };
         img.onerror = (error) => reject(error);
@@ -204,7 +207,8 @@ const PublicTasks: React.FC = () => {
       currentY += img.height + 20;
     });
 
-    return canvas.toDataURL('image/jpeg', 0.7);
+    // REVISI SUPER AGRESIF: Hasil Merge dikompres lagi ke 40%
+    return canvas.toDataURL('image/jpeg', 0.4);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -467,7 +471,7 @@ const PublicTasks: React.FC = () => {
                             </button>
                         </div>
                         <p className="text-[10px] text-center text-slate-400 italic">
-                             *Pastikan semua foto yang dikirim sudah benar!
+                             *Pastikan foto sudah benar sebelum di kirim!
                         </p>
                     </div>
                 ) : (
@@ -478,7 +482,7 @@ const PublicTasks: React.FC = () => {
                       {processingImage ? (
                         <div className="space-y-2">
                            <Loader2 size={24} className="mx-auto text-emerald-600 animate-spin" />
-                           <p className="text-[10px] font-bold text-emerald-600">Mengompres Foto...</p>
+                           <p className="text-[10px] font-bold text-emerald-600">Proses Foto...</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -487,7 +491,7 @@ const PublicTasks: React.FC = () => {
                           </div>
                           <div>
                              <p className="text-[11px] font-black text-slate-600 tracking-tight uppercase">Ambil Foto Tugas</p>
-                             <p className="text-[10px] font-normal italic text-slate-400">Foto dengan pencahayaan yang jelas & tidak blur</p>
+                             <p className="text-[10px] font-normal italic text-slate-400">Fotolah dengan Pencahayaan Jelas & Tidak Blur</p>
                           </div>
                         </div>
                       )}
@@ -505,7 +509,7 @@ const PublicTasks: React.FC = () => {
             {loading || processingImage ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                {processingImage ? 'Proses Kirim...' : 'Kirim Tugas'}
+                {processingImage ? 'Proses...' : 'Kirim Tugas'}
               </>
             ) : (
               <>

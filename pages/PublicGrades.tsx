@@ -40,7 +40,7 @@ const PublicGrades: React.FC = () => {
         setStudent(found);
         const studentGrades = await db.getGradesByStudent(found.id!);
         setAllGrades(studentGrades);
-        Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, icon: 'success', title: 'Siswa Ditemukan' });
+        Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, icon: 'success', title: 'Siswa Terverifikasi' });
       } else {
         setStudent(null);
         setAllGrades([]);
@@ -91,7 +91,7 @@ const PublicGrades: React.FC = () => {
                 inputMode="numeric"
                 pattern="[0-9]*"
                 placeholder="Masukkan nomor NIS siswa" 
-                className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:border-emerald-500 transition-all shadow-sm"
                 value={nis}
                 onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
               />
