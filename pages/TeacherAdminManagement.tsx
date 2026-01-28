@@ -200,7 +200,7 @@ const TeacherAdminManagement: React.FC = () => {
       {/* CARD FORM TAMBAH ADMIN (KARTU BARU SESUAI PERMINTAAN) */}
       {showAddForm && (
         <div className="animate-slideDown">
-            <div className="bg-white p-5 md:p-8 rounded-[2rem] border border-blue-300 shadow-xl relative overflow-hidden">
+            <div className="bg-white p-5 md:p-8 rounded-[2rem] border border-blue-100 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                    <UserCog size={120} className="text-emerald-800" />
                 </div>

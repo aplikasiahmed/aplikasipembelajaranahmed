@@ -41,9 +41,9 @@ const TeacherDashboard: React.FC = () => {
   const menuItems = [
     { title: 'Input Nilai', path: '/guru/nilai', icon: Award, color: 'bg-emerald-600', desc: 'Kelola nilai harian & ujian' },
     { title: 'Input Absensi', path: '/guru/absensi', icon: ClipboardCheck, color: 'bg-amber-600', desc: 'Rekap kehadiran harian' },
-    { title: 'Cek Tugas', path: '/guru/tugas-masuk', icon: FileText, color: 'bg-blue-600', desc: 'Koreksi pengumpulan tugas' },
-    { title: 'Laporan', path: '/guru/laporan', icon: TrendingUp, color: 'bg-purple-600', desc: 'Export PDF & Excel' },
-    { title: 'Kelola Admin', path: '/guru/admin', icon: ShieldCheck, color: 'bg-slate-800', desc: 'Manajemen akun pengajar' },
+    { title: 'Cek Tugas', path: '/guru/tugas-masuk', icon: FileText, color: 'bg-purple-600', desc: 'Koreksi pengumpulan tugas' },
+    { title: 'Laporan', path: '/guru/laporan', icon: TrendingUp, color: 'bg-red-600', desc: 'Export PDF & Excel' },
+    { title: 'Kelola Admin', path: '/guru/admin', icon: ShieldCheck, color: 'bg-blue-600', desc: 'Manajemen akun pengajar' },
   ];
 
   return (

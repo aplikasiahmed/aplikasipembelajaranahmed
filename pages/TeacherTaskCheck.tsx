@@ -117,7 +117,7 @@ const TeacherTaskCheck: React.FC = () => {
                 key={g}
                 onClick={() => setFilterGrade(g)}
                 className={`px-3 py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-all whitespace-nowrap ${
-                  filterGrade === g ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'
+                  filterGrade === g ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'
                 }`}
               >
                 {g === 'all' ? 'Semua Jenjang' : `Kelas ${g}`}
