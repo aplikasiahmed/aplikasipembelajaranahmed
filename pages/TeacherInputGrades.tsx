@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, User, Award, CheckCircle2, ArrowLeft, Users, Search, Calendar, FileUp, Download, Upload, Info } from 'lucide-react';
+import { Save, User, Award, CheckCircle2, ArrowLeft, Users, Search, Calendar, FileUp, Download, Upload, Info, FileCheck } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, GradeLevel } from '../types';
 import Swal from 'sweetalert2';
@@ -27,6 +27,8 @@ const TeacherInputGrades: React.FC = () => {
   // State Khusus untuk Kartu Import Excel
   const [importKelas, setImportKelas] = useState('');
   const [importSemester, setImportSemester] = useState(''); // Tambahan State Semester Import
+  const [importDate, setImportDate] = useState(''); // 1. Tambahan Dropdown Tanggal Import
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // 2. Tambahan State File Terpilih
   const [allClassesList, setAllClassesList] = useState<string[]>([]); // Semua kelas (7A-9I)
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'success'>('idle');
@@ -177,22 +179,54 @@ const TeacherInputGrades: React.FC = () => {
     Swal.fire({ icon: 'success', title: 'Template Didownload', text: 'Silakan isi nilai menggunakan Excel.', timer: 2000, showConfirmButton: false, heightAuto: false });
   };
 
-  const handleUploadExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Hanya memilih file dan menyimpannya ke state
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
 
-    if (!date || !importKelas) {
-      Swal.fire({ icon: 'warning', title: 'Data Kurang', text: 'Mohon isi Tanggal (di form atas) dan Pilih Kelas (di kartu import).', heightAuto: false });
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
+  // Proses Import setelah Konfirmasi
+  const handleProcessImport = async () => {
+    if (!selectedFile) return;
+
+    // Validasi Data Import
+    if (!importDate || !importKelas || !importSemester) {
+       Swal.fire({ 
+           icon: 'warning', 
+           title: 'Data Kurang', 
+           text: 'Mohon lengkapi Kelas, Semester, dan Tanggal Import.', 
+           heightAuto: false 
+       });
+       return;
     }
 
-    if (!importSemester) {
-      Swal.fire({ icon: 'warning', title: 'Pilih Semester', text: 'Pilih semester di kartu import terlebih dahulu.', heightAuto: false });
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
+    // 2. TAMPILKAN POPUP KONFIRMASI (Permintaan Revisi)
+    const confirmResult = await Swal.fire({
+        title: 'Yakin kirim nilai?',
+        html: `<p class="text-sm">Anda akan mengimport data nilai untuk:</p>
+               <p class="font-bold text-lg mt-2 text-emerald-600">Nama Kelas: ${importKelas}</p>
+               <p class="text-xs text-slate-500 mt-1">Pastikan file excel sudah sesuai template.</p>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#059669',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Konfirmasi',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true, // Tombol Cancel di kiri
+        heightAuto: false,
+        customClass: {
+            popup: 'rounded-2xl'
+        }
+    });
+
+    // Jika user klik Cancel, batalkan proses
+    if (!confirmResult.isConfirmed) {
+        return;
     }
 
+    // Lanjutkan Proses Membaca File
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
@@ -201,8 +235,7 @@ const TeacherInputGrades: React.FC = () => {
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         
-        // FIX: Tambahkan range: 5 untuk melewatkan 5 baris judul/metadata. 
-        // Sehingga pembacaan dimulai dari baris ke-6 (Header Tabel).
+        // FIX: Range 5 untuk melewati judul
         const data = XLSX.utils.sheet_to_json(ws, { range: 5 }) as any[];
 
         if (data.length === 0) throw new Error("File kosong atau format salah.");
@@ -241,7 +274,7 @@ const TeacherInputGrades: React.FC = () => {
                 description: rowKet, 
                 kelas: rowKelas,
                 semester: rowSem || '1', 
-                created_at: new Date(date).toISOString() 
+                created_at: new Date(importDate).toISOString() // Gunakan Import Date
               });
               successCount++;
             }
@@ -255,6 +288,8 @@ const TeacherInputGrades: React.FC = () => {
           heightAuto: false 
         });
         
+        // Reset File Input
+        setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
 
       } catch (err) {
@@ -262,7 +297,7 @@ const TeacherInputGrades: React.FC = () => {
         Swal.fire('Gagal', 'Format file tidak sesuai atau terjadi kesalahan sistem.', 'error');
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsBinaryString(selectedFile);
   };
 
   return (
@@ -399,39 +434,66 @@ const TeacherInputGrades: React.FC = () => {
              <Info size={16} className="text-blue-600 mt-0.5 shrink-0" />
              <p className="text-[9px] text-blue-800 leading-relaxed font-medium">
                <strong>Cara Pakai:</strong> <br/>
-               1. Pilih <strong>Kelas & Semester</strong> di bawah.<br/>
+               1. Pilih <strong>Kelas, Tanggal & Semester</strong>.<br/>
                2. Klik <strong>Download Template</strong> (file berisi nama siswa).<br/>
-               3. Isi kolom <strong>NILAI, SEMESTER, JENIS TUGAS</strong> <br/>
-               4. Upload file kembali disini.
+               3. Isi kolom <strong>NILAI</strong> di Excel.<br/>
+               4. Pilih File lalu Klik <strong>Proses Import</strong>.
              </p>
           </div>
 
           <div className="space-y-3">
-             {/* DROPDOWN KELAS IMPORT TERPISAH (SEMUA KELAS) */}
-             <div className="space-y-1">
-                <label className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Pilih Kelas untuk Import/Download</label>
-                <select 
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none text-slate-800 focus:border-blue-500" 
-                  value={importKelas} 
-                  onChange={(e) => setImportKelas(e.target.value)}
-                >
-                  <option value="">-- Pilih Kelas Import --</option>
-                  {allClassesList.map(k => <option key={k} value={k}>{k}</option>)}
-                </select>
+             {/* ROW 1: KELAS & TANGGAL (POSISI DI SAMPING KELAS) */}
+             <div className="grid grid-cols-2 gap-3">
+                 <div className="space-y-1">
+                    <label className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Kelas Import</label>
+                    <select 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none text-slate-800 focus:border-blue-500" 
+                      value={importKelas} 
+                      onChange={(e) => setImportKelas(e.target.value)}
+                    >
+                      <option value="">-- Pilih Kelas --</option>
+                      {allClassesList.map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                 </div>
+                 
+                 {/* 1. DROPDOWN TANGGAL DI SAMPING KELAS */}
+                 <div className="space-y-1">
+                   <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal Import</label>
+                   <input 
+                     type="date" 
+                     className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-[9px] md:text-xs font-black outline-none focus:border-blue-500 cursor-pointer text-slate-800" 
+                     value={importDate} 
+                     onChange={(e) => setImportDate(e.target.value)} 
+                   />
+                 </div>
              </div>
 
-             {/* DROPDOWN SEMESTER IMPORT */}
-             <div className="space-y-1">
-                <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Semester</label>
-                <select 
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-[10px] md:text-xs font-black outline-none text-slate-800 focus:border-blue-500" 
-                  value={importSemester} 
-                  onChange={(e) => setImportSemester(e.target.value)}
-                >
-                  <option value="">-- Pilih Semester --</option>
-                  <option value="1">Semester 1 (Ganjil)</option>
-                  <option value="2">Semester 2 (Genap)</option>
-                </select>
+             {/* ROW 2: SEMESTER & NAMA FILE (POSISI DI SAMPING SEMESTER) */}
+             <div className="grid grid-cols-2 gap-3">
+                 <div className="space-y-1">
+                    <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
+                    <select 
+                      className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-[10px] md:text-xs font-black outline-none text-slate-800 focus:border-blue-500" 
+                      value={importSemester} 
+                      onChange={(e) => setImportSemester(e.target.value)}
+                    >
+                      <option value="">-- Pilih --</option>
+                      <option value="1">1 (Ganjil)</option>
+                      <option value="2">2 (Genap)</option>
+                    </select>
+                 </div>
+
+                 {/* 2. KOLOM NAMA FILE */}
+                 <div className="space-y-1">
+                    <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">File Terpilih</label>
+                    <input 
+                      type="text" 
+                      readOnly
+                      placeholder="Belum ada file..."
+                      value={selectedFile ? selectedFile.name : ''}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-[9px] md:text-xs font-medium outline-none text-slate-600 truncate" 
+                    />
+                 </div>
              </div>
 
              <div className="grid grid-cols-2 gap-3">
@@ -442,21 +504,34 @@ const TeacherInputGrades: React.FC = () => {
                   <Download size={16} />
                   Download Template
                 </button>
+                
+                {/* TOMBOL PILIH FILE (Hanya Trigger Input) */}
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="py-3 rounded-xl bg-emerald-600 text-white font-black text-[9px] md:text-xs uppercase flex flex-col items-center justify-center gap-1 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-95"
+                  className="py-3 rounded-xl bg-slate-800 text-white font-black text-[9px] md:text-xs uppercase flex flex-col items-center justify-center gap-1 hover:bg-slate-700 transition-all active:scale-95"
                 >
                   <Upload size={16} />
-                  Upload Excel
+                  Pilih File Excel
                 </button>
                 <input 
                   type="file" 
                   ref={fileInputRef} 
-                  onChange={handleUploadExcel} 
+                  onChange={handleFileSelect} 
                   accept=".xlsx, .xls" 
                   className="hidden" 
                 />
              </div>
+
+             {/* TOMBOL PROSES IMPORT (MUNCUL JIKA FILE ADA) */}
+             {selectedFile && (
+                <button 
+                  onClick={handleProcessImport}
+                  className="w-full py-4 rounded-xl bg-emerald-600 text-white font-black text-[10px] md:text-sm uppercase flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-95 animate-fadeIn"
+                >
+                  <FileCheck size={18} />
+                  Proses Import Data
+                </button>
+             )}
           </div>
       </div>
     </div>
