@@ -131,7 +131,7 @@ const TeacherExams: React.FC = () => {
       <div className="flex flex-col bg-emerald-600 md:flex-row md:items-center justify-between gap-4 shadow-emerald-200 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm z-10 relative">
         <div>
           <h1 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight">Bank Soal</h1>
-          <p className="text-yellow-600 text-[10px] md:text-sm font-medium">Buat dan kelola soal untuk siswa.</p>
+          <p className="text-yellow text-[10px] md:text-sm font-medium">Buat dan kelola soal untuk siswa.</p>
         </div>
         <button 
           onClick={toggleForm}
