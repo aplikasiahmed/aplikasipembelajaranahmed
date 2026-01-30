@@ -43,6 +43,7 @@ CREATE TABLE "hasil_ujian" (
     semester TEXT NOT NULL,
     answers JSONB,
     score NUMERIC NOT NULL,
+    started_at TIMESTAMPTZ,       -- WAKTU MULAI (PENTING UNTUK DURASI)
     submitted_at TIMESTAMPTZ DEFAULT NOW()
 );
 

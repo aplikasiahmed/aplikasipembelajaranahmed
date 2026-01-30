@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Play, Timer, CheckCircle, AlertTriangle, ArrowRight, HelpCircle, Calendar, BookOpen, ShieldAlert, EyeOff, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
@@ -25,16 +25,18 @@ const PublicExam: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0); 
   const [score, setScore] = useState(0);
   
-  // NEW: State untuk mencatat waktu mulai riil
-  const [startTime, setStartTime] = useState<string>('');
-
   // NEW: State untuk Pelanggaran (Anti-Curang)
   const [violationCount, setViolationCount] = useState(0);
+  // REF: Gunakan Ref agar nilai selalu update tanpa re-render effect (SOLUSI ANTI-CURANG TIDAK MUNCUL)
+  const violationRef = useRef(0);
 
   // NEW: State Slideshow & Ragu-ragu
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
   const [showNavMobile, setShowNavMobile] = useState(false); // Untuk toggle navigasi di HP
+  
+  // NEW: State Waktu Mulai (Penting untuk Durasi Pengerjaan)
+  const [startTime, setStartTime] = useState<string>('');
 
   // --- HANDLERS ---
 
@@ -174,37 +176,34 @@ const PublicExam: React.FC = () => {
       setCurrentQIndex(0); // Reset ke soal pertama
       setFlaggedQuestions(new Set()); // Reset ragu-ragu
       setTimeLeft(exam.duration * 60);
+      
+      // SET WAKTU MULAI (PENTING UNTUK DURASI)
       setStartTime(new Date().toISOString());
-      setViolationCount(0); // Reset pelanggaran
+
+      // RESET SENSOR ANTI CURANG
+      setViolationCount(0); 
+      violationRef.current = 0; // Reset REF juga penting!
+      
       setStep('exam');
     }
   };
 
   // --- SISTEM DETEKSI PELANGGARAN (Anti-Cheat) ---
+  // PERBAIKAN: Menggunakan violationRef agar listener tidak putus (stale closure)
   useEffect(() => {
     if (step !== 'exam') return;
 
-    // 1. Deteksi Pindah Tab / Minimize
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        handleViolation("Anda terdeteksi keluar dari aplikasi ujian!");
-      }
-    };
+    // Fungsi Trigger Pelanggaran
+    const triggerViolation = (msg: string) => {
+        // Increment REF (Data Kebenaran)
+        violationRef.current += 1;
+        const currentViolations = violationRef.current;
+        
+        // Update STATE (Untuk Tampilan UI)
+        setViolationCount(currentViolations);
 
-    // 2. Deteksi Fokus Hilang (Laptop/Split Screen)
-    const handleBlur = () => {
-        // Debounce sedikit agar tidak terlalu sensitif pada klik biasa
-        setTimeout(() => {
-            if (document.activeElement?.tagName === "IFRAME") return; // Ignore iframes
-            handleViolation("Fokus layar hilang. Dilarang membuka aplikasi lain!");
-        }, 500);
-    };
-
-    const handleViolation = (msg: string) => {
-        const newCount = violationCount + 1;
-        setViolationCount(prev => prev + 1);
-
-        if (newCount === 1) {
+        // Logic Peringatan (Menggunakan REF agar akurat)
+        if (currentViolations === 1) {
             Swal.fire({
                 title: 'PELANGGARAN 1/3',
                 text: msg,
@@ -213,9 +212,9 @@ const PublicExam: React.FC = () => {
                 confirmButtonColor: '#f59e0b',
                 allowOutsideClick: false,
                 heightAuto: false,
-                customClass: { popup: 'z-[10000]' } // Pastikan di atas layer ujian
+                customClass: { popup: 'z-[10000]' }
             });
-        } else if (newCount === 2) {
+        } else if (currentViolations === 2) {
             Swal.fire({
                 title: 'PELANGGARAN 2/3 (TERAKHIR)',
                 text: 'JANGAN KELUAR LAGI! Sekali lagi Anda keluar, jawaban otomatis dikumpulkan dan nilai apa adanya.',
@@ -226,7 +225,7 @@ const PublicExam: React.FC = () => {
                 heightAuto: false,
                 customClass: { popup: 'z-[10000]' }
             });
-        } else if (newCount >= 3) {
+        } else if (currentViolations >= 3) {
             // DISKUALIFIKASI
             handleSubmitExam(true); // Auto Submit
             Swal.fire({
@@ -240,8 +239,29 @@ const PublicExam: React.FC = () => {
                 customClass: { popup: 'z-[10000]' }
             });
         }
-    }
+    };
 
+    // 1. Deteksi Pindah Tab / Minimize (HP & Laptop)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        triggerViolation("Anda terdeteksi keluar dari aplikasi ujian!");
+      }
+    };
+
+    // 2. Deteksi Fokus Hilang (Split Screen / Klik Aplikasi Lain)
+    const handleBlur = () => {
+        // Abaikan jika fokus ke elemen internal (seperti Iframe atau SweetAlert)
+        // Kita beri delay sedikit untuk memastikan bukan klik di dalam
+        setTimeout(() => {
+            if (document.activeElement?.tagName === "IFRAME" || document.activeElement?.tagName === "BODY") return;
+            // Cek apakah user benar-benar tidak aktif di window
+            if (!document.hasFocus()) {
+                triggerViolation("Fokus layar hilang. Dilarang membuka aplikasi lain!");
+            }
+        }, 300);
+    };
+
+    // Pasang Event Listeners
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
 
@@ -260,12 +280,13 @@ const PublicExam: React.FC = () => {
     };
     window.addEventListener('popstate', handlePopState);
 
+    // Cleanup saat unmount (Selesai Ujian)
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [step, violationCount]);
+  }, [step]); // Dependency Cuma STEP, agar tidak re-render saat count berubah (Ref yang menangani count)
 
 
   // TIMER LOGIC
@@ -291,8 +312,6 @@ const PublicExam: React.FC = () => {
   // ANSWER HANDLER (SlideShow Mode)
   const handleAnswer = (qId: string, optIndex: number) => {
     setAnswers(prev => ({ ...prev, [qId]: String(optIndex) }));
-    // Hapus ragu-ragu jika dijawab (Opsional, tapi biasanya membantu)
-    // if (flaggedQuestions.has(qId)) toggleFlag(qId); 
   };
 
   const toggleFlag = (qId: string) => {
@@ -377,12 +396,13 @@ const PublicExam: React.FC = () => {
             semester: selectedExam.semester, 
             answers: answers,
             score: finalScore,
-            started_at: startTime // KIRIM WAKTU MULAI
+            started_at: startTime // KIRIM WAKTU MULAI (RESTORED)
         });
         Swal.close();
       } catch (e) {
         console.error("Gagal simpan nilai", e);
-        Swal.fire({title: 'Error', text: 'Gagal menyimpan nilai. Screenshot layar ini dan lapor guru.', icon: 'error', customClass: { popup: 'z-[10000]' }});
+        // Pesan Error Lebih Jelas
+        Swal.fire({title: 'Error', text: 'Gagal menyimpan nilai. Pastikan kolom started_at sudah ada di database.', icon: 'error', customClass: { popup: 'z-[10000]' }});
       }
     }
 
