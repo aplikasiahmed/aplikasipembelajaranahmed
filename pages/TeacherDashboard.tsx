@@ -9,7 +9,8 @@ import {
   ShieldCheck, 
   TrendingUp, 
   Clock,
-  ArrowRight
+  ArrowRight,
+  FileEdit
 } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 
@@ -42,6 +43,8 @@ const TeacherDashboard: React.FC = () => {
     { title: 'Input Nilai', path: '/guru/nilai', icon: Award, color: 'bg-emerald-600', desc: 'Kelola nilai harian & ujian' },
     { title: 'Input Absensi', path: '/guru/absensi', icon: ClipboardCheck, color: 'bg-amber-600', desc: 'Rekap kehadiran harian' },
     { title: 'Cek Tugas', path: '/guru/tugas-masuk', icon: FileText, color: 'bg-purple-600', desc: 'Koreksi pengumpulan tugas' },
+    // KARTU BANK SOAL (KHUSUS MOBILE)
+    { title: 'Bank Soal', path: '/guru/ujian', icon: FileEdit, color: 'bg-pink-600', desc: 'Buat & Kelola Soal Ujian', mobileOnly: true },
     { title: 'Laporan', path: '/guru/laporan', icon: TrendingUp, color: 'bg-red-600', desc: 'Export PDF & Excel' },
     { title: 'Kelola Admin', path: '/guru/admin', icon: ShieldCheck, color: 'bg-blue-600', desc: 'Manajemen akun pengajar' },
   ];
@@ -96,7 +99,7 @@ const TeacherDashboard: React.FC = () => {
           <button
             key={idx}
             onClick={() => navigate(item.path)}
-            className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-emerald-100 transition-all group text-left relative overflow-hidden active:scale-95"
+            className={`bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-emerald-100 transition-all group text-left relative overflow-hidden active:scale-95 ${item.mobileOnly ? 'md:hidden' : ''}`}
           >
             <div className={`w-12 h-12 ${item.color} text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
               <item.icon size={24} />
