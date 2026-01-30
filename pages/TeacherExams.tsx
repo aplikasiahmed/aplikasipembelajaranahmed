@@ -14,12 +14,14 @@ const TeacherExams: React.FC = () => {
   // --- STATE UNTUK FORM (INLINE) ---
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // REVISI: Default values dibuat kosong agar muncul "Pilih..."
   const [formData, setFormData] = useState({
     title: '',
-    grade: '7',
-    category: 'harian', // Default
+    grade: '',     // Default kosong untuk "Pilih Kelas"
+    category: '',  // Default kosong untuk "Pilih Tugas"
     duration: '60',
-    semester: '1'
+    semester: ''   // Default kosong untuk "Pilih Semester"
   });
 
   // Load Exams
@@ -37,13 +39,13 @@ const TeacherExams: React.FC = () => {
   // Toggle Form
   const toggleForm = () => {
     if (!showForm) {
-      // Reset saat mau buka
+      // Reset form saat dibuka dengan value kosong
       setFormData({
         title: '',
-        grade: '7',
-        category: 'harian',
+        grade: '',
+        category: '',
         duration: '60',
-        semester: '1'
+        semester: ''
       });
     }
     setShowForm(!showForm);
@@ -56,8 +58,26 @@ const TeacherExams: React.FC = () => {
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.duration) {
-      Swal.fire({ icon: 'warning', title: 'Data Kurang', text: 'Judul dan Durasi wajib diisi!', heightAuto: false });
+    
+    // REVISI: Validasi Wajib Pilih Dropdown
+    if (!formData.title.trim()) {
+      Swal.fire({ icon: 'warning', title: 'Judul Kosong', text: 'Judul ujian wajib diisi.', heightAuto: false });
+      return;
+    }
+    if (!formData.category) {
+      Swal.fire({ icon: 'warning', title: 'Kategori Kosong', text: 'Silakan Pilih Tugas (Kategori) terlebih dahulu.', heightAuto: false });
+      return;
+    }
+    if (!formData.grade) {
+      Swal.fire({ icon: 'warning', title: 'Kelas Kosong', text: 'Silakan Pilih Kelas terlebih dahulu.', heightAuto: false });
+      return;
+    }
+    if (!formData.semester) {
+      Swal.fire({ icon: 'warning', title: 'Semester Kosong', text: 'Silakan Pilih Semester terlebih dahulu.', heightAuto: false });
+      return;
+    }
+    if (!formData.duration) {
+      Swal.fire({ icon: 'warning', title: 'Durasi Kosong', text: 'Durasi ujian wajib diisi.', heightAuto: false });
       return;
     }
 
@@ -180,12 +200,14 @@ const TeacherExams: React.FC = () => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kategori</label>
                     <div className="relative">
                        <Layers size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                       {/* REVISI: Default "Pilih Tugas" */}
                        <select 
                           name="category"
                           value={formData.category}
                           onChange={handleInputChange}
-                          className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all appearance-none"
+                          className={`w-full pl-9 pr-3 py-3 rounded-xl border text-xs font-bold outline-none focus:bg-white focus:border-emerald-500 transition-all appearance-none ${formData.category ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
                        >
+                          <option value="" disabled>-- Pilih Tugas --</option>
                           <option value="harian">Harian</option>
                           <option value="uts">UTS</option>
                           <option value="uas">UAS</option>
@@ -195,12 +217,14 @@ const TeacherExams: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kelas</label>
+                    {/* REVISI: Default "Pilih Kelas" */}
                     <select 
                         name="grade"
                         value={formData.grade}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all"
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none focus:bg-white focus:border-emerald-500 transition-all ${formData.grade ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
                     >
+                        <option value="" disabled>-- Pilih Kelas --</option>
                         <option value="7">Kelas 7</option>
                         <option value="8">Kelas 8</option>
                         <option value="9">Kelas 9</option>
@@ -225,12 +249,14 @@ const TeacherExams: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
+                     {/* REVISI: Default "Pilih Semester" */}
                      <select 
                         name="semester"
                         value={formData.semester}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all"
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none focus:bg-white focus:border-emerald-500 transition-all ${formData.semester ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
                      >
+                        <option value="" disabled>-- Pilih Semester --</option>
                         <option value="1">Ganjil (1)</option>
                         <option value="2">Genap (2)</option>
                      </select>

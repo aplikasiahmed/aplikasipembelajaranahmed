@@ -226,6 +226,35 @@ class DatabaseService {
       submitted_at: new Date().toISOString()
     };
     mockExamResults.push(newResult);
+
+    // --- REVISI: INTEGRASI AUTO-GRADING ---
+    // Ketika siswa submit ujian, nilai otomatis masuk ke Tabel 'Nilai' (GradeRecord)
+    try {
+      // 1. Ambil data Siswa asli dari Database (untuk mendapatkan ID Siswa UUID)
+      const student = await this.getStudentByNIS(result.student_nis);
+      
+      // 2. Ambil data Ujian (untuk tahu kategori & judul)
+      const exam = await this.getExamById(result.exam_id);
+
+      if (student && exam) {
+        // 3. Simpan ke Tabel Nilai (Layaknya Guru input manual)
+        await this.addGrade({
+          student_id: student.id!,
+          subject_type: exam.category, // 'harian' | 'uts' | 'uas' | 'praktik'
+          score: result.score,
+          description: `Ujian Online: ${exam.title}`, // Deskripsi otomatis
+          kelas: result.student_class,
+          semester: exam.semester,
+          created_at: new Date().toISOString()
+        });
+        console.log("Auto-grading successful: Score saved to Nilai table.");
+      }
+    } catch (error) {
+      console.error("Auto-grading failed:", error);
+      // Jangan throw error agar siswa tetap bisa melihat hasil ujiannya,
+      // meskipun gagal simpan ke buku nilai (fallback).
+    }
+
     return newResult;
   }
 }
