@@ -40,7 +40,17 @@ const PublicGrades: React.FC = () => {
         setStudent(found);
         const studentGrades = await db.getGradesByStudent(found.id!);
         setAllGrades(studentGrades);
-        Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, icon: 'success', title: 'Siswa Terverifikasi' });
+        
+        Swal.fire({ 
+            toast: true, 
+            position: 'top-end', 
+            icon: 'success', 
+            title: `Halo, ${found.namalengkap}`, 
+            text: ``,
+            showConfirmButton: false, 
+            timer: 2500 
+        });
+      
       } else {
         setStudent(null);
         setAllGrades([]);
@@ -110,7 +120,7 @@ const PublicGrades: React.FC = () => {
               <Award size={120} />
             </div>
             <div className="space-y-1 relative z-10">
-              <p className="text-emerald-200 text-[8px] font-bold uppercase tracking-widest">HASIL PENCARIAN • SEMESTER {semester}</p>
+              <p className="text-emerald-200 text-[8px] font-bold uppercase tracking-widest">DATA SISWA • SEMESTER {semester}</p>
               <h2 className="text-sm md:text-xl font-bold leading-tight uppercase tracking-tight">{student.namalengkap}</h2>
               {/* Added Gender Next to NIS */}
               <p className="text-emerald-100 text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis} • {student.jeniskelamin}</p>

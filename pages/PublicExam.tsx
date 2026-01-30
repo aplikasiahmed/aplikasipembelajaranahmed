@@ -70,9 +70,9 @@ const PublicExam: React.FC = () => {
             position: 'top-end', 
             icon: 'success', 
             title: `Halo, ${s.namalengkap}`, 
-            text: `Menampilkan ujian Semester ${semester}`,
+            text: ``,
             showConfirmButton: false, 
-            timer: 2000 
+            timer: 2500 
         });
 
       } else {
@@ -252,7 +252,7 @@ const PublicExam: React.FC = () => {
             </div>
 
             <button type="submit" disabled={loadingExams} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg flex items-center justify-center gap-2 transition-all">
-               {loadingExams ? 'Mencari...' : <><Search size={14} /> CARI UJIAN</>}
+               {loadingExams ? 'Mencari...' : <><Search size={14} /> CARI SOAL</>}
             </button>
           </form>
         </div>
@@ -272,12 +272,9 @@ const PublicExam: React.FC = () => {
               <CheckCircle size={100} />
             </div>
           <div className="relative z-10">
-            <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Selamat Datang</p>
+            <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">data siswa • Semester {semester}</p>
             <h1 className="text-lg font-black uppercase tracking-tight">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • </p>
-            <div className="inline-block bg-white/20 px-2 py-0.5 rounded-md mt-2">
-                <p className="text-[9px] font-bold uppercase">Ujian Semester {semester}</p>
-            </div>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • {student.jeniskelamin}</p>
           </div>
         </div>
 

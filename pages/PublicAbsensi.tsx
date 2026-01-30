@@ -40,7 +40,17 @@ const PublicAbsensi: React.FC = () => {
         setStudent(found);
         const records = await db.getAttendanceByStudent(found.id!);
         setAllAttendance(records);
-        Swal.fire({ icon: 'success', title: 'Siswa Terverifikasi', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+        
+        Swal.fire({ 
+            toast: true, 
+            position: 'top-end', 
+            icon: 'success', 
+            title: `Halo, ${found.namalengkap}`, 
+            text: ``,
+            showConfirmButton: false, 
+            timer: 2500 
+        });
+
       } else {
         setStudent(null);
         setAllAttendance([]);
@@ -117,7 +127,7 @@ const PublicAbsensi: React.FC = () => {
         <div className="space-y-3 md:space-y-4 animate-slideUp">
           <div className="bg-emerald-700 text-white p-4 md:p-5 rounded-[2rem] shadow-lg flex justify-between items-center relative overflow-hidden">
             <div className="space-y-0.5 relative z-10">
-              <p className="text-emerald-200 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Info Siswa • Semester {semester}</p>
+              <p className="text-emerald-200 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Data Siswa • Semester {semester}</p>
               <h2 className="text-sm md:text-lg font-black uppercase tracking-tight leading-tight">{student.namalengkap}</h2>
               {/* Added Gender Next to NIS */}
               <p className="text-emerald-100 text-[9px] md:text-[10px] font-medium">Kelas {student.kelas} • NIS {student.nis} • {student.jeniskelamin}</p>
