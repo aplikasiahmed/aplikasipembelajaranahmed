@@ -217,8 +217,8 @@ const PublicExam: React.FC = () => {
 
   if (step === 'login') {
     return (
-      <div className="max-w-md mx-auto min-h-[50vh] flex flex-col justify-center animate-fadeIn px-4">
-        <div className="text-center space-y-2 mb-6">
+      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
+        <div className="text-center space-y-1">
           <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
           <p className="text-xs text-slate-500">Silakan pilih semester dan masukkan NIS.</p>
         </div>
