@@ -284,10 +284,7 @@ const PublicExam: React.FC = () => {
           {activeExams.length === 0 ? (
              <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-200">
                <AlertTriangle className="mx-auto text-slate-200 mb-2" size={32} />
-               <p className="text-slate-600 text-xs font-bold">Tidak ada soal aktif.</p>
-               <p className="text-slate-400 text-[10px] mt-1 leading-relaxed">
-                  Pastikan Anda memilih <b>Semester {semester}</b> dengan benar,<br/>atau hubungi guru jika soal belum dipublikasikan.
-               </p>
+               <p className="text-slate-600 text-xs font-bold">Tidak ada soal yang di kerjakan.</p>
              </div>
           ) : (
              activeExams.map(exam => (
