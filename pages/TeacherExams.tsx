@@ -131,11 +131,11 @@ const TeacherExams: React.FC = () => {
       <div className="flex flex-col bg-emerald-600 md:flex-row md:items-center justify-between gap-4 shadow-emerald-200 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm z-10 relative">
         <div>
           <h1 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight">Bank Soal</h1>
-          <p className="text-yellow-500 text-[10px] md:text-sm font-medium">Buat dan kelola soal untuk siswa.</p>
+          <p className="text-yellow-400 text-[10px] md:text-sm font-medium">Buat dan kelola soal untuk siswa.</p>
         </div>
         <button 
           onClick={toggleForm}
-          className={`px-5 py-3 rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider ${showForm ? 'text-white red-600 hover:bg-red-800 shadow-red-900' : 'bg-blue-600 text-white shadow-blue-900 hover:bg-blue-800'}`}
+          className={`px-5 py-3 rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider ${showForm ? 'text-white bg-red-600 hover:bg-red-800 shadow-red-900' : 'bg-blue-600 text-white shadow-blue-900 hover:bg-blue-800'}`}
         >
           {showForm ? <><X size={16} /> Batal</> : <><Plus size={16} /> Buat Soal Baru</>}
         </button>
