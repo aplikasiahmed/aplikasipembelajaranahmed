@@ -219,8 +219,8 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-xs text-slate-500">Silakan pilih semester dan masukkan NIS.</p>
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk kerjakan soal</p>
         </div>
         
         <form onSubmit={handleLogin} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4">
@@ -253,8 +253,8 @@ const PublicExam: React.FC = () => {
               />
             </div>
           </div>
-          <button type="submit" disabled={loadingExams} className="w-full bg-emerald-600 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all">
-             {loadingExams ? 'Mencari...' : 'Cari Ujian'}
+          <button type="submit" disabled={loading} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all">
+            {loading ? 'Mencari...' : <><Search size={14} /> CARI SOAL</>}
           </button>
         </form>
       </div>
