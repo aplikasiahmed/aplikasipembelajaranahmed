@@ -128,14 +128,14 @@ const TeacherExams: React.FC = () => {
       </button>
 
       {/* HEADER CARD */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-emerald-200 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 shadow-sm z-10 relative">
+      <div className="flex flex-col bg-emerald-600 md:flex-row md:items-center justify-between gap-4 shadow-emerald-200 p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm z-10 relative">
         <div>
-          <h1 className="text-lg md:text-2xl font-black text-slate-800 uppercase tracking-tight">Bank Soal</h1>
+          <h1 className="text-lg md:text-2xl font-black text-white uppercase tracking-tight">Bank Soal</h1>
           <p className="text-slate-400 text-[10px] md:text-sm font-medium">Buat dan kelola soal untuk siswa.</p>
         </div>
         <button 
           onClick={toggleForm}
-          className={`px-5 py-3 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider ${showForm ? 'bg-red-500 text-white shadow-red-100' : 'bg-emerald-600 text-white shadow-emerald-500'}`}
+          className={`px-5 py-3 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider ${showForm ? 'bg-red-500 text-white shadow-red-100' : 'bg-emerald-800 text-white shadow-emerald-500'}`}
         >
           {showForm ? <><X size={16} /> Batal</> : <><Plus size={16} /> Buat Soal Baru</>}
         </button>
