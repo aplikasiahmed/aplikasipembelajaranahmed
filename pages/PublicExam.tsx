@@ -217,51 +217,45 @@ const PublicExam: React.FC = () => {
 
   if (step === 'login') {
     return (
-      <div className="max-w-md mx-auto min-h-[50vh] flex flex-col justify-center animate-fadeIn px-4">
-        <div className="text-center space-y-2 mb-6">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm animate-bounce">
-             <HelpCircle size={32} />
-          </div>
-          <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Login Ujian</h1>
-          <p className="text-xs text-slate-500">Silakan pilih semester dan masukkan NIS.</p>
+      <div className="max-w-2xl mx-auto space-y-3 md:space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
+        <div className="text-center space-y-1">
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk kerjakan soal.</p>
         </div>
         
-        <form onSubmit={handleLogin} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4">
-          {/* SEMESTER SELECTION */}
-          <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Semester Ujian</label>
-            <div className="relative">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+        <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
+          <form onSubmit={handleLogin} className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              {/* SEMESTER SELECTION */}
               <select 
-                className="w-full bg-slate-50 pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all text-slate-800 appearance-none"
+                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-normal outline-none focus:border-emerald-500 transition-all"
                 value={semester}
                 onChange={(e) => setSemester(e.target.value)}
               >
-                <option value="0">-- Pilih Semester --</option>
+                <option value="0">Pilih Semester</option>
                 <option value="1">Semester 1 (Ganjil)</option>
                 <option value="2">Semester 2 (Genap)</option>
               </select>
-            </div>
-          </div>
 
-          <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Nomor Induk Siswa</label>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input 
-                type="text" 
-                inputMode="numeric"
-                className="w-full bg-slate-50 pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:font-normal text-slate-800"
-                placeholder="Masukkan NIS..."
-                value={nis}
-                onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
-              />
+              {/* NIS INPUT */}
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:border-emerald-500 transition-all shadow-sm"
+                  placeholder="Masukkan Nomor Induk Siswa..."
+                  value={nis}
+                  onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
+                />
+              </div>
             </div>
-          </div>
-          <button type="submit" disabled={loadingExams} className="w-full bg-emerald-600 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all">
-             {loadingExams ? 'Mencari...' : 'Cari Ujian'}
-          </button>
-        </form>
+
+            <button type="submit" disabled={loadingExams} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg flex items-center justify-center gap-2 transition-all">
+               {loadingExams ? 'Mencari...' : <><Search size={14} /> CARI UJIAN</>}
+            </button>
+          </form>
+        </div>
       </div>
     );
   }

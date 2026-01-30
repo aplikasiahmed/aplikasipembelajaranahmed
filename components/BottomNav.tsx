@@ -64,7 +64,7 @@ const BottomNav: React.FC = () => {
               }`}
             >
               <link.icon size={16} strokeWidth={isActive ? 2.5 : 2} />
-              <span className={`text-[7px] font-bold tracking-tighter uppercase leading-none ${isActive ? 'opacity-100' : 'opacity-80'}`}>
+              <span className={`text-[7px] font-bold tracking-tighter uppercase leading-none text-center w-full ${isActive ? 'opacity-100' : 'opacity-80'}`}>
                 {link.name}
               </span>
             </Link>
