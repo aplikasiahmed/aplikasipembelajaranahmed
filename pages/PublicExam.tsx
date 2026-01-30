@@ -56,8 +56,8 @@ const PublicExam: React.FC = () => {
       if (s) {
         setStudent(s);
         
-        // Ambil Angka Kelas (misal 7.A -> '7')
-        const gradeChar = s.kelas.charAt(0); 
+        // Ambil Angka Kelas (misal 7.A -> '7'), handle jika null
+        const gradeChar = s.kelas ? s.kelas.charAt(0) : ''; 
         
         // Cari Ujian berdasarkan Kelas AND Semester
         const exams = await db.getActiveExamsByGrade(gradeChar, semester);
@@ -217,19 +217,23 @@ const PublicExam: React.FC = () => {
 
   if (step === 'login') {
     return (
-      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
-        <div className="text-center space-y-1">
-          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk kerjakan soal</p>
+      <div className="max-w-md mx-auto min-h-[50vh] flex flex-col justify-center animate-fadeIn px-4">
+        <div className="text-center space-y-2 mb-6">
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm animate-bounce">
+             <HelpCircle size={32} />
+          </div>
+          <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Login Ujian</h1>
+          <p className="text-xs text-slate-500">Silakan pilih semester dan masukkan NIS.</p>
         </div>
         
         <form onSubmit={handleLogin} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-4">
           {/* SEMESTER SELECTION */}
           <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Semester Ujian</label>
             <div className="relative">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <select 
-                className="w-full bg-slate-50 pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm font-noarmal outline-none focus:border-emerald-500 focus:bg-white transition-all text-slate-800 appearance-none"
+                className="w-full bg-slate-50 pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all text-slate-800 appearance-none"
                 value={semester}
                 onChange={(e) => setSemester(e.target.value)}
               >
@@ -241,20 +245,21 @@ const PublicExam: React.FC = () => {
           </div>
 
           <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Nomor Induk Siswa</label>
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
                 type="text" 
                 inputMode="numeric"
-                className="w-full bg-slate-50 pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm font-normal outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:font-normal text-slate-800"
-                placeholder="Masukkan nomor NIS siswa"
+                className="w-full bg-slate-50 pl-11 pr-4 py-3 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white transition-all placeholder:font-normal text-slate-800"
+                placeholder="Masukkan NIS..."
                 value={nis}
                 onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
               />
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all">
-            {loading ? 'Mencari...' : <><Search size={14} /> CARI SOAL</>}
+          <button type="submit" disabled={loadingExams} className="w-full bg-emerald-600 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all">
+             {loadingExams ? 'Mencari...' : 'Cari Ujian'}
           </button>
         </form>
       </div>
@@ -275,7 +280,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Selamat Datang</p>
             <h1 className="text-lg font-black uppercase tracking-tight">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student.nis} • </p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • </p>
             <div className="inline-block bg-white/20 px-2 py-0.5 rounded-md mt-2">
                 <p className="text-[9px] font-bold uppercase">Ujian Semester {semester}</p>
             </div>
