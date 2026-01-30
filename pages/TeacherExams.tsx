@@ -181,7 +181,7 @@ const TeacherExams: React.FC = () => {
                  
                  <button 
                    onClick={() => navigate(`/guru/ujian/edit/${exam.id}`)}
-                   className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-slate-900 shadow-sm active:scale-95 transition-all"
+                   className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-900 shadow-sm active:scale-95 transition-all"
                  >
                    <Edit size={14} /> Kelola Soal
                  </button>
