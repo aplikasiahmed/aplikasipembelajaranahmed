@@ -1,11 +1,16 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Student, AttendanceRecord, GradeRecord, Material, GradeLevel, TaskSubmission, AdminUser } from '../types';
+import { Student, AttendanceRecord, GradeRecord, Material, GradeLevel, TaskSubmission, AdminUser, Exam, Question, ExamResult } from '../types';
 
 const SUPABASE_URL = 'https://irqphggbsncuplifywul.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_2MlaJJX4yWGwaxU5qIVADA_4N1bqqZ-';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Mock Data Storage
+let mockExams: Exam[] = [];
+let mockQuestions: Question[] = [];
+let mockExamResults: ExamResult[] = [];
 
 class DatabaseService {
   // ADMIN FUNCTIONS
@@ -156,6 +161,72 @@ class DatabaseService {
     if (grade) query = query.eq('grade', grade);
     const { data, error } = await query;
     return (data || []) as Material[];
+  }
+
+  // --- EXAM & QUESTION FUNCTIONS (MOCK IMPLEMENTATION) ---
+  
+  // 1. Manage Exams
+  async getExams(): Promise<Exam[]> {
+    // Return all exams sorted by created_at desc
+    return [...mockExams].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  async getExamById(id: string): Promise<Exam | undefined> {
+    return mockExams.find(e => e.id === id);
+  }
+
+  async createExam(exam: Omit<Exam, 'id' | 'created_at'>): Promise<Exam> {
+    const newExam: Exam = {
+      ...exam,
+      id: crypto.randomUUID(),
+      created_at: new Date().toISOString()
+    };
+    mockExams.push(newExam);
+    return newExam;
+  }
+
+  async updateExamStatus(id: string, status: 'draft' | 'active' | 'closed'): Promise<void> {
+    const exam = mockExams.find(e => e.id === id);
+    if (exam) exam.status = status;
+  }
+  
+  async deleteExam(id: string): Promise<void> {
+    mockExams = mockExams.filter(e => e.id !== id);
+    mockQuestions = mockQuestions.filter(q => q.exam_id !== id);
+  }
+
+  // 2. Manage Questions
+  async getQuestionsByExamId(examId: string): Promise<Question[]> {
+    return mockQuestions.filter(q => q.exam_id === examId);
+  }
+
+  async addQuestion(question: Omit<Question, 'id'>): Promise<Question> {
+    const newQ: Question = {
+      ...question,
+      id: crypto.randomUUID()
+    };
+    mockQuestions.push(newQ);
+    return newQ;
+  }
+
+  async deleteQuestion(id: string): Promise<void> {
+    mockQuestions = mockQuestions.filter(q => q.id !== id);
+  }
+
+  // 3. Student Public Exam
+  async getActiveExamsByGrade(grade: string): Promise<Exam[]> {
+    // Return exams that are active AND match the grade level
+    return mockExams.filter(e => e.status === 'active' && e.grade === grade);
+  }
+
+  async submitExamResult(result: Omit<ExamResult, 'id' | 'submitted_at'>): Promise<ExamResult> {
+    const newResult: ExamResult = {
+      ...result,
+      id: crypto.randomUUID(),
+      submitted_at: new Date().toISOString()
+    };
+    mockExamResults.push(newResult);
+    return newResult;
   }
 }
 

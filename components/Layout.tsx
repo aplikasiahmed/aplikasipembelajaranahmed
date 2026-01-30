@@ -62,6 +62,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const teacherLinks = [
     { name: 'Dashboard', path: '/guru', icon: LayoutDashboard },
+    { name: 'Bank Soal', path: '/guru/ujian', icon: FileEdit }, // Menu Baru
     { name: 'Input Nilai', path: '/guru/nilai', icon: Award },
     { name: 'Input Absensi', path: '/guru/absensi', icon: ClipboardCheck },
     { name: 'Cek Tugas Siswa', path: '/guru/tugas-masuk', icon: FileSearch },

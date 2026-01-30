@@ -8,12 +8,15 @@ import PublicGrades from './pages/PublicGrades';
 import PublicAbsensi from './pages/PublicAbsensi';
 import PublicTasks from './pages/PublicTasks';
 import PublicMaterials from './pages/PublicMaterials';
+import PublicExam from './pages/PublicExam';
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherInputGrades from './pages/TeacherInputGrades';
 import TeacherInputAbsensi from './pages/TeacherInputAbsensi';
 import TeacherReports from './pages/TeacherReports';
 import TeacherTaskCheck from './pages/TeacherTaskCheck';
 import TeacherAdminManagement from './pages/TeacherAdminManagement';
+import TeacherExams from './pages/TeacherExams';
+import TeacherExamEditor from './pages/TeacherExamEditor';
 
 // Higher Order Component for Route Protection
 // Fix: Use React.FC and make children optional to resolve the "Property 'children' is missing" JSX error
@@ -56,7 +59,8 @@ const App: React.FC = () => {
           <Route path="/nilai" element={<PublicGrades />} />
           <Route path="/absensi" element={<PublicAbsensi />} />
           <Route path="/tugas" element={<PublicTasks />} />
-          <Route path="/kerjakan-tugas" element={<PlaceholderPage title="Kerjakan Soal" />} />
+          {/* Halaman Ujian Siswa (Sudah bukan Placeholder) */}
+          <Route path="/kerjakan-tugas" element={<PublicExam />} />
           <Route path="/materi" element={<PublicMaterials />} />
           
           {/* Protected Teacher Routes */}
@@ -65,6 +69,18 @@ const App: React.FC = () => {
               <TeacherDashboard />
             </ProtectedRoute>
           } />
+          {/* Route Baru: Bank Soal & Editor */}
+          <Route path="/guru/ujian" element={
+            <ProtectedRoute>
+              <TeacherExams />
+            </ProtectedRoute>
+          } />
+          <Route path="/guru/ujian/edit/:id" element={
+            <ProtectedRoute>
+              <TeacherExamEditor />
+            </ProtectedRoute>
+          } />
+
           <Route path="/guru/nilai" element={
             <ProtectedRoute>
               <TeacherInputGrades />
