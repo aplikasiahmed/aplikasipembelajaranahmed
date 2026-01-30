@@ -389,7 +389,7 @@ const TeacherInputGrades: React.FC = () => {
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Jenjang</label>
               <div className="flex gap-1">
                 {(['7', '8', '9'] as const).map((g) => (
-                  <button key={g} type="button" onClick={() => setGrade(g)} className={`flex-1 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-sm font-black border transition-all ${grade === g ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200'}`}>{g}</button>
+                  <button key={g} type="button" onClick={() => setGrade(g)} className={`flex-1 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-sm font-normal border transition-all ${grade === g ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200'}`}>{g}</button>
                 ))}
               </div>
             </div>
@@ -398,7 +398,7 @@ const TeacherInputGrades: React.FC = () => {
               <div className="relative">
                 <input 
                   type="date" 
-                  className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-black outline-none focus:border-emerald-500 cursor-pointer text-slate-600 placeholder:text-slate-300" 
+                  className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-normal outline-none focus:border-emerald-500 cursor-pointer text-slate-600 placeholder:text-slate-300" 
                   value={date} 
                   onChange={(e) => setDate(e.target.value)} 
                   placeholder="pilih tanggal"
@@ -411,14 +411,14 @@ const TeacherInputGrades: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nama Kelas</label>
-              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-black outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}>
+              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-normal outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}>
                 <option value="">-- Pilih Kelas --</option>
                 {availableKelas.map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
             <div className="space-y-1">
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-black outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
+              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-normal outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
                 <option value="">-- Pilih Semester --</option>
                 <option value="1">Semester 1</option>
                 <option value="2">Semester 2</option>
@@ -430,7 +430,7 @@ const TeacherInputGrades: React.FC = () => {
           <div className="space-y-1">
             <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nama Siswa</label>
             <select 
-              className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-black outline-none" 
+              className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-normal outline-none" 
               value={selectedStudentId} 
               onChange={(e) => setSelectedStudentId(e.target.value)}
             >
@@ -443,7 +443,7 @@ const TeacherInputGrades: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="space-y-1">
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Jenis Tugas</label>
-              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-black outline-none" value={type} onChange={(e: any) => setType(e.target.value)}>
+              <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-normal outline-none" value={type} onChange={(e: any) => setType(e.target.value)}>
                 <option value="">-- Pilih Tugas --</option>
                 <option value="harian">Harian</option>
                 <option value="uts">UTS</option>
@@ -478,7 +478,7 @@ const TeacherInputGrades: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Bab/Tugas (min: -)" 
-                className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-medium outline-none" 
+                className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[10px] md:text-sm font-normal outline-none" 
                 value={desc} 
                 onChange={(e) => setDesc(e.target.value)} 
               />

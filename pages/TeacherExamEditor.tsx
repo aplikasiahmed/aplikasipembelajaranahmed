@@ -203,7 +203,7 @@ const TeacherExamEditor: React.FC = () => {
             <div>
                 <p className="text-emerald-200 text-[9px] font-bold uppercase tracking-widest mb-1">EDITOR SOAL</p>
                 <h1 className="text-lg md:text-xl font-black uppercase tracking-tight leading-tight">{exam.title}</h1>
-                <p className="text-emerald-100 text-[10px] mt-1">Kelas {exam.grade} • {questions.length} Soal</p>
+                <p className="text-emerald-100 text-[10px] mt-1">Kelas {exam.grade} • Semester {exam.semester} • {questions.length} Soal</p>
             </div>
             {exam.status === 'active' && (
                 <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
@@ -277,9 +277,10 @@ const TeacherExamEditor: React.FC = () => {
                           <div key={opt}>
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="w-5 h-5 rounded-full bg-white text-emerald-500 text-[10px] font-black flex items-center justify-center border border-slate-200">{opt}</span>
+                                {/* REVISI WARNA INPUT MENJADI BG-WHITE */}
                                 <input 
                                     type="text"
-                                    className="flex-1 p-2 rounded-lg border border-slate-200 text-xs font-medium focus:border-emerald-500 outline-none"
+                                    className="flex-1 p-2 rounded-lg border border-slate-200 text-xs font-medium focus:border-emerald-500 outline-none bg-white text-slate-800"
                                     placeholder={`Jawaban ${opt}`}
                                     value={idx === 0 ? optA : idx === 1 ? optB : idx === 2 ? optC : optD}
                                     onChange={(e) => {
@@ -359,9 +360,10 @@ const TeacherExamEditor: React.FC = () => {
                                 >
                                     <Pencil size={16} />
                                 </button>
+                                {/* REVISI WARNA ICON HAPUS JADI MERAH */}
                                 <button 
                                     onClick={() => handleDeleteQ(q.id)} 
-                                    className={`p-1.5 rounded-lg shrink-0 ${exam.status === 'active' ? 'text-slate-200 cursor-not-allowed' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
+                                    className={`p-1.5 rounded-lg shrink-0 ${exam.status === 'active' ? 'text-slate-200 cursor-not-allowed' : 'text-red-500 hover:text-red-700 hover:bg-red-50'}`}
                                     title={exam.status === 'active' ? "Nonaktifkan ujian untuk menghapus" : "Hapus Soal"}
                                 >
                                     <Trash2 size={16} />

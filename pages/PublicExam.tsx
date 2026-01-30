@@ -36,7 +36,7 @@ const PublicExam: React.FC = () => {
       Swal.fire({ 
         icon: 'warning', 
         title: 'Pilih Semester', 
-        text: 'Silakan pilih semester ujian terlebih dahulu.', 
+        text: 'Silakan pilih semester terlebih dahulu.', 
         heightAuto: false 
       });
       return;
@@ -70,7 +70,7 @@ const PublicExam: React.FC = () => {
             position: 'top-end', 
             icon: 'success', 
             title: `Halo, ${s.namalengkap}`, 
-            text: `Menampilkan ujian Semester ${semester}`,
+            text: ``,
             showConfirmButton: false, 
             timer: 2000 
         });
@@ -98,7 +98,7 @@ const PublicExam: React.FC = () => {
             Swal.fire({
                 icon: 'error',
                 title: 'Akses Ditolak',
-                text: 'Anda sudah mengerjakan soal ini. Soal tidak bisa dikerjakan lebih dari 1x.',
+                text: 'Anda sudah mengerjakan soal ini. Soal tidak bisa dikerjakan lebih dari 1x',
                 heightAuto: false
             });
             return;
@@ -109,7 +109,7 @@ const PublicExam: React.FC = () => {
     const q = await db.getQuestionsByExamId(exam.id);
     
     if (q.length === 0) {
-      Swal.fire('Maaf', 'Soal belum tersedia / kosong untuk ujian ini.', 'info');
+      Swal.fire('Maaf', 'Soal belum tersedia.', 'info');
       return;
     }
     
@@ -269,7 +269,7 @@ const PublicExam: React.FC = () => {
             </div>
 
             <button type="submit" disabled={loadingExams} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg flex items-center justify-center gap-2 transition-all">
-               {loadingExams ? 'Mencari...' : <><Search size={14} /> CARI UJIAN</>}
+               {loadingExams ? 'Mencari...' : <><Search size={14} /> CARI SOAL</>}
             </button>
           </form>
         </div>
@@ -289,12 +289,9 @@ const PublicExam: React.FC = () => {
               <CheckCircle size={100} />
             </div>
           <div className="relative z-10">
-            <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Selamat Datang</p>
+            <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa • Semester {semester} </p>
             <h1 className="text-lg font-black uppercase tracking-tight">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • </p>
-            <div className="inline-block bg-white/20 px-2 py-0.5 rounded-md mt-2">
-                <p className="text-[9px] font-bold uppercase">Ujian Semester {semester}</p>
-            </div>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • {student.jeniskelamin} </p>
           </div>
         </div>
 
@@ -328,7 +325,7 @@ const PublicExam: React.FC = () => {
                  </div>
                  <button 
                    onClick={() => startExam(exam)}
-                   className="w-full bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md active:scale-95"
+                   className="w-full bg-red-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md active:scale-95"
                  >
                    <Play size={12} fill="currentColor" /> Kerjakan Sekarang
                  </button>
@@ -431,8 +428,8 @@ const PublicExam: React.FC = () => {
            <CheckCircle size={48} strokeWidth={3} />
         </div>
         
-        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Ujian Selesai!</h1>
-        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai.</p>
+        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
+        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
         
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl w-full space-y-2 mb-8 relative overflow-hidden">
            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
@@ -444,7 +441,7 @@ const PublicExam: React.FC = () => {
           onClick={() => { setStep('login'); setNis(''); setSemester('0'); }}
           className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
         >
-          <ArrowRight size={16} /> Kembali ke Depan
+          <ArrowRight size={16} /> Selesai
         </button>
       </div>
     );
