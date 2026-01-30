@@ -88,16 +88,18 @@ const TeacherExams: React.FC = () => {
         grade: formData.grade as GradeLevel,
         category: formData.category as any,
         semester: formData.semester,
-        duration: parseInt(formData.duration),
+        duration: parseInt(formData.duration) || 60, // Fallback 60 jika error parse
         status: 'draft'
       });
       
       Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Soal baru telah dibuat.', timer: 1000, showConfirmButton: false, heightAuto: false });
       setShowForm(false); // Tutup form
       fetchExams();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan sistem.', heightAuto: false });
+      // Tampilkan pesan error spesifik dari database jika ada
+      const errMsg = err.message || 'Terjadi kesalahan sistem.';
+      Swal.fire({ icon: 'error', title: 'Gagal', text: errMsg, heightAuto: false });
     } finally {
       setIsSubmitting(false);
     }
@@ -301,6 +303,9 @@ const TeacherExams: React.FC = () => {
                    </span>
                    <span className="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
                       {exam.duration} MENIT
+                   </span>
+                   <span className="text-[9px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                      SEM {exam.semester}
                    </span>
                 </div>
                 <h3 className="text-sm md:text-base font-black text-slate-800 leading-tight">{exam.title}</h3>

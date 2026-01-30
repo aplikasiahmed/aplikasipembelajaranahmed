@@ -280,7 +280,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Selamat Datang</p>
             <h1 className="text-lg font-black uppercase tracking-tight">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student.nis}</p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student.nis} • </p>
             <div className="inline-block bg-white/20 px-2 py-0.5 rounded-md mt-2">
                 <p className="text-[9px] font-bold uppercase">Ujian Semester {semester}</p>
             </div>
