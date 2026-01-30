@@ -408,7 +408,7 @@ const PublicExam: React.FC = () => {
            <CheckCircle size={48} strokeWidth={3} />
         </div>
         
-        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Ujian Selesai!</h1>
+        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Soal telah selesai dikerjakan!</h1>
         <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai.</p>
         
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl w-full space-y-2 mb-8 relative overflow-hidden">
@@ -419,9 +419,9 @@ const PublicExam: React.FC = () => {
 
         <button 
           onClick={() => { setStep('login'); setNis(''); setSemester('0'); }}
-          className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
+          className="bg-emerald text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
         >
-          <ArrowRight size={16} /> Kembali ke Depan
+          <ArrowRight size={16} /> Selesai
         </button>
       </div>
     );
