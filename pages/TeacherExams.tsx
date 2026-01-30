@@ -135,7 +135,7 @@ const TeacherExams: React.FC = () => {
         </div>
         <button 
           onClick={toggleForm}
-          className={`px-5 py-3 rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider ${showForm ? 'bg-blue-700 text-white bg-blue-600 hover:bg-blue-600 shadow-blue-800' : 'bg-red-600 text-white'}`}
+          className={`px-5 py-3 rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider ${showForm ? 'text-white bg-blue-600 hover:bg-blue-600 shadow-blue-800' : 'bg-red-600 text-white shadow-red-800'}`}
         >
           {showForm ? <><X size={16} /> Batal</> : <><Plus size={16} /> Buat Soal Baru</>}
         </button>
