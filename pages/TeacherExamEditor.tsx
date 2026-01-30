@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2, CheckCircle2, AlertCircle, ImageIcon, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle2, AlertCircle, ImageIcon, X, Loader2, Pencil } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Exam, Question } from '../types';
 import Swal from 'sweetalert2';
@@ -14,16 +14,19 @@ const TeacherExamEditor: React.FC = () => {
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   
-  // Form State untuk Soal Baru
+  // State untuk Mode Edit
+  const [editingQId, setEditingQId] = useState<string | null>(null);
+
+  // Form State
   const [qText, setQText] = useState('');
-  const [qImage, setQImage] = useState(''); // Base64 Image String
+  const [qImage, setQImage] = useState('');
   const [isProcessingImg, setIsProcessingImg] = useState(false);
 
   const [optA, setOptA] = useState('');
   const [optB, setOptB] = useState('');
   const [optC, setOptC] = useState('');
   const [optD, setOptD] = useState('');
-  const [correctKey, setCorrectKey] = useState('0'); // 0=A, 1=B, 2=C, 3=D
+  const [correctKey, setCorrectKey] = useState('0'); 
 
   useEffect(() => {
     if (id) {
@@ -42,7 +45,6 @@ const TeacherExamEditor: React.FC = () => {
     setQuestions(q);
   };
 
-  // Logic Kompresi Gambar (Sama seperti di Input Tugas)
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -54,7 +56,7 @@ const TeacherExamEditor: React.FC = () => {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 600; // Resize agar tidak terlalu besar
+          const MAX_WIDTH = 600; 
           let width = img.width;
           let height = img.height;
 
@@ -68,7 +70,7 @@ const TeacherExamEditor: React.FC = () => {
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
           
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Quality 60%
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
           setQImage(dataUrl);
           setIsProcessingImg(false);
         };
@@ -76,36 +78,72 @@ const TeacherExamEditor: React.FC = () => {
     }
   };
 
-  const handleAddQuestion = async (e: React.FormEvent) => {
+  const handleEditClick = (q: Question) => {
+    if (exam?.status === 'active') {
+        Swal.fire({ icon: 'warning', title: 'Ujian Aktif', text: 'Nonaktifkan ujian terlebih dahulu untuk mengedit.', heightAuto: false });
+        return;
+    }
+    setEditingQId(q.id);
+    setQText(q.text);
+    setQImage(q.image_url || '');
+    if (q.options && q.options.length === 4) {
+        setOptA(q.options[0]);
+        setOptB(q.options[1]);
+        setOptC(q.options[2]);
+        setOptD(q.options[3]);
+    }
+    setCorrectKey(q.correct_answer);
+    // Scroll ke form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingQId(null);
+    setQText('');
+    setQImage('');
+    setOptA(''); setOptB(''); setOptC(''); setOptD('');
+    setCorrectKey('0');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!exam) return;
+
+    if (exam.status === 'active') {
+       Swal.fire({ icon: 'warning', title: 'Ujian Aktif', text: 'Nonaktifkan ujian terlebih dahulu.', heightAuto: false });
+       return;
+    }
 
     if (!qText || !optA || !optB || !optC || !optD) {
       Swal.fire({ icon: 'warning', title: 'Lengkapi Soal', text: 'Pertanyaan dan semua opsi jawaban wajib diisi.', heightAuto: false });
       return;
     }
 
-    try {
-      await db.addQuestion({
-        exam_id: exam.id,
-        type: 'pg',
+    const payload = {
+        type: 'pg' as any,
         text: qText,
-        image_url: qImage, // Simpan gambar
+        image_url: qImage,
         options: [optA, optB, optC, optD],
         correct_answer: correctKey
-      });
+    };
 
-      // Reset Form
-      setQText('');
-      setQImage('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      setOptA(''); setOptB(''); setOptC(''); setOptD('');
-      setCorrectKey('0');
-      
-      Swal.fire({ icon: 'success', title: 'Tersimpan', text: 'Soal berhasil ditambahkan.', timer: 1000, showConfirmButton: false, heightAuto: false });
-      
-      // Reload Questions
-      loadData(exam.id);
+    try {
+      if (editingQId) {
+          // UPDATE
+          await db.updateQuestion(editingQId, payload);
+          Swal.fire({ icon: 'success', title: 'Diperbarui', text: 'Data soal berhasil diupdate.', timer: 1000, showConfirmButton: false, heightAuto: false });
+      } else {
+          // CREATE
+          await db.addQuestion({
+            exam_id: exam.id,
+            ...payload
+          });
+          Swal.fire({ icon: 'success', title: 'Tersimpan', text: 'Soal berhasil ditambahkan.', timer: 1000, showConfirmButton: false, heightAuto: false });
+      }
+
+      cancelEdit(); // Reset form
+      loadData(exam.id); // Reload
 
     } catch (err) {
       Swal.fire('Error', 'Gagal menyimpan soal.', 'error');
@@ -113,10 +151,42 @@ const TeacherExamEditor: React.FC = () => {
   };
 
   const handleDeleteQ = async (qid: string) => {
-    const res = await Swal.fire({ title: 'Hapus Soal?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626', heightAuto: false });
-    if (res.isConfirmed && exam) {
-      await db.deleteQuestion(qid);
-      loadData(exam.id);
+    if (!exam) return;
+
+    if (exam.status === 'active') {
+       Swal.fire({ icon: 'warning', title: 'Ujian Aktif', text: 'Nonaktifkan ujian terlebih dahulu untuk menghapus soal.', heightAuto: false });
+       return;
+    }
+
+    const res = await Swal.fire({ 
+        title: 'Hapus Soal?', 
+        text: 'Soal ini akan dihapus permanen.',
+        icon: 'warning', 
+        showCancelButton: true, 
+        confirmButtonColor: '#dc2626', 
+        heightAuto: false 
+    });
+
+    if (!res.isConfirmed) return;
+
+    const { value: token } = await Swal.fire({
+      title: 'Verifikasi Keamanan',
+      text: 'Masukkan Token ID Server PAI',
+      input: 'password',
+      inputPlaceholder: 'Token Keamanan',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      heightAuto: false
+    });
+
+    if (token === "PAI_ADMIN_GURU") {
+        await db.deleteQuestion(qid);
+        loadData(exam.id);
+        Swal.fire({ icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false, heightAuto: false });
+        if (editingQId === qid) cancelEdit();
+    } else if (token !== undefined) {
+        Swal.fire({ icon: 'error', title: 'Token Salah', text: 'Penghapusan dibatalkan.', heightAuto: false });
     }
   };
 
@@ -144,13 +214,19 @@ const TeacherExamEditor: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* KOLOM KIRI: FORM TAMBAH SOAL */}
+        {/* KOLOM KIRI: FORM TAMBAH/EDIT SOAL */}
         <div className="md:col-span-1">
-            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm sticky top-20">
-                <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-4 flex items-center gap-2">
-                    <Plus size={16} className="text-emerald-600"/> Tambah Soal PG
-                </h2>
-                <form onSubmit={handleAddQuestion} className="space-y-3">
+            <div className={`bg-white p-4 rounded-2xl border border-slate-100 shadow-sm sticky top-20 ${exam.status === 'active' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                        {editingQId ? <><Pencil size={16} className="text-blue-600"/> Edit Soal</> : <><Plus size={16} className="text-emerald-600"/> Tambah Soal</>}
+                    </h2>
+                    {editingQId && (
+                        <button onClick={cancelEdit} className="text-[10px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded-lg">Batal Edit</button>
+                    )}
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Pertanyaan</label>
                         <textarea 
@@ -233,10 +309,11 @@ const TeacherExamEditor: React.FC = () => {
                         </select>
                     </div>
 
-                    <button type="submit" disabled={isProcessingImg} className="w-full bg-emerald-600 text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-emerald-700 shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mt-2">
-                        <Save size={14} /> Simpan Soal
+                    <button type="submit" disabled={isProcessingImg} className={`w-full text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mt-2 ${editingQId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                        <Save size={14} /> {editingQId ? 'Update Soal' : 'Simpan Soal'}
                     </button>
                 </form>
+                {exam.status === 'active' && <p className="text-[10px] text-red-500 font-bold text-center mt-2 italic">*Nonaktifkan ujian untuk mengedit</p>}
             </div>
         </div>
 
@@ -249,10 +326,10 @@ const TeacherExamEditor: React.FC = () => {
                 </div>
             ) : (
                 questions.map((q, idx) => (
-                    <div key={q.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-100 transition-all group">
+                    <div key={q.id} className={`bg-white p-4 rounded-2xl border shadow-sm transition-all group ${editingQId === q.id ? 'border-blue-500 ring-2 ring-blue-500/10' : 'border-slate-100 hover:border-emerald-100'}`}>
                         <div className="flex justify-between items-start gap-3">
                             <div className="flex gap-3 w-full">
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-500 font-black text-[10px] flex items-center justify-center border border-slate-200">
+                                <span className={`flex-shrink-0 w-6 h-6 rounded-full font-black text-[10px] flex items-center justify-center border ${editingQId === q.id ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
                                     {idx + 1}
                                 </span>
                                 <div className="space-y-3 w-full">
@@ -273,9 +350,23 @@ const TeacherExamEditor: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <button onClick={() => handleDeleteQ(q.id)} className="text-slate-300 hover:text-red-500 p-1 shrink-0">
-                                <Trash2 size={16} />
-                            </button>
+                            
+                            <div className="flex flex-col gap-1">
+                                <button 
+                                    onClick={() => handleEditClick(q)} 
+                                    className={`p-1.5 rounded-lg shrink-0 ${exam.status === 'active' ? 'text-slate-200 cursor-not-allowed' : 'text-blue-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                    title={exam.status === 'active' ? "Nonaktifkan ujian untuk mengedit" : "Edit Soal"}
+                                >
+                                    <Pencil size={16} />
+                                </button>
+                                <button 
+                                    onClick={() => handleDeleteQ(q.id)} 
+                                    className={`p-1.5 rounded-lg shrink-0 ${exam.status === 'active' ? 'text-slate-200 cursor-not-allowed' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
+                                    title={exam.status === 'active' ? "Nonaktifkan ujian untuk menghapus" : "Hapus Soal"}
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))

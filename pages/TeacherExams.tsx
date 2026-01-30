@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileEdit, Plus, Trash2, Edit, PlayCircle, PauseCircle, Loader2, ArrowLeft, X, Save, BookOpen, Clock, Layers } from 'lucide-react';
+import { FileEdit, Plus, Trash2, Edit, PlayCircle, PauseCircle, Loader2, ArrowLeft, X, Save, BookOpen, Clock, Layers, Pencil } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Exam, GradeLevel } from '../types';
 import Swal from 'sweetalert2';
@@ -14,8 +14,8 @@ const TeacherExams: React.FC = () => {
   // --- STATE UNTUK FORM (INLINE) ---
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
-  // REVISI: Default values dibuat kosong agar muncul "Pilih..."
   const [formData, setFormData] = useState({
     title: '',
     grade: '',     // Default kosong untuk "Pilih Kelas"
@@ -39,7 +39,7 @@ const TeacherExams: React.FC = () => {
   // Toggle Form
   const toggleForm = () => {
     if (!showForm) {
-      // Reset form saat dibuka dengan value kosong
+      // Reset form saat dibuka
       setFormData({
         title: '',
         grade: '',
@@ -47,8 +47,27 @@ const TeacherExams: React.FC = () => {
         duration: '60',
         semester: ''
       });
+      setEditingId(null);
     }
     setShowForm(!showForm);
+  };
+
+  const handleEditClick = (exam: Exam) => {
+    if (exam.status === 'active') {
+       Swal.fire({ icon: 'warning', title: 'Ujian Aktif', text: 'Nonaktifkan ujian terlebih dahulu untuk mengedit.', heightAuto: false });
+       return;
+    }
+    setFormData({
+        title: exam.title,
+        grade: exam.grade,
+        category: exam.category,
+        duration: String(exam.duration),
+        semester: exam.semester
+    });
+    setEditingId(exam.id);
+    setShowForm(true);
+    // Scroll ke atas agar form terlihat
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -56,10 +75,10 @@ const TeacherExams: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // REVISI: Validasi Wajib Pilih Dropdown
+    // Validasi Wajib Pilih Dropdown
     if (!formData.title.trim()) {
       Swal.fire({ icon: 'warning', title: 'Judul Kosong', text: 'Judul ujian wajib diisi.', heightAuto: false });
       return;
@@ -83,21 +102,32 @@ const TeacherExams: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await db.createExam({
+      const payload = {
         title: formData.title,
         grade: formData.grade as GradeLevel,
         category: formData.category as any,
         semester: formData.semester,
-        duration: parseInt(formData.duration) || 60, // Fallback 60 jika error parse
-        status: 'draft'
-      });
+        duration: parseInt(formData.duration) || 60, 
+      };
+
+      if (editingId) {
+          // UPDATE
+          await db.updateExam(editingId, payload);
+          Swal.fire({ icon: 'success', title: 'Diperbarui', text: 'Data ujian berhasil diupdate.', timer: 1000, showConfirmButton: false, heightAuto: false });
+      } else {
+          // CREATE
+          await db.createExam({
+            ...payload,
+            status: 'draft'
+          });
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Soal baru telah dibuat.', timer: 1000, showConfirmButton: false, heightAuto: false });
+      }
       
-      Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Soal baru telah dibuat.', timer: 1000, showConfirmButton: false, heightAuto: false });
-      setShowForm(false); // Tutup form
+      setShowForm(false);
+      setEditingId(null);
       fetchExams();
     } catch (err: any) {
       console.error(err);
-      // Tampilkan pesan error spesifik dari database jika ada
       const errMsg = err.message || 'Terjadi kesalahan sistem.';
       Swal.fire({ icon: 'error', title: 'Gagal', text: errMsg, heightAuto: false });
     } finally {
@@ -109,7 +139,6 @@ const TeacherExams: React.FC = () => {
     const newStatus = exam.status === 'active' ? 'draft' : 'active';
     const actionText = newStatus === 'active' ? 'Mengaktifkan' : 'Menonaktifkan';
     
-    // Konfirmasi
     const result = await Swal.fire({
       title: `${actionText} Soal?`,
       text: newStatus === 'active' ? 'Siswa dapat melihat dan mengerjakan soal ini.' : 'Soal akan disembunyikan dari siswa.',
@@ -126,20 +155,71 @@ const TeacherExams: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (exam: Exam) => {
+    // 1. Validasi Status Aktif
+    if (exam.status === 'active') {
+       Swal.fire({
+          icon: 'error',
+          title: 'Akses Ditolak',
+          text: 'Ujian sedang AKTIF. Silakan nonaktifkan (draft) terlebih dahulu untuk menghapus.',
+          heightAuto: false
+       });
+       return;
+    }
+
+    // 2. Konfirmasi Awal
     const result = await Swal.fire({
       title: 'Hapus Ujian?',
-      text: 'Semua soal di dalamnya juga akan terhapus.',
+      text: 'Anda akan menghapus data ujian ini.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#dc2626',
-      confirmButtonText: 'Hapus Permanen',
+      confirmButtonText: 'Ya, Hapus',
       heightAuto: false
     });
 
-    if (result.isConfirmed) {
-      await db.deleteExam(id);
-      fetchExams();
+    if (!result.isConfirmed) return;
+
+    // 3. Validasi Keamanan Token
+    const { value: token } = await Swal.fire({
+      title: 'Verifikasi Keamanan',
+      text: 'Masukkan Token ID Server PAI',
+      input: 'password',
+      inputPlaceholder: 'Token Keamanan',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      heightAuto: false
+    });
+
+    if (token === "PAI_ADMIN_GURU") {
+        Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading(), heightAuto: false });
+        
+        // 4. CEK APAKAH ADA HASIL UJIAN
+        const hasResults = await db.hasExamResults(exam.id);
+
+        if (hasResults) {
+            // JIKA ADA HASIL: HAPUS SOAL SAJA, JANGAN HAPUS UJIAN
+            await db.deleteAllQuestionsByExamId(exam.id);
+            // Opsional: Set status closed atau ubah judul untuk menandakan archived
+            await db.updateExamStatus(exam.id, 'closed');
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Diarsipkan',
+                text: 'Ujian memiliki data hasil siswa. Hanya soal yang dihapus untuk menjaga arsip nilai.',
+                heightAuto: false
+            });
+        } else {
+            // JIKA TIDAK ADA HASIL: HAPUS SEMUA (CLEAN DELETE)
+            await db.deleteExam(exam.id);
+            Swal.fire({ icon: 'success', title: 'Terhapus', text: 'Data ujian berhasil dihapus permanen.', timer: 1500, showConfirmButton: false, heightAuto: false });
+        }
+        
+        fetchExams();
+
+    } else if (token !== undefined) {
+        Swal.fire({ icon: 'error', title: 'Token Salah', text: 'Penghapusan dibatalkan.', heightAuto: false });
     }
   };
 
@@ -163,26 +243,24 @@ const TeacherExams: React.FC = () => {
         </button>
       </div>
 
-      {/* FORM CARD (INLINE, MUNCUL DI BAWAH HEADER) */}
+      {/* FORM CARD (INLINE) */}
       {showForm && (
         <div className="bg-white w-full rounded-[2.5rem] p-6 md:p-8 shadow-xl border border-blue-100 relative overflow-hidden animate-slideUp">
-             {/* Background Decoration */}
              <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                 <BookOpen size={120} className="text-blue-900"/>
              </div>
              
-             {/* Header Form */}
              <div className="flex items-center gap-3 mb-6 relative z-10">
                   <div className="bg-blue-100 text-blue-700 p-2.5 rounded-xl">
                      <FileEdit size={20} />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Form Ujian Baru</h2>
+                    <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">{editingId ? 'Edit Data Ujian' : 'Form Ujian Baru'}</h2>
                     <p className="text-[10px] text-slate-400 font-medium leading-none">Lengkapi detail ujian di bawah ini</p>
                   </div>
              </div>
 
-             <form onSubmit={handleCreateSubmit} className="space-y-4 relative z-10">
+             <form onSubmit={handleFormSubmit} className="space-y-4 relative z-10">
                {/* 1. Judul Ujian */}
                <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul Ujian</label>
@@ -202,7 +280,6 @@ const TeacherExams: React.FC = () => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kategori</label>
                     <div className="relative">
                        <Layers size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                       {/* REVISI: Default "Pilih Tugas" */}
                        <select 
                           name="category"
                           value={formData.category}
@@ -219,7 +296,6 @@ const TeacherExams: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kelas</label>
-                    {/* REVISI: Default "Pilih Kelas" */}
                     <select 
                         name="grade"
                         value={formData.grade}
@@ -251,7 +327,6 @@ const TeacherExams: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-                     {/* REVISI: Default "Pilih Semester" */}
                      <select 
                         name="semester"
                         value={formData.semester}
@@ -265,14 +340,13 @@ const TeacherExams: React.FC = () => {
                   </div>
                </div>
 
-               {/* Tombol Submit */}
                <div className="pt-2">
                   <button 
                     type="submit" 
                     disabled={isSubmitting}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
-                    {isSubmitting ? <><Loader2 size={16} className="animate-spin"/> Proses...</> : <><Save size={16} /> Simpan Soal</>}
+                    {isSubmitting ? <><Loader2 size={16} className="animate-spin"/> Proses...</> : <><Save size={16} /> {editingId ? 'Update Data' : 'Simpan Soal'}</>}
                   </button>
                </div>
             </form>
@@ -320,17 +394,32 @@ const TeacherExams: React.FC = () => {
                  >
                    {exam.status === 'active' ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
                  </button>
+
+                 {/* Tombol Edit Ujian (Metadata) - BARU */}
+                 <button 
+                    onClick={() => handleEditClick(exam)}
+                    className={`p-2.5 rounded-xl border transition-all active:scale-95 ${exam.status === 'active' ? 'bg-slate-100 text-slate-300 border-transparent cursor-not-allowed' : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'}`}
+                    title="Edit Data Ujian"
+                 >
+                    <Pencil size={18} />
+                 </button>
                  
                  <button 
-                   onClick={() => navigate(`/guru/ujian/edit/${exam.id}`)}
-                   className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-900 shadow-sm active:scale-95 transition-all"
+                   onClick={() => {
+                       if(exam.status === 'active') {
+                           Swal.fire({ icon: 'warning', title: 'Akses Dibatasi', text: 'Nonaktifkan ujian terlebih dahulu untuk mengedit soal.', heightAuto: false });
+                       } else {
+                           navigate(`/guru/ujian/edit/${exam.id}`)
+                       }
+                   }}
+                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm active:scale-95 transition-all ${exam.status === 'active' ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-900'}`}
                  >
                    <Edit size={14} /> Kelola Soal
                  </button>
 
                  <button 
-                   onClick={() => handleDelete(exam.id)}
-                   className="p-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-all active:scale-95"
+                   onClick={() => handleDelete(exam)}
+                   className={`p-2.5 rounded-xl border transition-all active:scale-95 ${exam.status === 'active' ? 'bg-slate-100 text-slate-300 border-transparent cursor-not-allowed' : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100'}`}
                  >
                    <Trash2 size={18} />
                  </button>

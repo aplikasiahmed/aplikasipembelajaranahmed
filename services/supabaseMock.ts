@@ -177,6 +177,11 @@ class DatabaseService {
     if (error) throw error;
     return data as Exam;
   }
+  
+  async updateExam(id: string, updates: Partial<Exam>): Promise<void> {
+    const { error } = await supabase.from('ujian').update(updates).eq('id', id);
+    if (error) throw error;
+  }
 
   async updateExamStatus(id: string, status: 'draft' | 'active' | 'closed'): Promise<void> {
     const { error } = await supabase.from('ujian').update({ status }).eq('id', id);
@@ -200,25 +205,54 @@ class DatabaseService {
     return data as Question;
   }
 
+  async updateQuestion(id: string, updates: Partial<Question>): Promise<void> {
+    const { error } = await supabase.from('bank_soal').update(updates).eq('id', id);
+    if (error) throw error;
+  }
+
   async deleteQuestion(id: string): Promise<void> {
     const { error } = await supabase.from('bank_soal').delete().eq('id', id);
     if (error) throw error;
   }
+  
+  async deleteAllQuestionsByExamId(examId: string): Promise<void> {
+    const { error } = await supabase.from('bank_soal').delete().eq('exam_id', examId);
+    if (error) throw error;
+  }
 
   // 3. Student Public Exam (Tabel: ujian & hasil_ujian)
-  // UPDATED: Filter by Grade AND Semester
   async getActiveExamsByGrade(grade: string, semester: string): Promise<Exam[]> {
-    // Pastikan Semester selalu dalam bentuk String agar cocok dengan DB
     const semString = String(semester);
-    
     const { data, error } = await supabase
         .from('ujian')
         .select('*')
         .eq('status', 'active')
         .eq('grade', grade)
-        .eq('semester', semString); // FILTER SEMESTER INI KUNCINYA
+        .eq('semester', semString); 
 
     return (data || []) as Exam[];
+  }
+
+  async checkStudentExamResult(nis: string, examId: string): Promise<boolean> {
+    const { data, error } = await supabase
+        .from('hasil_ujian')
+        .select('id')
+        .eq('student_nis', nis)
+        .eq('exam_id', examId)
+        .limit(1); 
+    
+    if (error) return false;
+    return data && data.length > 0;
+  }
+  
+  async hasExamResults(examId: string): Promise<boolean> {
+    const { count, error } = await supabase
+        .from('hasil_ujian')
+        .select('*', { count: 'exact', head: true })
+        .eq('exam_id', examId);
+    
+    if (error) return false;
+    return (count || 0) > 0;
   }
 
   async submitExamResult(result: Omit<ExamResult, 'id' | 'submitted_at'>): Promise<ExamResult> {
@@ -228,26 +262,20 @@ class DatabaseService {
     const newResult = data as ExamResult;
 
     // 2. INTEGRASI AUTO-GRADING KE BUKU NILAI
-    // Ketika siswa submit ujian, nilai otomatis masuk ke Tabel 'Nilai' (GradeRecord)
     try {
-      // Ambil data Siswa asli dari Database
       const student = await this.getStudentByNIS(result.student_nis);
-      // Ambil data Ujian
       const exam = await this.getExamById(result.exam_id);
 
       if (student && exam) {
-        // Simpan ke Tabel Nilai (Layaknya Guru input manual)
-        // INILAH INTEGRASINYA: Menggunakan exam.semester agar sesuai dengan semester soal
         await this.addGrade({
           student_id: student.id!,
           subject_type: exam.category, 
           score: result.score,
           description: `Ujian Online: ${exam.title}`,
           kelas: result.student_class,
-          semester: exam.semester, // Auto-Sync Semester
+          semester: exam.semester, 
           created_at: new Date().toISOString()
         });
-        console.log("Auto-grading successful.");
       }
     } catch (error) {
       console.error("Auto-grading failed:", error);
