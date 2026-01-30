@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Timer, CheckCircle, AlertTriangle, ArrowRight, HelpCircle, Calendar, BookOpen, ShieldAlert, EyeOff } from 'lucide-react';
+import { Search, Play, Timer, CheckCircle, AlertTriangle, ArrowRight, HelpCircle, Calendar, BookOpen, ShieldAlert, EyeOff, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
 import Swal from 'sweetalert2';
@@ -30,6 +30,11 @@ const PublicExam: React.FC = () => {
 
   // NEW: State untuk Pelanggaran (Anti-Curang)
   const [violationCount, setViolationCount] = useState(0);
+
+  // NEW: State Slideshow & Ragu-ragu
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
+  const [showNavMobile, setShowNavMobile] = useState(false); // Untuk toggle navigasi di HP
 
   // --- HANDLERS ---
 
@@ -121,33 +126,29 @@ const PublicExam: React.FC = () => {
     
     // TAMPILKAN TATA TERTIB & KONFIRMASI
     const rules = await Swal.fire({
-      title: 'TATA TERTIB UJIAN',
+      title: 'MODE UJIAN AMAN',
       html: `
         <div class="text-left space-y-3">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div>
                 <div>
-                    <h4 class="font-bold text-red-600 text-sm">SISTEM ANTI-CURANG AKTIF</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem akan mendeteksi jika Anda keluar aplikasi, pindah tab, atau membuka notifikasi.</p>
+                    <h4 class="font-bold text-red-600 text-sm">PERINGATAN KERAS</h4>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda keluar aplikasi/pindah tab. Pelanggaran 3x = DISKUALIFIKASI.</p>
                 </div>
             </div>
             
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
+                <li>Tampilan akan menjadi layar penuh.</li>
                 <li>Dilarang membuka Google / Browser lain.</li>
-                <li>Dilarang membuka WhatsApp / Kalkulator.</li>
-                <li>Jika terdeteksi keluar <b>3 KALI</b>, ujian akan <b>OTOMATIS DIKUMPULKAN</b>.</li>
-                <li>Waktu pengerjaan: <b>${exam.duration} Menit</b>.</li>
+                <li>Dilarang <i>Copy-Paste</i> atau <i>Screenshot</i>.</li>
+                <li>Jika tombol navigasi HP hilang, geser dari bawah layar.</li>
             </ul>
-
-            <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-center">
-               <p class="text-[10px] font-bold text-slate-500">Klik tombol di bawah untuk menyetujui & mulai.</p>
-            </div>
         </div>
       `,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#059669',
-      confirmButtonText: 'SAYA MENGERTI & PATUH',
+      confirmButtonText: 'SAYA MENGERTI & SIAP',
       cancelButtonText: 'Batal',
       heightAuto: false,
       allowOutsideClick: false,
@@ -170,6 +171,8 @@ const PublicExam: React.FC = () => {
       setSelectedExam(exam);
       setQuestions(q);
       setAnswers({});
+      setCurrentQIndex(0); // Reset ke soal pertama
+      setFlaggedQuestions(new Set()); // Reset ragu-ragu
       setTimeLeft(exam.duration * 60);
       setStartTime(new Date().toISOString());
       setViolationCount(0); // Reset pelanggaran
@@ -181,52 +184,86 @@ const PublicExam: React.FC = () => {
   useEffect(() => {
     if (step !== 'exam') return;
 
+    // 1. Deteksi Pindah Tab / Minimize
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // SISWA KELUAR APLIKASI / PINDAH TAB
+        handleViolation("Anda terdeteksi keluar dari aplikasi ujian!");
+      }
+    };
+
+    // 2. Deteksi Fokus Hilang (Laptop/Split Screen)
+    const handleBlur = () => {
+        // Debounce sedikit agar tidak terlalu sensitif pada klik biasa
+        setTimeout(() => {
+            if (document.activeElement?.tagName === "IFRAME") return; // Ignore iframes
+            handleViolation("Fokus layar hilang. Dilarang membuka aplikasi lain!");
+        }, 500);
+    };
+
+    const handleViolation = (msg: string) => {
         const newCount = violationCount + 1;
-        setViolationCount(newCount);
+        setViolationCount(prev => prev + 1);
 
         if (newCount === 1) {
             Swal.fire({
-                title: 'PERINGATAN 1',
-                text: 'Dilarang meninggalkan halaman ujian! Ini adalah peringatan pertama.',
+                title: 'PELANGGARAN 1/3',
+                text: msg,
                 icon: 'warning',
                 confirmButtonText: 'Kembali Mengerjakan',
                 confirmButtonColor: '#f59e0b',
                 allowOutsideClick: false,
-                heightAuto: false
+                heightAuto: false,
+                customClass: { popup: 'z-[10000]' } // Pastikan di atas layer ujian
             });
         } else if (newCount === 2) {
             Swal.fire({
-                title: 'PERINGATAN TERAKHIR!',
-                text: 'JANGAN KELUAR LAGI! Jika Anda keluar sekali lagi, jawaban akan otomatis dikumpulkan dan Anda didiskualifikasi.',
+                title: 'PELANGGARAN 2/3 (TERAKHIR)',
+                text: 'JANGAN KELUAR LAGI! Sekali lagi Anda keluar, jawaban otomatis dikumpulkan dan nilai apa adanya.',
                 icon: 'error',
                 confirmButtonText: 'Saya Mengerti',
                 confirmButtonColor: '#dc2626',
                 allowOutsideClick: false,
-                heightAuto: false
+                heightAuto: false,
+                customClass: { popup: 'z-[10000]' }
             });
         } else if (newCount >= 3) {
             // DISKUALIFIKASI
             handleSubmitExam(true); // Auto Submit
             Swal.fire({
-                title: 'UJIAN DIHENTIKAN',
-                text: 'Anda terdeteksi melakukan kecurangan berulang kali (3x). Sistem telah mengunci jawaban Anda.',
+                title: 'DISKUALIFIKASI',
+                text: 'Anda melanggar aturan berulang kali. Ujian dihentikan paksa oleh sistem.',
                 icon: 'error',
                 confirmButtonText: 'Lihat Hasil',
                 confirmButtonColor: '#000000',
                 allowOutsideClick: false,
-                heightAuto: false
+                heightAuto: false,
+                customClass: { popup: 'z-[10000]' }
             });
         }
-      }
-    };
+    }
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+
+    // Mencegah Tombol Back Browser (PopState)
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+        window.history.pushState(null, "", window.location.href);
+        Swal.fire({
+            title: 'Dilarang Kembali',
+            text: 'Gunakan tombol "Selesai" jika ingin mengakhiri ujian.',
+            icon: 'warning',
+            timer: 2000,
+            showConfirmButton: false,
+            customClass: { popup: 'z-[10000]' }
+        });
+    };
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, [step, violationCount]);
 
@@ -251,9 +288,33 @@ const PublicExam: React.FC = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // ANSWER HANDLER
+  // ANSWER HANDLER (SlideShow Mode)
   const handleAnswer = (qId: string, optIndex: number) => {
     setAnswers(prev => ({ ...prev, [qId]: String(optIndex) }));
+    // Hapus ragu-ragu jika dijawab (Opsional, tapi biasanya membantu)
+    // if (flaggedQuestions.has(qId)) toggleFlag(qId); 
+  };
+
+  const toggleFlag = (qId: string) => {
+      const newFlags = new Set(flaggedQuestions);
+      if (newFlags.has(qId)) {
+          newFlags.delete(qId);
+      } else {
+          newFlags.add(qId);
+      }
+      setFlaggedQuestions(newFlags);
+  };
+
+  const goToNextQuestion = () => {
+      if (currentQIndex < questions.length - 1) {
+          setCurrentQIndex(prev => prev + 1);
+      }
+  };
+
+  const goToPrevQuestion = () => {
+      if (currentQIndex > 0) {
+          setCurrentQIndex(prev => prev - 1);
+      }
   };
 
   // STEP 3: SUBMIT EXAM
@@ -273,7 +334,8 @@ const PublicExam: React.FC = () => {
           showCancelButton: true,
           confirmButtonColor: '#d33',
           confirmButtonText: 'Ya, Kumpulkan',
-          heightAuto: false
+          heightAuto: false,
+          customClass: { popup: 'z-[10000]' }
         });
         if (!confirm.isConfirmed) return;
       } else {
@@ -284,13 +346,11 @@ const PublicExam: React.FC = () => {
           showCancelButton: true,
           confirmButtonColor: '#059669',
           confirmButtonText: 'Ya, Selesai',
-          heightAuto: false
+          heightAuto: false,
+          customClass: { popup: 'z-[10000]' }
         });
         if (!confirm.isConfirmed) return;
       }
-    } else {
-        // Jika Auto Submit (Waktu habis / Diskualifikasi)
-        // Tidak perlu alert disini karena sudah di handle di logic pemanggil (Timer / Violation)
     }
 
     // HITUNG NILAI
@@ -306,7 +366,7 @@ const PublicExam: React.FC = () => {
 
     // SIMPAN KE DATABASE (Auto-Grading)
     if (selectedExam && student) {
-      Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading(), heightAuto: false, allowOutsideClick: false });
+      Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading(), heightAuto: false, allowOutsideClick: false, customClass: { popup: 'z-[10000]' } });
       
       try {
         await db.submitExamResult({
@@ -322,7 +382,7 @@ const PublicExam: React.FC = () => {
         Swal.close();
       } catch (e) {
         console.error("Gagal simpan nilai", e);
-        Swal.fire('Error', 'Gagal menyimpan nilai ke server. Hubungi guru.', 'error');
+        Swal.fire({title: 'Error', text: 'Gagal menyimpan nilai. Screenshot layar ini dan lapor guru.', icon: 'error', customClass: { popup: 'z-[10000]' }});
       }
     }
 
@@ -436,92 +496,238 @@ const PublicExam: React.FC = () => {
     );
   }
 
-  if (step === 'exam' && selectedExam) {
+  // --- TAMPILAN UJIAN (FULLSCREEN OVERLAY) ---
+  if (step === 'exam' && selectedExam && questions.length > 0) {
+    const currentQ = questions[currentQIndex];
+    const isLastQ = currentQIndex === questions.length - 1;
+
     return (
-      <div className="max-w-3xl mx-auto min-h-screen pb-20 animate-fadeIn bg-slate-50 relative">
-        {/* Sticky Timer Header */}
-        <div className="sticky top-16 md:top-20 z-30 bg-white/95 backdrop-blur-xl border-b border-emerald-100 p-3 md:p-4 shadow-sm flex justify-between items-center rounded-b-2xl mb-4 mx-2 md:mx-0">
-           <div>
-              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Sisa Waktu</p>
-              <div className="flex items-baseline gap-1">
-                <p className={`text-xl font-black font-mono tracking-tight leading-none ${timeLeft < 60 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>
-                  {formatTime(timeLeft)}
-                </p>
-                <span className="text-[10px] font-bold text-slate-400">menit</span>
+      // Z-INDEX 9999 + FIXED INSET-0 AKAN MENUTUPI HEADER & FOOTER
+      <div 
+        className="fixed inset-0 z-[9999] bg-slate-100 flex flex-col overflow-hidden select-none"
+        onContextMenu={(e) => e.preventDefault()} // DISABLE KLIK KANAN
+      >
+        {/* HEADER INFORMASI LENGKAP (REVISI SESUAI REQUEST) */}
+        <div className="bg-white border-b border-emerald-100 shadow-md p-3 z-50 flex items-center justify-between shrink-0 h-20 md:h-24">
+           {/* Info Kiri: Data Siswa */}
+           <div className="flex items-center gap-3">
+              <div className="hidden md:flex w-12 h-12 bg-emerald-600 text-white rounded-xl items-center justify-center shadow-lg">
+                 <User size={24} />
+              </div>
+              <div className="space-y-0.5">
+                 <h2 className="text-xs md:text-lg font-black text-slate-800 uppercase tracking-tight leading-none">
+                    {student?.namalengkap}
+                 </h2>
+                 <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase">
+                    Kelas {student?.kelas} • {selectedExam.title} 
+                 </p>
+                 <div className="flex items-center gap-2 text-[9px] md:text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md w-fit">
+                    <Calendar size={10}/> 
+                    <span>{new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</span>
+                    <span>• Sem {selectedExam.semester}</span>
+                 </div>
               </div>
            </div>
-           
-           {/* Indikator Status Keamanan (Visual Only) */}
-           <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100">
-              <ShieldAlert size={14} className={violationCount > 0 ? "text-red-500 animate-pulse" : "text-emerald-500"} />
-              <span className="text-[9px] font-bold uppercase">Status: {violationCount === 0 ? 'Aman' : `Pelanggaran ${violationCount}/3`}</span>
-           </div>
 
-           <button 
-             onClick={() => handleSubmitExam(false)}
-             className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-emerald-200 active:scale-95 transition-all hover:bg-emerald-700"
-           >
-             Selesai
-           </button>
-        </div>
-
-        <div className="space-y-6 px-3 md:px-0">
-          {questions.map((q, idx) => (
-            <div key={q.id} className="bg-white p-5 md:p-6 rounded-[1.5rem] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
-               <div className="absolute right-0 top-0 p-4 opacity-[0.03] font-black text-9xl text-slate-800 pointer-events-none -translate-y-6 translate-x-4">
-                 {idx + 1}
+           {/* Info Kanan: Timer & Tombol Selesai */}
+           <div className="flex items-center gap-2 md:gap-4">
+               {violationCount > 0 && (
+                   <div className="hidden md:flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg border border-red-100 animate-pulse">
+                      <ShieldAlert size={14} />
+                      <span className="text-[10px] font-black uppercase">Pelanggaran {violationCount}/3</span>
+                   </div>
+               )}
+               
+               <div className="text-right mr-2">
+                  <p className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-widest">Sisa Waktu</p>
+                  <div className="flex items-baseline justify-end gap-1">
+                    <p className={`text-lg md:text-2xl font-black font-mono tracking-tight leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>
+                      {formatTime(timeLeft)}
+                    </p>
+                    <span className="text-[9px] font-bold text-slate-400">mnt</span>
+                  </div>
                </div>
 
-               <div className="relative z-10">
-                   <div className="flex gap-4 mb-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-black text-sm border border-emerald-100 shadow-sm">
-                        {idx + 1}
+               <button 
+                 onClick={() => handleSubmitExam(false)}
+                 className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg shadow-red-200 active:scale-95 transition-all hover:bg-red-700 flex items-center gap-2"
+               >
+                 <LogOut size={14} strokeWidth={3} /> <span className="hidden md:inline">Selesai</span>
+               </button>
+           </div>
+        </div>
+
+        {/* BODY: SLIDESHOW SOAL & NAVIGATOR */}
+        <div className="flex flex-1 overflow-hidden">
+            
+            {/* AREA SOAL (KIRI) */}
+            <div className="flex-1 flex flex-col h-full relative overflow-y-auto bg-slate-50">
+               
+               {/* Progress Bar di atas soal */}
+               <div className="w-full bg-slate-200 h-1">
+                  <div 
+                    className="bg-emerald-500 h-1 transition-all duration-300" 
+                    style={{ width: `${((currentQIndex + 1) / questions.length) * 100}%` }}
+                  ></div>
+               </div>
+
+               <div className="p-4 md:p-8 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full animate-slideRight">
+                  {/* KARTU SOAL */}
+                  <div className="bg-white p-5 md:p-8 rounded-[2rem] shadow-xl border border-slate-100 relative min-h-[400px] flex flex-col">
+                      <div className="flex justify-between items-start mb-4 md:mb-6">
+                          <span className="bg-emerald-600 text-white px-4 py-1.5 rounded-xl text-xs md:text-sm font-black shadow-md">
+                             SOAL NO. {currentQIndex + 1}
+                          </span>
+                          <button 
+                             onClick={() => toggleFlag(currentQ.id)}
+                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${flaggedQuestions.has(currentQ.id) ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
+                          >
+                             <Flag size={12} fill={flaggedQuestions.has(currentQ.id) ? "currentColor" : "none"} /> Ragu-ragu
+                          </button>
                       </div>
-                      <div className="flex-1 pt-1">
-                        {/* Gambar Soal */}
-                        {q.image_url && (
-                            <div className="mb-4 rounded-xl overflow-hidden border border-slate-100 shadow-sm max-w-md bg-slate-50">
-                                <img src={q.image_url} alt="Soal" className="w-full h-auto object-contain" />
-                            </div>
-                        )}
-                        <p className="text-sm md:text-base font-bold text-slate-800 leading-relaxed">
-                          {q.text}
-                        </p>
+
+                      {/* GAMBAR SOAL */}
+                      {currentQ.image_url && (
+                          <div className="mb-6 rounded-2xl overflow-hidden border border-slate-100 shadow-sm max-w-lg mx-auto bg-slate-50">
+                              <img src={currentQ.image_url} alt="Soal" className="w-full h-auto object-contain max-h-[300px]" />
+                          </div>
+                      )}
+
+                      {/* TEKS SOAL */}
+                      <div className="flex-1 mb-6">
+                          <p className="text-sm md:text-lg font-bold text-slate-800 leading-relaxed">
+                            {currentQ.text}
+                          </p>
                       </div>
-                   </div>
-                   
-                   <div className="space-y-2.5 pl-0 md:pl-12">
-                     {q.options?.map((opt, optIdx) => {
-                       const isSelected = answers[q.id] === String(optIdx);
-                       return (
-                         <button
-                           key={optIdx}
-                           onClick={() => handleAnswer(q.id, optIdx)}
-                           className={`w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all text-xs md:text-sm flex items-start gap-3 group active:scale-[0.98] ${
-                             isSelected 
-                               ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-sm' 
-                               : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-200 hover:bg-slate-50'
-                           }`}
-                         >
-                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center text-[10px] font-black shrink-0 mt-0 transition-colors ${
-                                isSelected 
-                                  ? 'bg-emerald-500 border-emerald-500 text-white' 
-                                  : 'bg-slate-50 border-slate-200 text-slate-400 group-hover:border-emerald-300 group-hover:text-emerald-500'
-                            }`}>
-                               {['A','B','C','D'][optIdx]}
-                            </div>
-                            <span className="leading-relaxed font-medium">{opt}</span>
-                         </button>
-                       );
-                     })}
-                   </div>
+
+                      {/* OPSI JAWABAN */}
+                      <div className="grid grid-cols-1 gap-3">
+                         {currentQ.options?.map((opt, optIdx) => {
+                           const isSelected = answers[currentQ.id] === String(optIdx);
+                           return (
+                             <button
+                               key={optIdx}
+                               onClick={() => handleAnswer(currentQ.id, optIdx)}
+                               className={`w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all text-xs md:text-sm flex items-center gap-4 group active:scale-[0.99] ${
+                                 isSelected 
+                                   ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-md ring-2 ring-emerald-500/20' 
+                                   : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/30'
+                               }`}
+                             >
+                                <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-black shrink-0 transition-colors ${
+                                    isSelected 
+                                      ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                      : 'bg-slate-50 border-slate-200 text-slate-400 group-hover:border-emerald-400 group-hover:text-emerald-500'
+                                }`}>
+                                   {['A','B','C','D'][optIdx]}
+                                </div>
+                                <span className="leading-relaxed font-medium">{opt}</span>
+                             </button>
+                           );
+                         })}
+                      </div>
+                  </div>
+               </div>
+
+               {/* FOOTER NAVIGASI (PREV/NEXT) */}
+               <div className="p-4 bg-white border-t border-slate-200 flex justify-between items-center shrink-0">
+                  <button 
+                    onClick={goToPrevQuestion}
+                    disabled={currentQIndex === 0}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                  >
+                    <ChevronLeft size={16}/> Sebelumnya
+                  </button>
+
+                  <button 
+                    onClick={() => setShowNavMobile(!showNavMobile)}
+                    className="md:hidden flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-white font-bold text-xs active:scale-95"
+                  >
+                    <Grid size={16}/> <span className="text-[10px]">NO. SOAL</span>
+                  </button>
+
+                  {isLastQ ? (
+                      <button 
+                        onClick={() => handleSubmitExam(false)}
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase hover:bg-emerald-700 shadow-lg shadow-emerald-200 active:scale-95 transition-all"
+                      >
+                        Selesai <CheckCircle size={16}/>
+                      </button>
+                  ) : (
+                      <button 
+                        onClick={goToNextQuestion}
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all"
+                      >
+                        Selanjutnya <ChevronRight size={16}/>
+                      </button>
+                  )}
                </div>
             </div>
-          ))}
-        </div>
-        
-        <div className="p-8 text-center pb-20">
-           <p className="text-[10px] text-slate-400 italic">"Kejujuran adalah kunci kesuksesan"</p>
+
+            {/* NAVIGATOR NOMOR SOAL (KANAN / DESKTOP) */}
+            <div className={`
+                fixed inset-y-0 right-0 z-[100] w-64 bg-white shadow-2xl transform transition-transform duration-300 md:relative md:transform-none md:w-80 md:border-l md:border-slate-200 md:shadow-none flex flex-col
+                ${showNavMobile ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+            `}>
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 className="font-black text-slate-700 text-sm uppercase tracking-tight flex items-center gap-2">
+                        <Grid size={16} className="text-emerald-600"/> Navigasi Soal
+                    </h3>
+                    <button onClick={() => setShowNavMobile(false)} className="md:hidden p-1 text-slate-400 hover:text-red-500">
+                        <ArrowRight size={20} />
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4">
+                    <div className="grid grid-cols-4 gap-2">
+                        {questions.map((q, idx) => {
+                            const isAnswered = !!answers[q.id];
+                            const isFlagged = flaggedQuestions.has(q.id);
+                            const isCurrent = currentQIndex === idx;
+                            
+                            let bgClass = 'bg-slate-50 border-slate-200 text-slate-500'; // Default
+                            if (isAnswered) bgClass = 'bg-emerald-500 border-emerald-600 text-white'; // Hijau
+                            if (isFlagged) bgClass = 'bg-amber-400 border-amber-500 text-white'; // Kuning
+                            if (isCurrent) bgClass = 'ring-2 ring-blue-500 ring-offset-2 border-blue-500 text-blue-600 font-black'; // Focus
+
+                            return (
+                                <button
+                                    key={q.id}
+                                    onClick={() => {
+                                        setCurrentQIndex(idx);
+                                        setShowNavMobile(false);
+                                    }}
+                                    className={`aspect-square rounded-lg border flex items-center justify-center text-xs font-bold transition-all shadow-sm active:scale-95 ${bgClass}`}
+                                >
+                                    {idx + 1}
+                                    {isFlagged && <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></div>}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                        <div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Sudah Dijawab
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                        <div className="w-3 h-3 bg-amber-400 rounded-sm"></div> Ragu-ragu
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                        <div className="w-3 h-3 bg-slate-200 rounded-sm border border-slate-300"></div> Belum Dijawab
+                    </div>
+                </div>
+            </div>
+
+            {/* Overlay Gelap untuk Mobile saat Nav Open */}
+            {showNavMobile && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-[90] md:hidden backdrop-blur-sm"
+                    onClick={() => setShowNavMobile(false)}
+                ></div>
+            )}
+
         </div>
       </div>
     );
