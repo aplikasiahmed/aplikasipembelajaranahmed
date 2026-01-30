@@ -350,7 +350,7 @@ const PublicTasks: React.FC = () => {
   return (
     <div className="max-w-xl mx-auto space-y-4 animate-fadeIn pb-24 px-2">
       <div className="text-center space-y-1 pt-2">
-        <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kumpulkan Tugas</h1>
+        <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kirim Tugas PAI</h1>
         <p className="text-[10px] text-slate-500 font-medium tracking-tight">Masukkan NIS terlebih dahulu untuk mengumpulkan tugas</p>
       </div>
 
