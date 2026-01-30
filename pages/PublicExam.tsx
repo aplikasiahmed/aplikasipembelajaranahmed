@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Timer, CheckCircle, AlertTriangle, ArrowRight, HelpCircle, Calendar, BookOpen } from 'lucide-react';
+import { Search, Play, Timer, CheckCircle, AlertTriangle, ArrowRight, HelpCircle, Calendar, BookOpen, ShieldAlert, EyeOff } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
 import Swal from 'sweetalert2';
@@ -27,6 +27,9 @@ const PublicExam: React.FC = () => {
   
   // NEW: State untuk mencatat waktu mulai riil
   const [startTime, setStartTime] = useState<string>('');
+
+  // NEW: State untuk Pelanggaran (Anti-Curang)
+  const [violationCount, setViolationCount] = useState(0);
 
   // --- HANDLERS ---
 
@@ -89,7 +92,7 @@ const PublicExam: React.FC = () => {
     }
   };
 
-  // STEP 2: START EXAM
+  // STEP 2: START EXAM (Updated with Rules & Anti-Cheat Init)
   const startExam = async (exam: Exam) => {
     // 0. CEK APAKAH SUDAH MENGERJAKAN?
     if (student) {
@@ -116,32 +119,117 @@ const PublicExam: React.FC = () => {
       return;
     }
     
-    const res = await Swal.fire({
-      title: 'Mulai Ujian?',
+    // TAMPILKAN TATA TERTIB & KONFIRMASI
+    const rules = await Swal.fire({
+      title: 'TATA TERTIB UJIAN',
       html: `
-        <div class="text-left bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm">
-            <p><b>Mata Pelajaran:</b> ${exam.title}</p>
-            <p><b>Durasi:</b> ${exam.duration} Menit</p>
-            <p><b>Jumlah Soal:</b> ${q.length} Butir</p>
+        <div class="text-left space-y-3">
+            <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
+                <div class="text-red-500 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div>
+                <div>
+                    <h4 class="font-bold text-red-600 text-sm">SISTEM ANTI-CURANG AKTIF</h4>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem akan mendeteksi jika Anda keluar aplikasi, pindah tab, atau membuka notifikasi.</p>
+                </div>
+            </div>
+            
+            <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
+                <li>Dilarang membuka Google / Browser lain.</li>
+                <li>Dilarang membuka WhatsApp / Kalkulator.</li>
+                <li>Jika terdeteksi keluar <b>3 KALI</b>, ujian akan <b>OTOMATIS DIKUMPULKAN</b>.</li>
+                <li>Waktu pengerjaan: <b>${exam.duration} Menit</b>.</li>
+            </ul>
+
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-center">
+               <p class="text-[10px] font-bold text-slate-500">Klik tombol di bawah untuk menyetujui & mulai.</p>
+            </div>
         </div>
       `,
-      icon: 'question',
+      icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#059669',
-      confirmButtonText: 'Mulai Mengerjakan',
+      confirmButtonText: 'SAYA MENGERTI & PATUH',
       cancelButtonText: 'Batal',
-      heightAuto: false
+      heightAuto: false,
+      allowOutsideClick: false,
+      customClass: {
+        popup: 'rounded-2xl',
+        title: 'text-lg font-black uppercase'
+      }
     });
 
-    if (res.isConfirmed) {
+    if (rules.isConfirmed) {
+      // AKTIFKAN FULLSCREEN
+      try {
+        if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+        }
+      } catch (e) {
+        console.log("Fullscreen blocked or not supported", e);
+      }
+
       setSelectedExam(exam);
       setQuestions(q);
       setAnswers({});
       setTimeLeft(exam.duration * 60);
-      setStartTime(new Date().toISOString()); // CATAT WAKTU MULAI RIILL
+      setStartTime(new Date().toISOString());
+      setViolationCount(0); // Reset pelanggaran
       setStep('exam');
     }
   };
+
+  // --- SISTEM DETEKSI PELANGGARAN (Anti-Cheat) ---
+  useEffect(() => {
+    if (step !== 'exam') return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // SISWA KELUAR APLIKASI / PINDAH TAB
+        const newCount = violationCount + 1;
+        setViolationCount(newCount);
+
+        if (newCount === 1) {
+            Swal.fire({
+                title: 'PERINGATAN 1',
+                text: 'Dilarang meninggalkan halaman ujian! Ini adalah peringatan pertama.',
+                icon: 'warning',
+                confirmButtonText: 'Kembali Mengerjakan',
+                confirmButtonColor: '#f59e0b',
+                allowOutsideClick: false,
+                heightAuto: false
+            });
+        } else if (newCount === 2) {
+            Swal.fire({
+                title: 'PERINGATAN TERAKHIR!',
+                text: 'JANGAN KELUAR LAGI! Jika Anda keluar sekali lagi, jawaban akan otomatis dikumpulkan dan Anda didiskualifikasi.',
+                icon: 'error',
+                confirmButtonText: 'Saya Mengerti',
+                confirmButtonColor: '#dc2626',
+                allowOutsideClick: false,
+                heightAuto: false
+            });
+        } else if (newCount >= 3) {
+            // DISKUALIFIKASI
+            handleSubmitExam(true); // Auto Submit
+            Swal.fire({
+                title: 'UJIAN DIHENTIKAN',
+                text: 'Anda terdeteksi melakukan kecurangan berulang kali (3x). Sistem telah mengunci jawaban Anda.',
+                icon: 'error',
+                confirmButtonText: 'Lihat Hasil',
+                confirmButtonColor: '#000000',
+                allowOutsideClick: false,
+                heightAuto: false
+            });
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [step, violationCount]);
+
 
   // TIMER LOGIC
   useEffect(() => {
@@ -170,6 +258,11 @@ const PublicExam: React.FC = () => {
 
   // STEP 3: SUBMIT EXAM
   const handleSubmitExam = async (auto = false) => {
+    // KELUAR DARI FULLSCREEN
+    if (document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch(e) {}
+    }
+
     if (!auto) {
       const answeredCount = Object.keys(answers).length;
       if (answeredCount < questions.length) {
@@ -196,7 +289,8 @@ const PublicExam: React.FC = () => {
         if (!confirm.isConfirmed) return;
       }
     } else {
-        await Swal.fire({ icon: 'info', title: 'Waktu Habis!', text: 'Jawaban Anda otomatis dikumpulkan.', timer: 2000, showConfirmButton: false, heightAuto: false });
+        // Jika Auto Submit (Waktu habis / Diskualifikasi)
+        // Tidak perlu alert disini karena sudah di handle di logic pemanggil (Timer / Violation)
     }
 
     // HITUNG NILAI
@@ -356,6 +450,13 @@ const PublicExam: React.FC = () => {
                 <span className="text-[10px] font-bold text-slate-400">menit</span>
               </div>
            </div>
+           
+           {/* Indikator Status Keamanan (Visual Only) */}
+           <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100">
+              <ShieldAlert size={14} className={violationCount > 0 ? "text-red-500 animate-pulse" : "text-emerald-500"} />
+              <span className="text-[9px] font-bold uppercase">Status: {violationCount === 0 ? 'Aman' : `Pelanggaran ${violationCount}/3`}</span>
+           </div>
+
            <button 
              onClick={() => handleSubmitExam(false)}
              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-emerald-200 active:scale-95 transition-all hover:bg-emerald-700"
