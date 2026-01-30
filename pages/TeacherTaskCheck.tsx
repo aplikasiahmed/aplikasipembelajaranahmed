@@ -19,7 +19,7 @@ const TeacherTaskCheck: React.FC = () => {
   // --- STATE FILTER ---
   const [filterGrade, setFilterGrade] = useState<GradeLevel | 'all'>('all');
   const [filterClass, setFilterClass] = useState<string>('all');
-  const [filterSemester, setFilterSemester] = useState<string>('all'); // Khusus Tab Ujian
+  const [filterSemester, setFilterSemester] = useState<string>('all'); // Sekarang untuk KEDUA Tab
   
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
 
@@ -104,6 +104,7 @@ const TeacherTaskCheck: React.FC = () => {
 
   // --- ACTIONS: EXAMS ---
   const handleDeleteResult = async (id: string, name: string) => {
+      // 1. Konfirmasi Awal
       const confirm = await Swal.fire({
           title: 'Hapus Hasil Ujian?',
           text: `Menghapus data hasil ujian milik ${name}. Siswa dapat mengerjakan ulang setelah dihapus.`,
@@ -111,23 +112,64 @@ const TeacherTaskCheck: React.FC = () => {
           showCancelButton: true,
           confirmButtonColor: '#dc2626',
           confirmButtonText: 'Ya, Hapus',
+          cancelButtonText: 'Batal',
           heightAuto: false
       });
 
-      if (confirm.isConfirmed) {
+      if (!confirm.isConfirmed) return;
+
+      // 2. Layer Keamanan Ganda (Token)
+      const { value: token } = await Swal.fire({
+          title: 'Verifikasi Keamanan',
+          text: 'Masukkan Token ID Server PAI',
+          input: 'password',
+          inputPlaceholder: 'Token Keamanan',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc2626',
+          heightAuto: false
+      });
+
+      if (token === "PAI_ADMIN_GURU") {
           await db.deleteExamResult(id);
           loadExamResults();
           Swal.fire({icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false, heightAuto: false});
+      } else if (token !== undefined) {
+          Swal.fire({ icon: 'error', title: 'Token Salah', text: 'Penghapusan dibatalkan.', heightAuto: false });
       }
   };
 
-  // Filter Lokal untuk Kelas (Karena DB kadang hanya filter grade)
+  // Filter Lokal untuk Kelas & Semester (Tugas Upload)
   const getFilteredData = () => {
-    if (activeTab === 'tasks') {
-        return tasks.filter(t => filterClass === 'all' || t.kelas === filterClass);
-    } else {
-        return examResults.filter(r => filterClass === 'all' || r.student_class === filterClass);
+    let data: any[] = activeTab === 'tasks' ? tasks : examResults;
+
+    // 1. Filter Kelas
+    if (filterClass !== 'all') {
+        if (activeTab === 'tasks') {
+            data = data.filter((t: TaskSubmission) => t.kelas === filterClass);
+        } else {
+            data = data.filter((r: any) => r.student_class === filterClass);
+        }
     }
+
+    // 2. Filter Semester untuk TUGAS UPLOAD (Client Side Logic berdasarkan Tanggal)
+    // Karena DB Tugas hanya simpan tanggal, kita filter manual: Sem 1 (Jul-Des), Sem 2 (Jan-Jun)
+    if (activeTab === 'tasks' && filterSemester !== 'all') {
+        data = data.filter((t: TaskSubmission) => {
+            const date = new Date(t.created_at);
+            const month = date.getMonth() + 1; // 1-12
+            
+            if (filterSemester === '1') {
+                return month >= 7 && month <= 12; // Juli - Desember
+            } else {
+                return month >= 1 && month <= 6;  // Januari - Juni
+            }
+        });
+    }
+
+    // Note: Untuk Exam Results, filter semester sudah ditangani di query `loadExamResults` via API
+
+    return data;
   };
 
   const filteredData = getFilteredData();
@@ -198,18 +240,16 @@ const TeacherTaskCheck: React.FC = () => {
             </select>
           )}
 
-          {/* 3. Filter Semester (KHUSUS TAB UJIAN) */}
-          {activeTab === 'exams' && (
-             <select
-                value={filterSemester}
-                onChange={(e) => setFilterSemester(e.target.value)}
-                className="px-3 py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold border border-slate-200 bg-white text-slate-700 outline-none focus:border-emerald-500 transition-all shrink-0"
-             >
-                <option value="all">Semua Semester</option>
-                <option value="1">Semester 1 (Ganjil)</option>
-                <option value="2">Semester 2 (Genap)</option>
-             </select>
-          )}
+          {/* 3. Filter Semester (SEKARANG MUNCUL UNTUK KEDUA TAB) */}
+          <select
+            value={filterSemester}
+            onChange={(e) => setFilterSemester(e.target.value)}
+            className="px-3 py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold border border-slate-200 bg-white text-slate-700 outline-none focus:border-emerald-500 transition-all shrink-0"
+          >
+            <option value="all">Semua Semester</option>
+            <option value="1">Semester 1 (Ganjil)</option>
+            <option value="2">Semester 2 (Genap)</option>
+          </select>
       </div>
 
       <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-100 overflow-hidden shadow-sm min-h-[300px]">
@@ -238,6 +278,8 @@ const TeacherTaskCheck: React.FC = () => {
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-800 text-[11px] md:text-sm leading-tight">{task.student_name}</span>
                             <span className="text-[8px] md:text-[10px] text-slate-400 uppercase font-black tracking-tighter">Kelas {task.kelas}</span>
+                            {/* Mobile Task Name */}
+                            <span className="md:hidden text-[9px] text-slate-500 mt-1 truncate max-w-[120px]">{task.task_name}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
@@ -269,7 +311,7 @@ const TeacherTaskCheck: React.FC = () => {
                   </tbody>
                 </table>
             ) : (
-                /* ================= TABEL HASIL UJIAN (BARU) ================= */
+                /* ================= TABEL HASIL UJIAN ================= */
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
@@ -287,24 +329,32 @@ const TeacherTaskCheck: React.FC = () => {
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-800 text-[11px] md:text-sm leading-tight">{res.student_name}</span>
                             <span className="text-[8px] md:text-[10px] text-slate-400 uppercase font-black tracking-tighter">Kelas {res.student_class}</span>
+                            
+                            {/* REVISI: INFO TAMBAHAN KHUSUS MOBILE (DI BAWAH KELAS) */}
+                            <div className="block md:hidden mt-1.5 pt-1.5 border-t border-slate-100">
+                               <span className="text-[10px] font-bold text-slate-700 block leading-tight">{res.ujian?.title || '-'}</span>
+                               <span className="text-[9px] font-bold text-emerald-600 uppercase">{res.ujian?.category} • Sem {res.semester}</span>
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
                           <span className="text-sm font-medium text-slate-600">{res.ujian?.title || '-'}</span>
                           <span className="block text-[10px] text-slate-400 uppercase font-bold">{res.ujian?.category} • Sem {res.semester}</span>
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3 text-center align-top md:align-middle">
                            <span className={`inline-block w-8 py-1 rounded-lg font-black text-[10px] md:text-xs ${res.score >= 75 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
                               {res.score}
                            </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 align-top md:align-middle">
                            <div className="flex flex-col text-[10px] md:text-xs text-slate-500">
                               <span className="font-bold">{new Date(res.submitted_at).toLocaleDateString('id-ID')}</span>
                               <span className="flex items-center gap-1 text-[9px]"><Clock size={10}/> {new Date(res.submitted_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})} WIB</span>
+                              {/* REVISI: INFO DURASI PENGERJAAN (Berdasarkan durasi soal, karena data start time tidak tersimpan) */}
+                              <span className="text-[9px] text-emerald-600 font-bold mt-1 block">Durasi: {res.ujian?.duration} Menit</span>
                            </div>
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3 text-center align-top md:align-middle">
                           <button
                             onClick={() => handleDeleteResult(res.id, res.student_name)}
                             className="bg-red-50 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all active:scale-95"

@@ -290,7 +290,7 @@ class DatabaseService {
     let query = supabase.from('hasil_ujian')
       .select(`
         *,
-        ujian:exam_id ( title, category )
+        ujian:exam_id ( title, category, duration )
       `)
       .order('submitted_at', { ascending: false });
 
