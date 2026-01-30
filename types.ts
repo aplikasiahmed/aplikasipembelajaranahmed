@@ -1,5 +1,6 @@
 
 
+
 export type GradeLevel = '7' | '8' | '9';
 
 export interface AdminUser {
@@ -94,5 +95,6 @@ export interface ExamResult {
   semester: string; // NEW FIELD: Semester Wajib Ada di Tabel Hasil
   answers: Record<string, string>; // question_id: answer_value
   score: number;
+  started_at?: string; // NEW: Waktu mulai mengerjakan
   submitted_at: string;
 }

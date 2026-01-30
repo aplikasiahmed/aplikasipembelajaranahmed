@@ -24,6 +24,9 @@ const PublicExam: React.FC = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({}); 
   const [timeLeft, setTimeLeft] = useState(0); 
   const [score, setScore] = useState(0);
+  
+  // NEW: State untuk mencatat waktu mulai riil
+  const [startTime, setStartTime] = useState<string>('');
 
   // --- HANDLERS ---
 
@@ -134,7 +137,8 @@ const PublicExam: React.FC = () => {
       setSelectedExam(exam);
       setQuestions(q);
       setAnswers({});
-      setTimeLeft(exam.duration * 60); 
+      setTimeLeft(exam.duration * 60);
+      setStartTime(new Date().toISOString()); // CATAT WAKTU MULAI RIILL
       setStep('exam');
     }
   };
@@ -216,9 +220,10 @@ const PublicExam: React.FC = () => {
             student_nis: student.nis,
             student_name: student.namalengkap,
             student_class: student.kelas,
-            semester: selectedExam.semester, // WAJIB DIKIRIM KE DB HASIL UJIAN
+            semester: selectedExam.semester, 
             answers: answers,
-            score: finalScore
+            score: finalScore,
+            started_at: startTime // KIRIM WAKTU MULAI
         });
         Swal.close();
       } catch (e) {

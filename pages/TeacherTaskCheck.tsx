@@ -64,6 +64,23 @@ const TeacherTaskCheck: React.FC = () => {
       setLoading(false);
   };
 
+  // --- HELPER FUNCTION: Hitung Durasi Pengerjaan Riil ---
+  const calculateRealDuration = (start?: string, end?: string) => {
+    if (!start || !end) return '-';
+    
+    const startTime = new Date(start).getTime();
+    const endTime = new Date(end).getTime();
+    
+    // Hitung selisih dalam menit
+    const diffMs = endTime - startTime;
+    const diffMins = Math.floor(diffMs / 60000); // 60000 ms = 1 menit
+    
+    // Jika kurang dari 1 menit, tampilkan detik (opsional) atau bulatkan ke 1 menit
+    if (diffMins < 1) return '< 1 Menit';
+    
+    return `${diffMins} Menit`;
+  };
+
   // --- ACTIONS: TASKS ---
   const viewContent = async (task: TaskSubmission) => {
     if (task.submission_type === 'link') {
@@ -350,8 +367,10 @@ const TeacherTaskCheck: React.FC = () => {
                            <div className="flex flex-col text-[10px] md:text-xs text-slate-500">
                               <span className="font-bold">{new Date(res.submitted_at).toLocaleDateString('id-ID')}</span>
                               <span className="flex items-center gap-1 text-[9px]"><Clock size={10}/> {new Date(res.submitted_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})} WIB</span>
-                              {/* REVISI: INFO DURASI PENGERJAAN (Berdasarkan durasi soal, karena data start time tidak tersimpan) */}
-                              <span className="text-[9px] text-emerald-600 font-bold mt-1 block">Durasi: {res.ujian?.duration} Menit</span>
+                              {/* REVISI: MENAMPILKAN LAMA PENGERJAAN RIIL */}
+                              <span className="text-[9px] text-emerald-600 font-bold mt-1 block">
+                                  Pengerjaan: {calculateRealDuration(res.started_at, res.submitted_at)}
+                              </span>
                            </div>
                         </td>
                         <td className="px-4 py-3 text-center align-top md:align-middle">
