@@ -29,6 +29,8 @@ const PublicExam: React.FC = () => {
   const [violationCount, setViolationCount] = useState(0);
   // REF: Gunakan Ref agar nilai selalu update tanpa re-render effect (SOLUSI ANTI-CURANG TIDAK MUNCUL)
   const violationRef = useRef(0);
+  // REF: Untuk mencegah alert muncul dobel saat blur/focus switching
+  const isAlertOpen = useRef(false);
 
   // NEW: State Slideshow & Ragu-ragu
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -183,18 +185,21 @@ const PublicExam: React.FC = () => {
       // RESET SENSOR ANTI CURANG
       setViolationCount(0); 
       violationRef.current = 0; // Reset REF juga penting!
+      isAlertOpen.current = false;
       
       setStep('exam');
     }
   };
 
-  // --- SISTEM DETEKSI PELANGGARAN (Anti-Cheat) ---
-  // PERBAIKAN: Menggunakan violationRef agar listener tidak putus (stale closure)
+  // --- SISTEM DETEKSI PELANGGARAN (Anti-Cheat 3 Strikes) ---
   useEffect(() => {
     if (step !== 'exam') return;
 
     // Fungsi Trigger Pelanggaran
-    const triggerViolation = (msg: string) => {
+    const triggerViolation = async (msg: string) => {
+        // Cegah spam alert jika alert sudah terbuka
+        if (isAlertOpen.current) return;
+
         // Increment REF (Data Kebenaran)
         violationRef.current += 1;
         const currentViolations = violationRef.current;
@@ -202,42 +207,49 @@ const PublicExam: React.FC = () => {
         // Update STATE (Untuk Tampilan UI)
         setViolationCount(currentViolations);
 
-        // Logic Peringatan (Menggunakan REF agar akurat)
+        // Kunci Alert
+        isAlertOpen.current = true;
+
         if (currentViolations === 1) {
-            Swal.fire({
+            // STRIKE 1: PERINGATAN KUNING
+            await Swal.fire({
                 title: 'PELANGGARAN 1/3',
-                text: msg,
-                icon: 'warning',
+                text: 'Peringatan! Dilarang keluar dari aplikasi ujian.',
+                icon: 'warning', 
                 confirmButtonText: 'Kembali Mengerjakan',
-                confirmButtonColor: '#f59e0b',
+                confirmButtonColor: '#f59e0b', // Kuning
                 allowOutsideClick: false,
                 heightAuto: false,
                 customClass: { popup: 'z-[10000]' }
             });
+            isAlertOpen.current = false; // Buka kunci setelah klik
         } else if (currentViolations === 2) {
-            Swal.fire({
+            // STRIKE 2: PERINGATAN MERAH (TERAKHIR)
+            await Swal.fire({
                 title: 'PELANGGARAN 2/3 (TERAKHIR)',
-                text: 'JANGAN KELUAR LAGI! Sekali lagi Anda keluar, jawaban otomatis dikumpulkan dan nilai apa adanya.',
-                icon: 'error',
+                text: 'AWAS! Sekali lagi Anda keluar, jawaban otomatis dikumpulkan (DISKUALIFIKASI).',
+                icon: 'error', // Merah
                 confirmButtonText: 'Saya Mengerti',
-                confirmButtonColor: '#dc2626',
+                confirmButtonColor: '#dc2626', // Merah
                 allowOutsideClick: false,
                 heightAuto: false,
                 customClass: { popup: 'z-[10000]' }
             });
+            isAlertOpen.current = false; // Buka kunci setelah klik
         } else if (currentViolations >= 3) {
-            // DISKUALIFIKASI
-            handleSubmitExam(true); // Auto Submit
-            Swal.fire({
+            // STRIKE 3: AUTO SUBMIT (DISKUALIFIKASI)
+            await Swal.fire({
                 title: 'DISKUALIFIKASI',
-                text: 'Anda melanggar aturan berulang kali. Ujian dihentikan paksa oleh sistem.',
+                text: 'Anda telah melanggar aturan 3 kali. Ujian dihentikan paksa oleh sistem.',
                 icon: 'error',
-                confirmButtonText: 'Lihat Hasil',
-                confirmButtonColor: '#000000',
+                showConfirmButton: false,
+                timer: 3000, // Tampil 3 detik lalu auto submit
                 allowOutsideClick: false,
                 heightAuto: false,
                 customClass: { popup: 'z-[10000]' }
             });
+            // Tidak perlu buka kunci isAlertOpen karena akan submit & pindah halaman
+            handleSubmitExam(true); 
         }
     };
 
@@ -250,15 +262,14 @@ const PublicExam: React.FC = () => {
 
     // 2. Deteksi Fokus Hilang (Split Screen / Klik Aplikasi Lain)
     const handleBlur = () => {
-        // Abaikan jika fokus ke elemen internal (seperti Iframe atau SweetAlert)
-        // Kita beri delay sedikit untuk memastikan bukan klik di dalam
         setTimeout(() => {
+            // Cek jika fokus pindah ke iframe (misal ada embed) atau elemen dalam body, jangan trigger
             if (document.activeElement?.tagName === "IFRAME" || document.activeElement?.tagName === "BODY") return;
-            // Cek apakah user benar-benar tidak aktif di window
+            // Cek apakah dokumen benar-benar kehilangan fokus
             if (!document.hasFocus()) {
                 triggerViolation("Fokus layar hilang. Dilarang membuka aplikasi lain!");
             }
-        }, 300);
+        }, 500); // Delay 500ms untuk menghindari false positive saat interaksi UI
     };
 
     // Pasang Event Listeners
@@ -269,11 +280,12 @@ const PublicExam: React.FC = () => {
     window.history.pushState(null, "", window.location.href);
     const handlePopState = () => {
         window.history.pushState(null, "", window.location.href);
+        // Alert kecil saja agar tidak mengganggu count
         Swal.fire({
             title: 'Dilarang Kembali',
             text: 'Gunakan tombol "Selesai" jika ingin mengakhiri ujian.',
             icon: 'warning',
-            timer: 2000,
+            timer: 1500,
             showConfirmButton: false,
             customClass: { popup: 'z-[10000]' }
         });
@@ -286,7 +298,7 @@ const PublicExam: React.FC = () => {
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [step]); // Dependency Cuma STEP, agar tidak re-render saat count berubah (Ref yang menangani count)
+  }, [step]); // Dependency Cuma STEP
 
 
   // TIMER LOGIC
@@ -549,7 +561,7 @@ const PublicExam: React.FC = () => {
               </div>
            </div>
 
-           {/* Info Kanan: Timer & Tombol Selesai */}
+           {/* Info Kanan: Timer */}
            <div className="flex items-center gap-2 md:gap-4">
                {violationCount > 0 && (
                    <div className="hidden md:flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg border border-red-100 animate-pulse">
@@ -567,13 +579,8 @@ const PublicExam: React.FC = () => {
                     <span className="text-[9px] font-bold text-slate-400">mnt</span>
                   </div>
                </div>
-
-               <button 
-                 onClick={() => handleSubmitExam(false)}
-                 className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg shadow-red-200 active:scale-95 transition-all hover:bg-red-700 flex items-center gap-2"
-               >
-                 <LogOut size={14} strokeWidth={3} /> <span className="hidden md:inline">Selesai</span>
-               </button>
+               
+               {/* REVISI POIN 2 & 3: TOMBOL SELESAI MERAH DI HEADER DIHAPUS */}
            </div>
         </div>
 
