@@ -67,6 +67,7 @@ export interface Exam {
   id: string;
   title: string;
   grade: GradeLevel;
+  category: 'harian' | 'uts' | 'uas' | 'praktik'; // Added category
   semester: string;
   duration: number; // in minutes
   status: 'draft' | 'active' | 'closed';
