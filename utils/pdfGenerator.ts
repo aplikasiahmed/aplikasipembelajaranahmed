@@ -19,7 +19,7 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
     doc.setFontSize(12);
     doc.text(`KELAS ${meta.kelas}`, pageWidth / 2, 28, { align: 'center' });
     
-    doc.setLineWidth(0.3); //Garis bawah judul
+    doc.setLineWidth(0.2); //Garis bawah judul
     doc.line(15, 32, pageWidth - 15, 32);
 
     doc.setFontSize(9);
@@ -182,10 +182,10 @@ export const generateBatchPDFReport = (
             : `Rekap_Absen_SEMUA_KELAS_${datasets[0].meta.bulan}.pdf`;
         doc.save(fileName);
 
-        Swal.fire({ icon: 'success', title: 'PDF Batch Berhasil', text: 'Semua kelas dalam satu file.', timer: 1500, showConfirmButton: false, heightAuto: false });
+        Swal.fire({ icon: 'success', title: 'Eksport PDF Berhasil', text: 'Semua kelas dalam satu file.', timer: 1500, showConfirmButton: false, heightAuto: false });
 
     } catch (error) {
         console.error('Batch PDF Error:', error);
-        Swal.fire('Gagal', 'Terjadi kesalahan Batch PDF.', 'error');
+        Swal.fire('Gagal', 'Terjadi kesalahan Eksport PDF.', 'error');
     }
 }
