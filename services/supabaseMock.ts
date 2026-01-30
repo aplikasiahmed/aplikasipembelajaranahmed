@@ -7,11 +7,6 @@ const SUPABASE_ANON_KEY = 'sb_publishable_2MlaJJX4yWGwaxU5qIVADA_4N1bqqZ-';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Mock Data Storage
-let mockExams: Exam[] = [];
-let mockQuestions: Question[] = [];
-let mockExamResults: ExamResult[] = [];
-
 class DatabaseService {
   // ADMIN FUNCTIONS
   async verifyAdminLogin(username: string, password: string): Promise<AdminUser | null> {
@@ -163,96 +158,99 @@ class DatabaseService {
     return (data || []) as Material[];
   }
 
-  // --- EXAM & QUESTION FUNCTIONS (MOCK IMPLEMENTATION) ---
+  // --- EXAM & QUESTION FUNCTIONS (REAL DATABASE IMPLEMENTATION) ---
   
-  // 1. Manage Exams
+  // 1. Manage Exams (Tabel: ujian)
   async getExams(): Promise<Exam[]> {
-    // Return all exams sorted by created_at desc
-    return [...mockExams].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const { data, error } = await supabase.from('ujian').select('*').order('created_at', { ascending: false });
+    return (data || []) as Exam[];
   }
 
   async getExamById(id: string): Promise<Exam | undefined> {
-    return mockExams.find(e => e.id === id);
+    const { data, error } = await supabase.from('ujian').select('*').eq('id', id).single();
+    if (error || !data) return undefined;
+    return data as Exam;
   }
 
   async createExam(exam: Omit<Exam, 'id' | 'created_at'>): Promise<Exam> {
-    const newExam: Exam = {
-      ...exam,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString()
-    };
-    mockExams.push(newExam);
-    return newExam;
+    const { data, error } = await supabase.from('ujian').insert([exam]).select().single();
+    if (error) throw error;
+    return data as Exam;
   }
 
   async updateExamStatus(id: string, status: 'draft' | 'active' | 'closed'): Promise<void> {
-    const exam = mockExams.find(e => e.id === id);
-    if (exam) exam.status = status;
+    const { error } = await supabase.from('ujian').update({ status }).eq('id', id);
+    if (error) throw error;
   }
   
   async deleteExam(id: string): Promise<void> {
-    mockExams = mockExams.filter(e => e.id !== id);
-    mockQuestions = mockQuestions.filter(q => q.exam_id !== id);
+    const { error } = await supabase.from('ujian').delete().eq('id', id);
+    if (error) throw error;
   }
 
-  // 2. Manage Questions
+  // 2. Manage Questions (Tabel: bank_soal)
   async getQuestionsByExamId(examId: string): Promise<Question[]> {
-    return mockQuestions.filter(q => q.exam_id === examId);
+    const { data, error } = await supabase.from('bank_soal').select('*').eq('exam_id', examId);
+    return (data || []) as Question[];
   }
 
   async addQuestion(question: Omit<Question, 'id'>): Promise<Question> {
-    const newQ: Question = {
-      ...question,
-      id: crypto.randomUUID()
-    };
-    mockQuestions.push(newQ);
-    return newQ;
+    const { data, error } = await supabase.from('bank_soal').insert([question]).select().single();
+    if (error) throw error;
+    return data as Question;
   }
 
   async deleteQuestion(id: string): Promise<void> {
-    mockQuestions = mockQuestions.filter(q => q.id !== id);
+    const { error } = await supabase.from('bank_soal').delete().eq('id', id);
+    if (error) throw error;
   }
 
-  // 3. Student Public Exam
-  async getActiveExamsByGrade(grade: string): Promise<Exam[]> {
-    // Return exams that are active AND match the grade level
-    return mockExams.filter(e => e.status === 'active' && e.grade === grade);
+  // 3. Student Public Exam (Tabel: ujian & hasil_ujian)
+  // UPDATED: Filter by Grade AND Semester
+  async getActiveExamsByGrade(grade: string, semester: string): Promise<Exam[]> {
+    // Pastikan Semester selalu dalam bentuk String agar cocok dengan DB
+    const semString = String(semester);
+    
+    const { data, error } = await supabase
+        .from('ujian')
+        .select('*')
+        .eq('status', 'active')
+        .eq('grade', grade)
+        .eq('semester', semString); // FILTER SEMESTER INI KUNCINYA
+
+    return (data || []) as Exam[];
   }
 
   async submitExamResult(result: Omit<ExamResult, 'id' | 'submitted_at'>): Promise<ExamResult> {
-    const newResult: ExamResult = {
-      ...result,
-      id: crypto.randomUUID(),
-      submitted_at: new Date().toISOString()
-    };
-    mockExamResults.push(newResult);
+    // 1. Simpan Hasil Ujian ke tabel 'hasil_ujian'
+    const { data, error } = await supabase.from('hasil_ujian').insert([result]).select().single();
+    if (error) throw error;
+    const newResult = data as ExamResult;
 
-    // --- REVISI: INTEGRASI AUTO-GRADING ---
+    // 2. INTEGRASI AUTO-GRADING KE BUKU NILAI
     // Ketika siswa submit ujian, nilai otomatis masuk ke Tabel 'Nilai' (GradeRecord)
     try {
-      // 1. Ambil data Siswa asli dari Database (untuk mendapatkan ID Siswa UUID)
+      // Ambil data Siswa asli dari Database
       const student = await this.getStudentByNIS(result.student_nis);
-      
-      // 2. Ambil data Ujian (untuk tahu kategori & judul)
+      // Ambil data Ujian
       const exam = await this.getExamById(result.exam_id);
 
       if (student && exam) {
-        // 3. Simpan ke Tabel Nilai (Layaknya Guru input manual)
+        // Simpan ke Tabel Nilai (Layaknya Guru input manual)
+        // INILAH INTEGRASINYA: Menggunakan exam.semester agar sesuai dengan semester soal
         await this.addGrade({
           student_id: student.id!,
-          subject_type: exam.category, // 'harian' | 'uts' | 'uas' | 'praktik'
+          subject_type: exam.category, 
           score: result.score,
-          description: `Ujian Online: ${exam.title}`, // Deskripsi otomatis
+          description: `Ujian Online: ${exam.title}`,
           kelas: result.student_class,
-          semester: exam.semester,
+          semester: exam.semester, // Auto-Sync Semester
           created_at: new Date().toISOString()
         });
-        console.log("Auto-grading successful: Score saved to Nilai table.");
+        console.log("Auto-grading successful.");
       }
     } catch (error) {
       console.error("Auto-grading failed:", error);
-      // Jangan throw error agar siswa tetap bisa melihat hasil ujiannya,
-      // meskipun gagal simpan ke buku nilai (fallback).
     }
 
     return newResult;
