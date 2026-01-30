@@ -55,17 +55,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Materi PAI', path: '/materi', icon: BookOpen },
     { name: 'Absensi', path: '/absensi', icon: ClipboardCheck },
     { name: 'Nilai Siswa', path: '/nilai', icon: Award },
-    { name: 'Tugas PAI', path: '/tugas', icon: FileEdit },
-    { name: 'Latihan Soal', path: '/kerjakan-tugas', icon: PencilLine },
+    { name: 'Kumpulkan Tugas', path: '/tugas', icon: FileEdit },
+    { name: 'Kerjakan Soal', path: '/kerjakan-tugas', icon: PencilLine },
     { name: 'Profil Guru', path: '/profil', icon: User },
   ];
 
   const teacherLinks = [
     { name: 'Dashboard', path: '/guru', icon: LayoutDashboard },
-    { name: 'Bank Soal', path: '/guru/ujian', icon: FileEdit }, // Menu Baru
     { name: 'Input Nilai', path: '/guru/nilai', icon: Award },
     { name: 'Input Absensi', path: '/guru/absensi', icon: ClipboardCheck },
     { name: 'Cek Tugas Siswa', path: '/guru/tugas-masuk', icon: FileSearch },
+    { name: 'Bank Soal', path: '/guru/ujian', icon: FileEdit }, // Menu Baru
     { name: 'Laporan Database', path: '/guru/laporan', icon: Settings },
     { name: 'Kelola Admin', path: '/guru/admin', icon: ShieldCheck },
   ];
