@@ -283,6 +283,35 @@ class DatabaseService {
 
     return newResult;
   }
+
+  // --- NEW: FUNGSI UNTUK CEK HASIL UJIAN SISWA (TEACHER SIDE) ---
+  async getExamResults(grade?: string, semester?: string): Promise<any[]> {
+    // Mengambil hasil ujian beserta judul ujiannya
+    let query = supabase.from('hasil_ujian')
+      .select(`
+        *,
+        ujian:exam_id ( title, category )
+      `)
+      .order('submitted_at', { ascending: false });
+
+    // Filter Semester
+    if (semester) {
+        query = query.eq('semester', semester);
+    }
+
+    // Filter Kelas/Grade (Manual Filter via LIKE karena student_class adalah string)
+    if (grade) {
+        query = query.like('student_class', `${grade}.%`);
+    }
+
+    const { data, error } = await query;
+    return data || [];
+  }
+
+  async deleteExamResult(id: string): Promise<void> {
+    const { error } = await supabase.from('hasil_ujian').delete().eq('id', id);
+    if (error) throw error;
+  }
 }
 
 export const db = new DatabaseService();
