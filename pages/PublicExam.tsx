@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen } from 'lucide-react';
 import { db } from '../services/supabaseMock';
@@ -25,12 +24,16 @@ const PublicExam: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0); 
   const [score, setScore] = useState(0);
   
-  // --- ANTI-CURANG SYSTEM ---
+  // --- ANTI-CURANG SYSTEM (INTI LOGIKA) ---
   const [violationCount, setViolationCount] = useState(0); 
+  
+  // REF: Menyimpan jumlah pelanggaran real-time tanpa render ulang
   const violationRef = useRef(0); 
   
-  // LOCK SYSTEM: Kunci sensor anti-curang saat ada Popup/Alert muncul
-  const isLocked = useRef(false); 
+  // REF: "isPaused" adalah KUNCI UTAMA.
+  // Saat true = Sensor Mati (misal: saat popup muncul, atau saat loading).
+  // Saat false = Sensor Hidup (mendeteksi pindah tab).
+  const isPaused = useRef(false); 
   
   // Navigation
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -58,6 +61,7 @@ const PublicExam: React.FC = () => {
                 setStartTime(session.startTime);
                 setTimeLeft(remaining);
                 setStep('exam');
+                // Restore status pelanggaran
                 setViolationCount(session.violationCount || 0);
                 violationRef.current = session.violationCount || 0;
             } else {
@@ -129,36 +133,35 @@ const PublicExam: React.FC = () => {
       return;
     }
     
-    // PERINGATAN (TANPA FULLSCREEN)
+    // PERINGATAN AWAL (TANPA FULLSCREEN)
     const rules = await Swal.fire({
-      title: 'ATURAN UJIAN',
+      title: 'PERATURAN UJIAN',
       html: `
         <div class="text-left space-y-3">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
-                    <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Aplikasi Lain, atau Pindah Tab.</p>
+                    <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, WA, atau Tab Lain.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
                 <li>Jangan keluar dari halaman ini.</li>
-                <li>Jika melanggar 3x, ujian otomatis selesai.</li>
+                <li>Jika melanggar 3x, ujian otomatis dihentikan (DISKUALIFIKASI).</li>
             </ul>
         </div>
       `,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#059669',
-      confirmButtonText: 'SAYA SIAP MENGERJAKAN',
+      confirmButtonText: 'SAYA MENGERTI & SIAP',
       cancelButtonText: 'Batal',
       heightAuto: false,
       allowOutsideClick: false
     });
 
     if (rules.isConfirmed) {
-      // TIDAK ADA REQUEST FULLSCREEN DISINI
-      
+      // SET DATA AWAL
       const startTimeIso = new Date().toISOString();
       const endTimeIso = new Date(new Date().getTime() + exam.duration * 60000).toISOString();
 
@@ -170,10 +173,10 @@ const PublicExam: React.FC = () => {
       setTimeLeft(exam.duration * 60);
       setStartTime(startTimeIso);
 
-      // RESET TOTAL
+      // RESET ANTI-CURANG
       setViolationCount(0); 
       violationRef.current = 0; 
-      isLocked.current = false;
+      isPaused.current = false; // SENSOR AKTIF
       
       const sessionData = {
           student,
@@ -190,17 +193,15 @@ const PublicExam: React.FC = () => {
     }
   };
 
-  // --- SUBMIT FUNCTION ---
+  // --- SUBMIT FUNCTION (Kirim Jawaban) ---
   const handleSubmitExam = async (forced = false) => {
-    // 1. KUNCI TOTAL (Agar tidak ada violation lagi)
-    isLocked.current = true;
+    // 1. MATIKAN SENSOR (Agar saat loading tidak dianggap curang)
+    isPaused.current = true;
 
-    // TIDAK ADA EXIT FULLSCREEN DISINI
-
-    // 3. Hapus Session
+    // 2. Hapus Session
     localStorage.removeItem('pai_exam_session');
 
-    // 4. Hitung Nilai
+    // 3. Hitung Nilai
     let correct = 0;
     questions.forEach(q => {
       if (answers[q.id] === q.correct_answer) correct++;
@@ -208,14 +209,24 @@ const PublicExam: React.FC = () => {
     const finalScore = Math.round((correct / questions.length) * 100);
     setScore(finalScore);
 
-    // 5. Tampilkan Loading
+    // 4. Tampilkan Loading
+    let title = 'Menyimpan...';
+    let text = 'Sedang mengirim jawaban...';
+    let icon: 'info' | 'error' = 'info';
+    
+    if (forced) {
+        title = 'DISKUALIFIKASI!';
+        text = 'Anda melanggar 3x. Jawaban otomatis dikirim seadanya.';
+        icon = 'error';
+    }
+
     Swal.fire({ 
-        title: forced ? 'DISKUALIFIKASI!' : 'Menyimpan...', 
-        text: forced ? 'Anda melanggar aturan 3 kali. Jawaban otomatis dikirim.' : 'Sedang mengirim jawaban...',
-        icon: forced ? 'error' : 'info',
+        title: title, 
+        text: text,
+        icon: icon,
         allowOutsideClick: false, 
         showConfirmButton: false,
-        timer: 2000, 
+        timer: 2500, 
         didOpen: () => Swal.showLoading(),
         heightAuto: false,
         customClass: { popup: 'z-[99999]' }
@@ -237,47 +248,56 @@ const PublicExam: React.FC = () => {
     }
 
     setStep('result');
-    Swal.close();
+    // Swal akan close sendiri saat komponen berubah atau timer habis
   };
 
-  // --- LOGIKA ANTI-CURANG (TANPA FULLSCREEN) ---
+  // --- LOGIKA ANTI-CURANG (SESUAI PERMINTAAN BAPAK) ---
   useEffect(() => {
     if (step !== 'exam') return;
 
-    // FUNGSI UTAMA PENANGANAN PELANGGARAN
-    const triggerViolation = async (reason: string) => {
-        // CEK KUNCI: Jika sedang locked (karena popup lain atau proses submit), ABAIKAN.
-        if (isLocked.current) return;
+    // FUNGSI INI DIPANGGIL SAAT SISWA PINDAH TAB / KLIK DILUAR
+    const handleViolationTrigger = async (reason: string) => {
+        // JIKA SEDANG PAUSED (Misal sedang ada popup lain), JANGAN JALANKAN
+        if (isPaused.current) return;
 
-        // 1. KUNCI SEMENTARA
-        isLocked.current = true;
+        // 1. PAUSE DULU (Agar tidak muncul popup berkali-kali)
+        isPaused.current = true;
 
-        // 2. Tambah Counter
+        // 2. HITUNG PELANGGARAN
         violationRef.current += 1;
         setViolationCount(violationRef.current);
         const count = violationRef.current;
 
-        // 3. Tentukan Pesan & Tombol
-        let title = `PELANGGARAN ${count}/3`;
-        let text = `Anda terdeteksi ${reason}. Harap tetap di halaman ujian!`;
-        let confirmBtnText = 'Saya Mengerti (OK)';
+        // 3. TENTUKAN ISI POPUP SESUAI URUTAN
+        let title = '';
+        let text = '';
         let icon: 'warning' | 'error' = 'warning';
+        let btnText = 'OK, Saya Mengerti';
 
-        if (count >= 3) {
-            title = 'DISKUALIFIKASI';
-            text = 'Anda telah melanggar aturan 3 kali. Klik OK untuk mengakhiri ujian.';
+        if (count === 1) {
+            title = 'PELANGGARAN KE-1';
+            text = `Anda terdeteksi ${reason}. Ini peringatan pertama.`;
+        } else if (count === 2) {
+            title = 'PELANGGARAN KE-2';
+            text = `Hati-hati! Satu kali lagi Anda akan dikeluarkan dari ujian.`;
+            icon = 'warning';
+        } else {
+            // PELANGGARAN KE-3
+            title = 'PELANGGARAN KE-3 (DISKUALIFIKASI)';
+            text = 'Anda telah melanggar aturan 3 kali. Ujian dihentikan otomatis.';
             icon = 'error';
-            confirmBtnText = 'OK, Kumpulkan';
+            btnText = 'Kirim Jawaban';
         }
 
-        // 4. TAMPILKAN SWEETALERT & TUNGGU (AWAIT)
+        // 4. MUNCULKAN POPUP & TUNGGU USER KLIK OK (AWAIT)
+        // Code akan berhenti disini sampai user klik tombol
         await Swal.fire({
             title: title,
             text: text,
             icon: icon,
             confirmButtonColor: count >= 3 ? '#d33' : '#f59e0b',
-            confirmButtonText: confirmBtnText,
-            allowOutsideClick: false, // WAJIB KLIK TOMBOL
+            confirmButtonText: btnText,
+            allowOutsideClick: false, // User WAJIB klik tombol
             allowEscapeKey: false,
             heightAuto: false,
             customClass: { popup: 'z-[99999]' }
@@ -285,35 +305,42 @@ const PublicExam: React.FC = () => {
 
         // 5. SETELAH KLIK OK
         if (count >= 3) {
+            // Jika sudah 3x -> KIRIM PAKSA
             handleSubmitExam(true);
         } else {
-            // BUKA KUNCI (Resume)
-            isLocked.current = false;
+            // Jika belum 3x -> LANJUTKAN UJIAN (Buka Pause)
+            // Kasih delay dikit biar aman
+            setTimeout(() => {
+                isPaused.current = false;
+            }, 500);
         }
     };
 
-    // EVENT LISTENER: Pindah Tab / Minimize
-    const handleVisibilityChange = () => {
-        if (document.hidden) triggerViolation("keluar dari aplikasi / pindah tab");
+    // EVENT LISTENER 1: Visibility Change (Pindah Tab/Minimize Browser)
+    const handleVisibility = () => {
+        if (document.hidden) {
+            handleViolationTrigger("keluar dari halaman soal");
+        }
     };
 
-    // EVENT LISTENER: Blur (Klik di luar window)
+    // EVENT LISTENER 2: Blur (Klik di luar area browser / Buka aplikasi lain)
     const handleBlur = () => {
-        // Timeout kecil untuk memastikan bukan interaksi tombol internal
+        // Gunakan timeout agar tidak langsung menuduh curang jika hanya klik elemen UI sendiri
         setTimeout(() => {
-            if (!document.hasFocus() && !document.hidden && !isLocked.current) {
-                triggerViolation("membuka aplikasi lain");
+            // Cek fokus dan status pause
+            if (!document.hasFocus() && !document.hidden && !isPaused.current) {
+                handleViolationTrigger("membuka aplikasi lain / tidak fokus");
             }
-        }, 300);
+        }, 500);
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("blur", handleBlur);
     
-    // Prevent Back Button
+    // Cegah Tombol Back Browser
     const handlePopState = () => {
         window.history.pushState(null, "", window.location.href);
-        if (!isLocked.current) {
+        if (!isPaused.current) {
             Swal.fire({
                 title: 'Dilarang Kembali!',
                 text: 'Gunakan tombol SELESAI jika ingin mengumpulkan.',
@@ -328,20 +355,21 @@ const PublicExam: React.FC = () => {
     window.history.pushState(null, "", window.location.href);
     window.addEventListener('popstate', handlePopState);
 
+    // CLEANUP SAAT COMPONENT HILANG
     return () => {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        document.removeEventListener("visibilitychange", handleVisibility);
         window.removeEventListener("blur", handleBlur);
         window.removeEventListener('popstate', handlePopState);
     };
   }, [step]); 
 
-  // TIMER
+  // TIMER MUNDUR
   useEffect(() => {
     let timer: any;
     if (step === 'exam' && timeLeft > 0) {
       timer = setInterval(() => setTimeLeft(p => p - 1), 1000);
     } else if (step === 'exam' && timeLeft <= 0) {
-      handleSubmitExam(true); // Waktu Habis
+      handleSubmitExam(true); // Waktu Habis -> dianggap forced submit
     }
     return () => clearInterval(timer);
   }, [step, timeLeft]);
@@ -363,16 +391,16 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- TOMBOL SELESAI ---
+  // --- LOGIKA TOMBOL SELESAI (YANG KEMARIN ERROR) ---
   const handleFinishButton = async () => {
-      // 1. KUNCI LANGSUNG! (Cegah blur terdeteksi)
-      isLocked.current = true;
+      // 1. KUNCI SENSOR DULU! (Penting agar saat klik tombol, tidak dianggap curang karena blur)
+      isPaused.current = true;
 
       const answered = Object.keys(answers).length;
       const total = questions.length;
       const empty = total - answered;
 
-      // VALIDASI 1
+      // 2. MUNCULKAN KONFIRMASI 1
       const confirm1 = await Swal.fire({
           title: empty > 0 ? 'Masih Ada Soal Kosong!' : 'Konfirmasi Selesai',
           text: empty > 0 ? `Masih ada ${empty} soal belum dijawab. Yakin mau kumpulkan?` : `Anda sudah menjawab semua soal.`,
@@ -388,15 +416,15 @@ const PublicExam: React.FC = () => {
       });
 
       if (!confirm1.isConfirmed) {
-          // JIKA BATAL: BUKA KUNCI
-          isLocked.current = false;
+          // JIKA BATAL: BUKA KUNCI SENSOR (Lanjut Ujian)
+          isPaused.current = false;
           return;
       }
 
-      // VALIDASI 2
+      // 3. MUNCULKAN KONFIRMASI 2 (Final)
       const confirm2 = await Swal.fire({
-          title: 'PERINGATAN TERAKHIR',
-          html: `<span style="color:red; font-weight:bold">JAWABAN TIDAK BISA DIUBAH!</span><br/>Yakin ingin mengakhiri ujian ini?`,
+          title: 'Yakin Kirim Jawaban?',
+          text: 'Jawaban yang sudah dikirim tidak bisa diubah lagi.',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#dc2626',
@@ -409,13 +437,15 @@ const PublicExam: React.FC = () => {
       });
 
       if (confirm2.isConfirmed) {
+          // JIKA OK: PROSES SUBMIT
           handleSubmitExam(false);
       } else {
-          isLocked.current = false; 
+          // JIKA BATAL: BUKA KUNCI SENSOR
+          isPaused.current = false; 
       }
   };
 
-  // --- VIEWS ---
+  // --- UI RENDER ---
 
   if (step === 'login') {
     return (
@@ -498,6 +528,7 @@ const PublicExam: React.FC = () => {
   if (step === 'exam' && selectedExam && questions.length > 0) {
     const currentQ = questions[currentQIndex];
     return (
+      // Pastikan div utama memblokir klik kanan
       <div className="fixed inset-0 z-[9999] bg-slate-100 flex flex-col overflow-hidden select-none" onContextMenu={(e) => e.preventDefault()}>
         {/* HEADER */}
         <div className="bg-white border-b border-emerald-100 shadow-md p-3 z-50 flex items-center justify-between shrink-0 h-20">
