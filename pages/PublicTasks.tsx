@@ -84,7 +84,7 @@ const PublicTasks: React.FC = () => {
 
   const showTutorial = (e: React.MouseEvent) => {
     e.preventDefault();
-    const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Video%20Tutorial%20Upload%20file%20ke%20Link%20Google%20Drive.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9WaWRlbyBUdXRvcmlhbCBVcGxvYWQgZmlsZSBrZSBMaW5rIEdvb2dsZSBEcml2ZS5tcDQiLCJpYXQiOjE3Njk0MTEyODUsImV4cCI6MTgwMDk0NzI4NX0.2w9Ab3WVm34ItTWstBLHPJHsX51D-lBrL0WWqOjOmQI";
+    const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Cara%20Upload%20File%20dan%20Share%20Link%20Google%20Drive%20Lewat%20HP%202026.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9DYXJhIFVwbG9hZCBGaWxlIGRhbiBTaGFyZSBMaW5rIEdvb2dsZSBEcml2ZSBMZXdhdCBIUCAyMDI2Lm1wNCIsImlhdCI6MTc2OTg4NDkzOCwiZXhwIjoxODY0NDkyOTM4fQ.4AE9wPV894Dm3WQRj15dKNlbBDD5IIBKi3FXWrqpFTU";
     
     Swal.fire({
       // REVISI LAYOUT TOTAL:
