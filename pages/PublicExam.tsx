@@ -138,7 +138,7 @@ const PublicExam: React.FC = () => {
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
                 <li>Dilarang keluar dari halaman mengerjakan soal</li>
-                <li>Jika melanggar 3x, halaman soal otomatis DISKUALIFIKASI</li>
+                <li>Jika melanggar 3x, maka Anda tidak bisa mengerjakan soal lagi dan jawaban langsung terkirim otomastis</li>
                 <li>Berdo'alah sebelum mengerjakan soal</li>
             </ul>
         </div>
