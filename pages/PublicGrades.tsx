@@ -166,7 +166,7 @@ const PublicGrades: React.FC = () => {
                           </td>
 
                           {/* Tipe Penilaian */}
-                          <td className="p-2 md:p-3 font-normal text-slate-700 uppercase tracking-tight truncate">
+                          <td className="p-2 md:p-3 font-normal text-slate-700 capitalize tracking-tight truncate">
                             {g.subject_type}
                           </td>
 
