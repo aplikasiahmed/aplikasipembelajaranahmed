@@ -138,7 +138,10 @@ const PublicExam: React.FC = () => {
             </div>
             <ul class="text-xs space-y-1 text-slate-600 list-disc pl-4 font-medium">
                 <li>Dilarang keluar dari halaman soal</li>
-                <li>Jika melanggar 3x, anda tidak dapat mengerjakan soal kembali (DISKUALIFIKASI) jawabanya akan otomatis masuk secara sistem</li>
+                <li>Jika melanggar 3x, Anda tidak dapat mengerjakan soal kembali (DISKUALIFIKASI) jawabanya akan otomatis masuk secara sistem</li>
+                <li>Perhatikan Durasi Waktu saat menegrjakan soal</li>
+                <li>Apabila Durasi Waktu telah habis, anda tidak dapat mengerjakan soal kembali, jawabanya akan otomatis masuk secara sistem</li>
+                <li>Setiap Soal hanya dapat dikerjakan 1x</li>
                 <li>Jangan Lupa membaca doa sebelum mengerjakan soal</li>
             </ul>
         </div>
@@ -390,7 +393,7 @@ const PublicExam: React.FC = () => {
                        <h3 className="font-bold text-slate-800 text-sm">{exam.title}</h3>
                        <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
                     </div>
-                    <div className="bg-emerald-50 text-emerald-700 p-2 rounded-xl flex flex-col items-center"><Timer size={16} /><span className="text-[10px] font-black">Waktu {exam.duration}m</span></div>
+                    <div className="bg-emerald-50 text-emerald-700 p-2 rounded-xl flex flex-col items-center"><Timer size={16} /><span className="text-[10px] font-black">Waktu {exam.duration} menit</span></div>
                  </div>
                  <button onClick={() => startExam(exam)} className="w-full bg-red-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md active:scale-95">
                    <Play size={12} fill="currentColor" /> Kerjakan Sekarang
