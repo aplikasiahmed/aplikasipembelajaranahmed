@@ -275,7 +275,7 @@ class DatabaseService {
           student_id: student.id!,
           subject_type: exam.category, 
           score: result.score,
-          description: `Ujian Online: ${exam.title}`,
+          description: `Tugas Online: ${exam.title}`,
           kelas: result.student_class,
           semester: exam.semester, 
           created_at: new Date().toISOString()
