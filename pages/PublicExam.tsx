@@ -387,7 +387,7 @@ const PublicExam: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {/* RESTORED: WARNA INPUT GELAP (SESUAI REQUEST) */}
               <select 
-                className="w-full px-4 py-3 text-xs rounded-xl border border-transparent bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
+                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-400 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
                 value={semester} 
                 onChange={(e) => setSemester(e.target.value)}
               >
@@ -401,7 +401,7 @@ const PublicExam: React.FC = () => {
                 <input 
                   type="text" 
                   inputMode="numeric" 
-                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-transparent bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
+                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-400 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
                   placeholder="Masukkan NIS siswa..." 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
