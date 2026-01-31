@@ -270,7 +270,7 @@ const TeacherExams: React.FC = () => {
                     value={formData.title}
                     onChange={handleInputChange}
                     placeholder="Contoh: Penilaian Harian Bab 1"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all placeholder:font-normal"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-normal text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all placeholder:font-normal"
                   />
                </div>
 
@@ -284,13 +284,13 @@ const TeacherExams: React.FC = () => {
                           name="category"
                           value={formData.category}
                           onChange={handleInputChange}
-                          className={`w-full pl-9 pr-3 py-3 rounded-xl border text-xs font-bold outline-none focus:bg-white focus:border-emerald-500 transition-all appearance-none ${formData.category ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
+                          className={`w-full pl-9 pr-3 py-3 rounded-xl border text-xs font-normal outline-none focus:bg-white focus:border-emerald-500 transition-all appearance-none ${formData.category ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
                        >
                           <option value="" disabled>-- Pilih Tugas --</option>
-                          <option value="harian">Harian</option>
-                          <option value="uts">UTS</option>
-                          <option value="uas">UAS</option>
-                          <option value="praktik">Praktik</option>
+                          <option value="Harian">Harian</option>
+                          <option value="UTS">UTS</option>
+                          <option value="UAS">UAS</option>
+                          <option value="Praktik">Praktik</option>
                        </select>
                     </div>
                   </div>
@@ -300,7 +300,7 @@ const TeacherExams: React.FC = () => {
                         name="grade"
                         value={formData.grade}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none focus:bg-white focus:border-emerald-500 transition-all ${formData.grade ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-normal outline-none focus:bg-white focus:border-emerald-500 transition-all ${formData.grade ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
                     >
                         <option value="" disabled>-- Pilih Kelas --</option>
                         <option value="7">Kelas 7</option>
@@ -321,7 +321,7 @@ const TeacherExams: React.FC = () => {
                            name="duration"
                            value={formData.duration}
                            onChange={handleInputChange}
-                           className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all"
+                           className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-normal text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all"
                         />
                      </div>
                   </div>
@@ -331,7 +331,7 @@ const TeacherExams: React.FC = () => {
                         name="semester"
                         value={formData.semester}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 rounded-xl border text-xs font-bold outline-none focus:bg-white focus:border-emerald-500 transition-all ${formData.semester ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-normal outline-none focus:bg-white focus:border-emerald-500 transition-all ${formData.semester ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
                      >
                         <option value="" disabled>-- Pilih Semester --</option>
                         <option value="1">Ganjil (1)</option>

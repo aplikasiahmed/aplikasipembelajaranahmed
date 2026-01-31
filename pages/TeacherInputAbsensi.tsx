@@ -136,7 +136,7 @@ const TeacherInputAbsensi: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
-            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-bold outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
+            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-normal outline-none" value={semester} onChange={(e) => setSemester(e.target.value)}>
               <option value="">-- Pilih Semester --</option>
               <option value="1">Semester 1</option>
               <option value="2">Semester 2</option>
@@ -144,14 +144,14 @@ const TeacherInputAbsensi: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Kelas</label>
-            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-bold outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}><option value="">-- Kelas --</option>{availableKelas.map(k => <option key={k} value={k}>{k}</option>)}</select>
+            <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-normal outline-none" value={selectedKelas} onChange={(e) => setSelectedKelas(e.target.value)}><option value="">-- Kelas --</option>{availableKelas.map(k => <option key={k} value={k}>{k}</option>)}</select>
           </div>
           <div className="space-y-1">
             <label className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
             <div className="relative">
               <input 
                 type="date" 
-                className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-bold outline-none cursor-pointer focus:border-amber-500 text-slate-600 placeholder:text-slate-300" 
+                className="w-full p-1.5 md:p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-xs font-normal outline-none cursor-pointer focus:border-amber-500 text-slate-600 placeholder:text-slate-300" 
                 value={date} 
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="pilih tanggal"
@@ -165,8 +165,8 @@ const TeacherInputAbsensi: React.FC = () => {
           <div className="divide-y divide-slate-50 max-h-[350px] overflow-y-auto">
             {students.length > 0 ? students.map((s, idx) => (
               <div key={s.id || s.nis} className="p-2 md:p-4 flex items-center justify-between gap-2 hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-2 overflow-hidden"><div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-black text-slate-400 border">{idx + 1}</div><p className="text-[10px] md:text-sm font-bold text-slate-800 truncate uppercase">{s.namalengkap}</p></div>
-                <div className="flex gap-1 shrink-0">{[{v:'hadir',l:'H',c:'bg-emerald-600'},{v:'sakit',l:'S',c:'bg-amber-500'},{v:'izin',l:'I',c:'bg-blue-600'},{v:'alfa',l:'A',c:'bg-red-600'}].map(o => (<button key={o.v} onClick={() => s.id && handleStatusChange(s.id, o.v)} className={`w-7 h-7 md:w-9 md:h-9 rounded-lg text-[9px] font-black border transition-all ${attendanceData[s.id!] === o.v ? `${o.c} text-white border-transparent shadow-sm scale-105` : 'bg-white text-slate-400 border-slate-100'}`}>{o.l}</button>))}</div>
+                <div className="flex items-center gap-2 overflow-hidden"><div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-black text-slate-400 border">{idx + 1}</div><p className="text-[10px] md:text-sm font-normal text-slate-800 truncate uppercase">{s.namalengkap}</p></div>
+                <div className="flex gap-1 shrink-0">{[{v:'hadir',l:'H',c:'bg-emerald-600'},{v:'sakit',l:'S',c:'bg-amber-500'},{v:'izin',l:'I',c:'bg-blue-600'},{v:'alfa',l:'A',c:'bg-red-600'}].map(o => (<button key={o.v} onClick={() => s.id && handleStatusChange(s.id, o.v)} className={`w-7 h-7 md:w-9 md:h-9 rounded-lg text-[9px] font-normal border transition-all ${attendanceData[s.id!] === o.v ? `${o.c} text-white border-transparent shadow-sm scale-105` : 'bg-white text-slate-400 border-slate-100'}`}>{o.l}</button>))}</div>
               </div>
             )) : <div className="p-10 text-center"><AlertCircle className="mx-auto text-slate-200 mb-2" size={32} /><p className="text-slate-400 text-[9px] font-bold">Pilih Kelas untuk memulai absensi</p></div>}
           </div>
