@@ -206,7 +206,7 @@ const TeacherAdminManagement: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-2 mb-6 relative z-10">
-                   <div className="bg-emerald-100 text-emerald-700 p-2 rounded-xl">
+                   <div className="bg-blue-100 text-blue-700 p-2 rounded-xl">
                       <UserPlus size={20} />
                    </div>
                    <h2 className="text-sm md:text-lg font-black text-slate-800 uppercase tracking-tight">Form Admin Baru</h2>
