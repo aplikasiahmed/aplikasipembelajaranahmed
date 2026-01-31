@@ -107,10 +107,9 @@ const PublicExam: React.FC = () => {
   };
 
   const startExam = async (exam: Exam) => {
+    // [REVISI] HAPUS Loading SweetAlert disini agar langsung proses
     if (student) {
-        Swal.fire({ title: 'Memeriksa Data...', didOpen: () => Swal.showLoading(), heightAuto: false });
         const hasTaken = await db.checkStudentExamResult(student.nis, exam.id);
-        Swal.close();
         if (hasTaken) {
             Swal.fire({ icon: 'error', title: 'Akses Ditolak', text: 'Anda sudah mengerjakan soal ini.', heightAuto: false });
             return;
@@ -292,9 +291,10 @@ const PublicExam: React.FC = () => {
       }
   };
 
-  // --- HANDLER TOMBOL SELESAI ---
+  // --- [REVISI PAGI] HANDLER TOMBOL SELESAI ---
   const handleFinishClick = async () => {
-      // 1. Matikan sensor segera
+      // 1. PAUSE SENSOR SEGERA
+      // Ini wajib agar saat popup SweetAlert muncul (dan focus pindah), tidak dianggap curang
       isPaused.current = true;
 
       const empty = questions.length - Object.keys(answers).length;
@@ -308,16 +308,18 @@ const PublicExam: React.FC = () => {
           cancelButtonColor: '#d33',
           confirmButtonText: 'Ya, Kumpulkan',
           cancelButtonText: 'Batal',
-          heightAuto: false
+          heightAuto: false,
+          allowOutsideClick: false // Paksa user pilih tombol
       });
 
       if (confirm1.isConfirmed) {
           handleSubmitExam(false);
       } else {
-          // Jika batal, aktifkan sensor lagi setelah jeda
+          // JIKA BATAL: RESUME SENSOR (Aktifkan Lagi)
+          // Beri jeda 500ms agar browser fokus kembali ke halaman sebelum sensor nyala
           setTimeout(() => {
               isPaused.current = false;
-          }, 1000);
+          }, 500);
       }
   };
 
@@ -454,10 +456,8 @@ const PublicExam: React.FC = () => {
                   <p className={`text-lg md:text-2xl font-black font-mono leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>{formatTime(timeLeft)}</p>
                </div>
                
-               {/* TOMBOL SELESAI */}
+               {/* TOMBOL SELESAI (REVISI: HAPUS onMouseEnter & onMouseLeave agar stabil) */}
                <button 
-                 onMouseEnter={() => { isPaused.current = true; }} // Cegah blur saat hover
-                 onMouseLeave={() => { if(!showViolationModal) isPaused.current = false; }} 
                  onClick={handleFinishClick} 
                  className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center gap-2"
                >
