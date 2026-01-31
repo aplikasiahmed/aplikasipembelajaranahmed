@@ -84,7 +84,7 @@ const PublicTasks: React.FC = () => {
 
   const showTutorial = (e: React.MouseEvent) => {
     e.preventDefault();
-    const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Cara%20Upload%20File%20dan%20Share%20Link%20Google%20Drive%20Lewat%20HP%202026.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9DYXJhIFVwbG9hZCBGaWxlIGRhbiBTaGFyZSBMaW5rIEdvb2dsZSBEcml2ZSBMZXdhdCBIUCAyMDI2Lm1wNCIsImlhdCI6MTc2OTg4NDkzOCwiZXhwIjoxODY0NDkyOTM4fQ.4AE9wPV894Dm3WQRj15dKNlbBDD5IIBKi3FXWrqpFTU";
+    const videoUrl = "https://irqphggbsncuplifywul.supabase.co/storage/v1/object/sign/video/Cara%20Upload%20File%20dan%20Share%20Link%20Google%20Drive%20Lewat%20HP%202026.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9kMjA2YTI2NS1hNTMwLTQ5ODktOTBhNS03Yjg2ZmNmZGM0ODYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9DYXJhIFVwbG9hZCBGaWxlIGRhbiBTaGFyZSBMaW5rIEdvb2dsZSBEcml2ZSBMZXdhdCBIUCAyMDI2Lm1wNCIsImlhdCI6MTc2OTg4NDg4MiwiZXhwIjoxODY0NDkyODgyfQ.eITFK8P06j4zq857eGx6liWNqnyFeLi4QrP_D12KKeU";
     
     Swal.fire({
       // REVISI LAYOUT TOTAL:
@@ -116,12 +116,13 @@ const PublicTasks: React.FC = () => {
           </div>
 
           <!-- ROW 3: VIDEO PLAYER -->
-          <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-200">
+          <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-200 flex justify-center bg-black">
             <video 
               src="${videoUrl}" 
               controls 
               autoplay
-              class="w-full h-auto aspect-video"
+              playsinline
+              class="w-full h-auto max-h-[70vh] object-contain"
               style="display: block;"
             >
               Browser Anda tidak mendukung pemutaran video.
@@ -154,7 +155,7 @@ const PublicTasks: React.FC = () => {
         img.onload = () => {
           const canvas = document.createElement('canvas');
           // PERTAHANKAN: Max Width 480px (Ukuran WA Low Quality)
-          const MAX_WIDTH = 480; 
+          const MAX_WIDTH = 450; 
           let width = img.width;
           let height = img.height;
 
