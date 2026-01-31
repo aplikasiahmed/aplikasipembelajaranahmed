@@ -128,9 +128,9 @@ const PublicExam: React.FC = () => {
     const rules = await Swal.fire({
       title: 'PERATURAN',
       html: `
-        <div class="text-left space-y-3">
+        <div class="text-left space-y-2">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
-                <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
+                <div class="text-red-500 shrink-0"><ShieldAlert size={14} /></div>
                 <div>
                     <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
                     <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau sumber lainya</p>
@@ -139,7 +139,7 @@ const PublicExam: React.FC = () => {
             <ul class="text-xs space-y-1 text-slate-600 list-disc pl-4 font-medium">
                 <li>Dilarang keluar dari halaman soal</li>
                 <li>Jika melanggar 3x, Anda tidak dapat mengerjakan soal kembali (DISKUALIFIKASI) jawabanya akan otomatis masuk secara sistem</li>
-                <li>Perhatikan Durasi Waktu saat menegrjakan soal</li>
+                <li>Perhatikan Durasi Waktu saat mengerjakan soal</li>
                 <li>Apabila Durasi Waktu telah habis, anda tidak dapat mengerjakan soal kembali, jawabanya akan otomatis masuk secara sistem</li>
                 <li>Setiap Soal hanya dapat dikerjakan 1x</li>
                 <li>Jangan Lupa membaca doa sebelum mengerjakan soal</li>
