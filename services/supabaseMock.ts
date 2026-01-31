@@ -275,6 +275,7 @@ class DatabaseService {
           student_id: student.id!,
           subject_type: exam.category, 
           score: result.score,
+          // REVISI: Mengubah deskripsi dari 'Ujian Online' menjadi 'Tugas Online'
           description: `Tugas Online: ${exam.title}`,
           kelas: result.student_class,
           semester: exam.semester, 
@@ -313,6 +314,33 @@ class DatabaseService {
   }
 
   async deleteExamResult(id: string): Promise<void> {
+    // REVISI: HAPUS JUGA DATA DI TABEL NILAI SEBELUM HAPUS HASIL UJIAN
+    
+    // 1. Ambil detail hasil ujian untuk mendapatkan siswa dan ujian terkait
+    const { data: resultData } = await supabase
+        .from('hasil_ujian')
+        .select('student_nis, exam_id')
+        .eq('id', id)
+        .single();
+
+    if (resultData) {
+        const student = await this.getStudentByNIS(resultData.student_nis);
+        const exam = await this.getExamById(resultData.exam_id);
+
+        if (student && student.id && exam) {
+            // 2. Hapus Nilai yang sesuai di Buku Nilai
+            // Kita hapus baik yang format baru (Tugas Online) maupun format lama (Ujian Online)
+            const descBaru = `Tugas Online: ${exam.title}`;
+            const descLama = `Ujian Online: ${exam.title}`;
+
+            await supabase.from('Nilai')
+                .delete()
+                .eq('student_id', student.id)
+                .in('description', [descBaru, descLama]);
+        }
+    }
+
+    // 3. Hapus data utama di hasil_ujian
     const { error } = await supabase.from('hasil_ujian').delete().eq('id', id);
     if (error) throw error;
   }
