@@ -136,9 +136,9 @@ const PublicExam: React.FC = () => {
                     <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, AI, WA, atau sumber lain.</p>
                 </div>
             </div>
-            <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
+            <ul class="text-xs space-y-1.5 text-slate-600 list-disc pl-4 font-medium">
                 <li>Dilarang keluar dari halaman mengerjakan soal</li>
-                <li>Jika melanggar 3x, maka Anda tidak bisa mengerjakan soal lagi dan jawaban langsung terkirim otomatis olrh sistem</li>
+                <li>Jika melanggar 3x, maka Anda tidak bisa mengerjakan soal lagi dan jawaban langsung terkirim otomatis oleh sistem</li>
                 <li>Berdo'alah sebelum mengerjakan soal</li>
             </ul>
         </div>
