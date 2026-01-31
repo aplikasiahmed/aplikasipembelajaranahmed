@@ -102,7 +102,7 @@ const PublicExam: React.FC = () => {
         Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
       }
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke soal.', heightAuto: false });
+      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server ujian.', heightAuto: false });
     } finally {
       setLoadingExams(false);
     }
@@ -133,13 +133,12 @@ const PublicExam: React.FC = () => {
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
                     <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, AI, WA, atau sumber lain.</p>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, WA, atau Tab Lain.</p>
                 </div>
             </div>
-            <ul class="text-xs space-y-1.5 text-slate-600 list-disc pl-4 font-medium">
-                <li>Dilarang keluar dari halaman mengerjakan soal</li>
-                <li>Jika melanggar 3x, maka Anda tidak bisa mengerjakan soal lagi dan jawaban langsung terkirim otomatis oleh sistem</li>
-                <li>Berdo'alah sebelum mengerjakan soal</li>
+            <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
+                <li>Dilarang keluar dari halaman ujian.</li>
+                <li>Jika melanggar 3x, ujian otomatis DISKUALIFIKASI.</li>
             </ul>
         </div>
       `,
@@ -330,14 +329,14 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
         <div className="text-center space-y-1">
-          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan nomor NIS untuk mengerjakan soal</p>
+          <h1 className="text-2xl font-black text-slate-800 uppercase">Kerjakan Soal</h1>
+          <p className="text-xs text-slate-500 font-medium">Pilih Semester & masukkan NIS.</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
-          <form onSubmit={handleLogin} className="space-y-2">
+          <form onSubmit={handleLogin} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <select 
-                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
+                className="w-full px-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all cursor-pointer"
                 value={semester} 
                 onChange={(e) => setSemester(e.target.value)}
               >
@@ -350,7 +349,7 @@ const PublicExam: React.FC = () => {
                 <input 
                   type="text" 
                   inputMode="numeric" 
-                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
+                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
                   placeholder="Masukkan NIS..." 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
@@ -374,7 +373,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa</p>
             <h1 className="text-lg font-black uppercase">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • {student.jeniskelamin}</p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis}</p>
           </div>
         </div>
         <h2 className="text-sm font-black text-slate-800 uppercase ml-1">Daftar Soal</h2>
@@ -481,11 +480,11 @@ const PublicExam: React.FC = () => {
                             {violationCount >= 3 ? (
                                 <p className="text-xs text-slate-500 font-medium">
                                     Maaf, Anda telah melanggar aturan sebanyak 3 kali. <br/>
-                                    <span className="text-red-600 font-bold">Anda tidak bisa mengerjakan soal kembali.</span>
+                                    <span className="text-red-600 font-bold">Ujian Anda dihentikan otomatis.</span>
                                 </p>
                             ) : (
                                 <p className="text-xs text-slate-500 font-medium">
-                                    Harap berada pada halaman mengerjakan soal. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
+                                    Harap tetap di halaman ujian. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
                                 </p>
                             )}
 
@@ -531,7 +530,7 @@ const PublicExam: React.FC = () => {
                                 </div>
                             ) : (
                                 <p className="text-center text-slate-500 font-medium text-sm">
-                                    Anda telah menjawab semua soal. Yakin ingin di selesaikan ?
+                                    Anda telah menjawab semua soal. Yakin ingin mengakhiri ujian ini?
                                 </p>
                             )}
 
@@ -621,14 +620,14 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-md mx-auto min-h-[60vh] flex flex-col items-center justify-center px-4 animate-slideUp text-center">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100 animate-bounce"><CheckCircle size={48} strokeWidth={3} /></div>
-        <h1 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
-        <p className="text-xs text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
+        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
+        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl w-full space-y-2 mb-8 relative overflow-hidden">
            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nilai Kamu</p>
            <p className="text-5xl font-black text-slate-800 tracking-tighter">{score}</p>
         </div>
-        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-emeraldd-700 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
+        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
       </div>
     );
   }
