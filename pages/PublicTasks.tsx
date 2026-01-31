@@ -462,7 +462,7 @@ const PublicTasks: React.FC = () => {
                   <input 
                     type="url" 
                     name="content" 
-                    placeholder="https://drive.google.com/..." 
+                    placeholder="https://drive.google.com/file/..." 
                     style={{ colorScheme: 'light' }}
                     className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 !bg-white !text-black outline-none focus:border-emerald-500 italic font-normal placeholder:font-normal" 
                     value={formData.content} 
