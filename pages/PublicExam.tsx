@@ -377,7 +377,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa</p>
             <h1 className="text-lg font-black uppercase">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis}</p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • {student.jeniskelamin}</p>
           </div>
         </div>
         <h2 className="text-sm font-black text-slate-800 uppercase ml-1">Daftar Soal</h2>
@@ -389,11 +389,11 @@ const PublicExam: React.FC = () => {
                <div key={exam.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-300 transition-all">
                  <div className="flex justify-between items-start mb-4">
                     <div>
-                       <div className="flex items-center gap-2 mb-1"><BookOpen size={12} className="text-emerald-600"/><span className="text-[9px] font-black text-emerald-600 uppercase">Sem {exam.semester}</span></div>
+                       <div className="flex items-center gap-2 mb-1"><BookOpen size={12} className="text-emerald-600"/><span className="text-[9px] font-black text-emerald-600 uppercase">Semerter {exam.semester}</span></div>
                        <h3 className="font-bold text-slate-800 text-sm">{exam.title}</h3>
                        <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
                     </div>
-                    <div className="bg-emerald-50 text-emerald-700 p-2 rounded-xl flex flex-col items-center"><Timer size={16} /><span className="text-[10px] font-black">{exam.duration}m</span></div>
+                    <div className="bg-emerald-50 text-emerald-700 p-2 rounded-xl flex flex-col items-center"><Timer size={16} /><span className="text-[10px] font-black">Waktu {exam.duration} Menit</span></div>
                  </div>
                  <button onClick={() => startExam(exam)} className="w-full bg-red-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md active:scale-95">
                    <Play size={12} fill="currentColor" /> Kerjakan Sekarang
