@@ -110,13 +110,10 @@ const PublicTasks: React.FC = () => {
           <!-- ROW 2: JUDUL & SUBJUDUL -->
           <div class="text-center px-1 mb-4">
              <h3 class="text-lg md:text-xl font-bold text-slate-800 leading-tight">Tutorial Upload Drive</h3>
-             <p class="text-slate-400 text-[11px] md:text-xs font-normal mt-1 leading-relaxed">
-               (pastikan sinyal internet kuat untuk memutar video)
-             </p>
           </div>
 
           <!-- ROW 3: VIDEO PLAYER -->
-          <div class="w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-200 flex justify-center bg-black">
+          <div class="w-full bg-white rounded-xl overflow-hidden shadow-2xl border border-slate-200 flex justify-center bg-black">
             <video 
               src="${videoUrl}" 
               controls 
