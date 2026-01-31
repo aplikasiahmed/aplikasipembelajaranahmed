@@ -46,7 +46,8 @@ const PublicTasks: React.FC = () => {
             toast: true, 
             position: 'top-end', 
             icon: 'success', 
-            title: 'Siswa Terverifikasi', 
+            title: 'Siswa Terverifikasi',
+            text:'',
             showConfirmButton: false, 
             timer: 1500 
           });
