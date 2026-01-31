@@ -58,7 +58,7 @@ const PublicProfile: React.FC = () => {
                 <div className="p-4 md:p-5 rounded-2xl bg-emerald-50/30 border border-emerald-100/50">
                   <p className="text-slate-600 text-[11px] md:text-base leading-relaxed italic">
                     "Assalamualaikum Warahmatullahi Wabarakatuh. saya adalah pengampu mata pelajaran PAI & Budi Pekerti. yang saat ini 
-                    bertugas paDa sekolah SMP PGRI Jatiuwung Kota Tangerang."
+                    bertugas pada satuan pendidikan SMP PGRI Jatiuwung Kota Tangerang."
                   </p>
                 </div>
               </section>

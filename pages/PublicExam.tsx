@@ -138,7 +138,7 @@ const PublicExam: React.FC = () => {
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
                 <li>Dilarang keluar dari halaman mengerjakan soal</li>
-                <li>Jika melanggar 3x, maka Anda tidak bisa mengerjakan soal lagi dan jawaban langsung terkirim otomastis</li>
+                <li>Jika melanggar 3x, maka Anda tidak bisa mengerjakan soal lagi dan jawaban langsung terkirim otomatis olrh sistem</li>
                 <li>Berdo'alah sebelum mengerjakan soal</li>
             </ul>
         </div>
@@ -374,7 +374,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa</p>
             <h1 className="text-lg font-black uppercase">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis}</p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • Jenis Kelamin {student.jeniskelamin}</p>
           </div>
         </div>
         <h2 className="text-sm font-black text-slate-800 uppercase ml-1">Daftar Soal</h2>
