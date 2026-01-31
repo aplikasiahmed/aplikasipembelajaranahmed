@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle } from 'lucide-react';
+import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle, Loader2, HelpCircle } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
 import Swal from 'sweetalert2';
@@ -26,9 +26,11 @@ const PublicExam: React.FC = () => {
   const [showNavMobile, setShowNavMobile] = useState(false);
   const [startTime, setStartTime] = useState<string>('');
 
-  // --- ANTI-CURANG SYSTEM (CUSTOM MODAL) ---
+  // --- MODAL STATES (PENGGANTI SWEETALERT) ---
   const [violationCount, setViolationCount] = useState(0); 
-  const [showViolationModal, setShowViolationModal] = useState(false); // Modal Pelanggaran
+  const [showViolationModal, setShowViolationModal] = useState(false); 
+  const [showFinishModal, setShowFinishModal] = useState(false); // Modal Konfirmasi Selesai
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loading Submit
   
   // Refs untuk logika realtime tanpa render ulang
   const violationRef = useRef(0); 
@@ -107,7 +109,7 @@ const PublicExam: React.FC = () => {
   };
 
   const startExam = async (exam: Exam) => {
-    // [REVISI] HAPUS Loading SweetAlert disini agar langsung proses
+    // [REVISI] HAPUS Loading SweetAlert disini
     if (student) {
         const hasTaken = await db.checkStudentExamResult(student.nis, exam.id);
         if (hasTaken) {
@@ -122,7 +124,7 @@ const PublicExam: React.FC = () => {
       return;
     }
     
-    // PERINGATAN AWAL
+    // PERINGATAN AWAL (Masih pakai SweetAlert tidak apa-apa karena belum masuk mode ujian)
     const rules = await Swal.fire({
       title: 'PERATURAN UJIAN',
       html: `
@@ -166,6 +168,8 @@ const PublicExam: React.FC = () => {
       violationRef.current = 0; 
       isPaused.current = false; 
       setShowViolationModal(false);
+      setShowFinishModal(false);
+      setIsSubmitting(false);
       
       const sessionData = {
           student,
@@ -185,7 +189,9 @@ const PublicExam: React.FC = () => {
   // --- SUBMIT FUNCTION ---
   const handleSubmitExam = async (forced = false) => {
     isPaused.current = true; // Matikan sensor
-    setShowViolationModal(false); // Tutup modal pelanggaran jika ada
+    setShowViolationModal(false); 
+    setShowFinishModal(false);
+    setIsSubmitting(true); // Tampilkan Loading Overlay Custom
 
     localStorage.removeItem('pai_exam_session');
 
@@ -195,18 +201,6 @@ const PublicExam: React.FC = () => {
     });
     const finalScore = Math.round((correct / questions.length) * 100);
     setScore(finalScore);
-
-    Swal.fire({ 
-        title: forced ? 'DISKUALIFIKASI!' : 'Menyimpan...', 
-        text: forced ? 'Anda melanggar 3x. Jawaban dikirim otomatis.' : 'Sedang mengirim jawaban...',
-        icon: forced ? 'error' : 'info',
-        allowOutsideClick: false, 
-        showConfirmButton: false,
-        timer: 2500, 
-        didOpen: () => Swal.showLoading(),
-        heightAuto: false,
-        customClass: { popup: 'z-[99999]' }
-    });
 
     try {
       await db.submitExamResult({
@@ -223,8 +217,8 @@ const PublicExam: React.FC = () => {
       console.error(e);
     }
 
+    setIsSubmitting(false);
     setStep('result');
-    Swal.close();
   };
 
   // --- LOGIKA ANTI-CURANG (CUSTOM) ---
@@ -232,18 +226,12 @@ const PublicExam: React.FC = () => {
     if (step !== 'exam') return;
 
     const triggerViolation = () => {
-        // Jika sedang pause (misal lagi submit atau lagi baca modal), abaikan
-        if (isPaused.current) return;
+        if (isPaused.current) return; // Jika sedang pause, abaikan
 
-        // 1. Kunci Sensor Langsung
-        isPaused.current = true;
-
-        // 2. Tambah Counter
+        isPaused.current = true; // Kunci Sensor
         violationRef.current += 1;
         setViolationCount(violationRef.current);
-
-        // 3. Tampilkan Modal Custom (Bukan SweetAlert)
-        setShowViolationModal(true);
+        setShowViolationModal(true); // Tampilkan Modal Pelanggaran
     };
 
     const handleVisibility = () => {
@@ -251,7 +239,6 @@ const PublicExam: React.FC = () => {
     };
 
     const handleBlur = () => {
-        // Timeout kecil untuk membedakan klik internal vs external
         setTimeout(() => {
             if (!document.hasFocus() && !document.hidden && !isPaused.current) {
                 triggerViolation();
@@ -276,51 +263,36 @@ const PublicExam: React.FC = () => {
     };
   }, [step]); 
 
-  // --- HANDLER TOMBOL DI MODAL PELANGGARAN ---
+  // --- HANDLER MODAL ---
   const handleCloseViolationModal = () => {
       if (violationCount >= 3) {
-          // Jika sudah 3x, submit paksa
           handleSubmitExam(true);
       } else {
-          // Jika belum 3x, lanjutkan ujian
           setShowViolationModal(false);
-          // Beri jeda sedikit sebelum mengaktifkan sensor lagi
+          // Beri jeda agar tidak langsung kena blur lagi saat klik tutup
           setTimeout(() => {
               isPaused.current = false;
           }, 1000);
       }
   };
 
-  // --- [REVISI PAGI] HANDLER TOMBOL SELESAI ---
-  const handleFinishClick = async () => {
-      // 1. PAUSE SENSOR SEGERA
-      // Ini wajib agar saat popup SweetAlert muncul (dan focus pindah), tidak dianggap curang
-      isPaused.current = true;
+  // --- HANDLER TOMBOL SELESAI (REVISI: MENGGUNAKAN CUSTOM MODAL) ---
+  const handleFinishClick = () => {
+      isPaused.current = true; // PAUSE SENSOR SEGERA
+      setShowFinishModal(true); // TAMPILKAN MODAL CUSTOM
+  };
 
-      const empty = questions.length - Object.keys(answers).length;
+  const handleConfirmFinish = () => {
+      setShowFinishModal(false);
+      handleSubmitExam(false);
+  };
 
-      const confirm1 = await Swal.fire({
-          title: empty > 0 ? 'Masih Ada Soal Kosong!' : 'Konfirmasi Selesai',
-          text: empty > 0 ? `Masih ada ${empty} soal belum dijawab.` : `Anda sudah menjawab semua soal.`,
-          icon: empty > 0 ? 'warning' : 'question',
-          showCancelButton: true,
-          confirmButtonColor: '#059669',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'Ya, Kumpulkan',
-          cancelButtonText: 'Batal',
-          heightAuto: false,
-          allowOutsideClick: false // Paksa user pilih tombol
-      });
-
-      if (confirm1.isConfirmed) {
-          handleSubmitExam(false);
-      } else {
-          // JIKA BATAL: RESUME SENSOR (Aktifkan Lagi)
-          // Beri jeda 500ms agar browser fokus kembali ke halaman sebelum sensor nyala
-          setTimeout(() => {
-              isPaused.current = false;
-          }, 500);
-      }
+  const handleCancelFinish = () => {
+      setShowFinishModal(false);
+      // RESUME SENSOR setelah jeda
+      setTimeout(() => {
+          isPaused.current = false;
+      }, 500);
   };
 
   // Timer
@@ -433,6 +405,9 @@ const PublicExam: React.FC = () => {
   // --- EXAM UI ---
   if (step === 'exam' && selectedExam && questions.length > 0) {
     const currentQ = questions[currentQIndex];
+    const answeredCount = Object.keys(answers).length;
+    const unansweredCount = questions.length - answeredCount;
+
     return (
       <div className="fixed inset-0 z-[9000] bg-slate-100 flex flex-col overflow-hidden select-none" onContextMenu={(e) => e.preventDefault()}>
         {/* HEADER */}
@@ -456,7 +431,7 @@ const PublicExam: React.FC = () => {
                   <p className={`text-lg md:text-2xl font-black font-mono leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>{formatTime(timeLeft)}</p>
                </div>
                
-               {/* TOMBOL SELESAI (REVISI: HAPUS onMouseEnter & onMouseLeave agar stabil) */}
+               {/* TOMBOL SELESAI (ATAS) */}
                <button 
                  onClick={handleFinishClick} 
                  className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center gap-2"
@@ -469,6 +444,17 @@ const PublicExam: React.FC = () => {
         {/* BODY */}
         <div className="flex flex-1 overflow-hidden relative">
             
+            {/* === LOADING OVERLAY (CUSTOM) === */}
+            {isSubmitting && (
+                <div className="absolute inset-0 z-[10001] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center space-y-4 animate-fadeIn">
+                    <Loader2 size={48} className="text-emerald-600 animate-spin" />
+                    <div className="text-center">
+                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Menyimpan Jawaban...</h3>
+                        <p className="text-xs text-slate-500 font-medium">Mohon tunggu, jangan keluar dari halaman.</p>
+                    </div>
+                </div>
+            )}
+
             {/* === CUSTOM VIOLATION MODAL === */}
             {showViolationModal && (
                 <div className="absolute inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
@@ -507,6 +493,54 @@ const PublicExam: React.FC = () => {
                 </div>
             )}
 
+            {/* === CUSTOM FINISH MODAL (REVISI BARU) === */}
+            {showFinishModal && (
+                <div className="absolute inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+                    <div className="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl animate-scaleUp border border-slate-200">
+                        <div className="bg-slate-50 p-6 text-center border-b border-slate-100">
+                            {unansweredCount > 0 ? (
+                                <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                    <AlertTriangle size={32} />
+                                </div>
+                            ) : (
+                                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                    <HelpCircle size={32} />
+                                </div>
+                            )}
+                            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Konfirmasi Selesai</h2>
+                        </div>
+                        
+                        <div className="p-6 space-y-4">
+                            {unansweredCount > 0 ? (
+                                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-center">
+                                    <p className="text-amber-800 font-bold text-sm">Masih ada {unansweredCount} soal kosong!</p>
+                                    <p className="text-amber-600 text-xs mt-1">Apakah Anda yakin ingin mengumpulkan?</p>
+                                </div>
+                            ) : (
+                                <p className="text-center text-slate-500 font-medium text-sm">
+                                    Anda telah menjawab semua soal. Yakin ingin mengakhiri ujian ini?
+                                </p>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <button 
+                                    onClick={handleCancelFinish}
+                                    className="py-3 rounded-xl bg-slate-200 text-slate-600 font-black uppercase text-xs hover:bg-slate-300 transition-all active:scale-95"
+                                >
+                                    Batal
+                                </button>
+                                <button 
+                                    onClick={handleConfirmFinish}
+                                    className="py-3 rounded-xl bg-emerald-600 text-white font-black uppercase text-xs hover:bg-emerald-700 transition-all shadow-lg active:scale-95"
+                                >
+                                    Ya, Kumpulkan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex-1 flex flex-col h-full relative overflow-y-auto bg-slate-50">
                <div className="w-full bg-slate-200 h-1"><div className="bg-emerald-500 h-1 transition-all duration-300" style={{ width: `${((currentQIndex + 1) / questions.length) * 100}%` }}></div></div>
                <div className="p-4 md:p-8 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
@@ -533,6 +567,8 @@ const PublicExam: React.FC = () => {
                <div className="p-4 bg-white border-t border-slate-200 flex justify-between items-center shrink-0">
                   <button onClick={() => currentQIndex > 0 && setCurrentQIndex(p => p - 1)} disabled={currentQIndex === 0} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 disabled:opacity-50"><ChevronLeft size={16}/> Sebelumnya</button>
                   <button onClick={() => setShowNavMobile(!showNavMobile)} className="md:hidden flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-white font-bold text-xs"><Grid size={16}/> <span className="text-[10px]">NO. SOAL</span></button>
+                  
+                  {/* TOMBOL SELESAI (BAWAH) */}
                   {currentQIndex === questions.length - 1 ? (
                       <button onClick={handleFinishClick} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase hover:bg-emerald-700 shadow-lg"><CheckCircle size={16}/> Selesai</button>
                   ) : (
