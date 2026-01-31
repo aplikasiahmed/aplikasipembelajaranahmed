@@ -407,6 +407,8 @@ const PublicExam: React.FC = () => {
     const currentQ = questions[currentQIndex];
     const answeredCount = Object.keys(answers).length;
     const unansweredCount = questions.length - answeredCount;
+    // Hitung jumlah soal ragu-ragu
+    const flaggedCount = flaggedQuestions.size;
 
     return (
       <div className="fixed inset-0 z-[9000] bg-slate-100 flex flex-col overflow-hidden select-none" onContextMenu={(e) => e.preventDefault()}>
@@ -422,11 +424,11 @@ const PublicExam: React.FC = () => {
            </div>
            
            <div className="flex items-center gap-2 md:gap-4 shrink-0">
-               {/* INDIKATOR PELANGGARAN (MUNCUL DI MOBILE) */}
+               {/* INDIKATOR PELANGGARAN (MUNCUL DI MOBILE) & TEKS "Poin Pelanggaran" */}
                {violationCount > 0 && (
                    <div className="flex items-center gap-1 bg-red-50 text-red-600 px-2 py-1 rounded-lg border border-red-100 animate-pulse">
                       <ShieldAlert size={12} className="md:w-3.5 md:h-3.5" />
-                      <span className="text-[9px] md:text-[10px] font-black uppercase">{violationCount}/3</span>
+                      <span className="text-[8px] md:text-[10px] font-black uppercase">Poin Pelanggaran {violationCount}/3</span>
                    </div>
                )}
                
@@ -497,12 +499,12 @@ const PublicExam: React.FC = () => {
                 </div>
             )}
 
-            {/* === CUSTOM FINISH MODAL (REVISI BARU) === */}
+            {/* === CUSTOM FINISH MODAL (REVISI BARU: DETEKSI KOSONG & RAGU-RAGU) === */}
             {showFinishModal && (
                 <div className="absolute inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
                     <div className="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl animate-scaleUp border border-slate-200">
                         <div className="bg-slate-50 p-6 text-center border-b border-slate-100">
-                            {unansweredCount > 0 ? (
+                            {unansweredCount > 0 || flaggedCount > 0 ? (
                                 <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
                                     <AlertTriangle size={32} />
                                 </div>
@@ -515,10 +517,16 @@ const PublicExam: React.FC = () => {
                         </div>
                         
                         <div className="p-6 space-y-4">
-                            {unansweredCount > 0 ? (
-                                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-center">
-                                    <p className="text-amber-800 font-bold text-sm">Masih ada {unansweredCount} soal kosong!</p>
-                                    <p className="text-amber-600 text-xs mt-1">Apakah Anda yakin ingin mengumpulkan?</p>
+                            {/* REVISI: TAMPILKAN STATUS SOAL KOSONG & RAGU-RAGU */}
+                            {(unansweredCount > 0 || flaggedCount > 0) ? (
+                                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-center space-y-1">
+                                    {unansweredCount > 0 && (
+                                        <p className="text-amber-800 font-bold text-sm">Masih ada {unansweredCount} soal kosong!</p>
+                                    )}
+                                    {flaggedCount > 0 && (
+                                        <p className="text-amber-700 font-bold text-sm">Masih ada {flaggedCount} soal ragu-ragu!</p>
+                                    )}
+                                    <p className="text-amber-600 text-xs mt-2">Apakah Anda yakin ingin mengumpulkan?</p>
                                 </div>
                             ) : (
                                 <p className="text-center text-slate-500 font-medium text-sm">
@@ -548,18 +556,22 @@ const PublicExam: React.FC = () => {
             <div className="flex-1 flex flex-col h-full relative overflow-y-auto bg-slate-50">
                <div className="w-full bg-slate-200 h-1"><div className="bg-emerald-500 h-1 transition-all duration-300" style={{ width: `${((currentQIndex + 1) / questions.length) * 100}%` }}></div></div>
                <div className="p-3 md:p-8 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
-                  <div className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 relative min-h-[350px] md:min-h-[400px] flex flex-col">
+                  {/* REVISI MOBILE: PADDING DIPERKECIL (p-3 untuk mobile) */}
+                  <div className="bg-white p-3 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 relative min-h-[350px] md:min-h-[400px] flex flex-col">
                       <div className="flex justify-between items-start mb-4 md:mb-6">
                           <span className="bg-emerald-600 text-white px-3 py-1 md:px-4 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-sm font-black shadow-md uppercase">Soal No. {currentQIndex + 1}</span>
                           <button onClick={() => toggleFlag(currentQ.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${flaggedQuestions.has(currentQ.id) ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}><Flag size={12} fill={flaggedQuestions.has(currentQ.id) ? "currentColor" : "none"} /> Ragu-ragu</button>
                       </div>
                       {currentQ.image_url && <div className="mb-4 md:mb-6 rounded-xl md:rounded-2xl overflow-hidden border border-slate-100 shadow-sm max-w-lg mx-auto bg-slate-50"><img src={currentQ.image_url} alt="Soal" className="w-full h-auto object-contain max-h-[250px] md:max-h-[300px]" /></div>}
                       <div className="flex-1 mb-4 md:mb-6"><p className="text-sm md:text-lg font-bold text-slate-800 leading-relaxed text-justify">{currentQ.text}</p></div>
-                      <div className="grid grid-cols-1 gap-2.5 md:gap-3">
+                      
+                      {/* REVISI MOBILE: GAP DIPERKECIL */}
+                      <div className="grid grid-cols-1 gap-2 md:gap-3">
                          {currentQ.options?.map((opt, optIdx) => {
                            const isSelected = answers[currentQ.id] === String(optIdx);
                            return (
-                             <button key={optIdx} onClick={() => handleAnswer(currentQ.id, optIdx)} className={`w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all text-xs md:text-sm flex items-center gap-3 md:gap-4 group active:scale-[0.98] ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-md ring-2 ring-emerald-500/20' : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-300'}`}>
+                             // REVISI MOBILE: PADDING OPSI DIPERKECIL (p-2.5)
+                             <button key={optIdx} onClick={() => handleAnswer(currentQ.id, optIdx)} className={`w-full text-left p-2.5 md:p-4 rounded-xl border-2 transition-all text-xs md:text-sm flex items-center gap-3 md:gap-4 group active:scale-[0.98] ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-md ring-2 ring-emerald-500/20' : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-300'}`}>
                                 <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg border-2 flex items-center justify-center text-[10px] md:text-xs font-black shrink-0 transition-colors ${isSelected ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>{['A','B','C','D'][optIdx]}</div>
                                 <span className="leading-relaxed font-medium">{opt}</span>
                              </button>
