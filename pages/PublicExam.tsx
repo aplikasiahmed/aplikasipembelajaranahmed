@@ -102,7 +102,7 @@ const PublicExam: React.FC = () => {
         Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
       }
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server ujian.', heightAuto: false });
+      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server soal', heightAuto: false });
     } finally {
       setLoadingExams(false);
     }
@@ -126,19 +126,23 @@ const PublicExam: React.FC = () => {
     
     // PERINGATAN AWAL (Masih pakai SweetAlert tidak apa-apa karena belum masuk mode ujian)
     const rules = await Swal.fire({
-      title: 'PERATURAN UJIAN',
+      title: 'PERATURAN',
+      text:'Wajib dibaca',
       html: `
         <div class="text-left space-y-3">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
                     <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, WA, atau Tab Lain.</p>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau Tab Lain.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Dilarang keluar dari halaman ujian.</li>
-                <li>Jika melanggar 3x, ujian otomatis DISKUALIFIKASI.</li>
+                <li>Dilarang keluar dari halaman soal.</li>
+                <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya, Jawabanya yang sudah dijawab akan terkirim langsung ke sistem.</li>
+                <li>Perhatikan waktu saat mengerjakan soal.</li>
+                <li>Apabila waktu telah habis saat mengerjakan soal. Maka, akan selesai dan tidak dapat mengerjakan soal berikutnya, jawaban akan terkirim langsung ke sistem.</li>
+                <li>Jangan Lupa untuk berdoa sebelum mengerjakan soal.</li>
             </ul>
         </div>
       `,
@@ -330,7 +334,7 @@ const PublicExam: React.FC = () => {
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
         <div className="text-center space-y-1">
           <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mulai ujian.</p>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mengerjakan soal.</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
@@ -483,11 +487,11 @@ const PublicExam: React.FC = () => {
                             {violationCount >= 3 ? (
                                 <p className="text-xs text-slate-500 font-medium">
                                     Maaf, Anda telah melanggar aturan sebanyak 3 kali. <br/>
-                                    <span className="text-red-600 font-bold">Ujian Anda dihentikan otomatis.</span>
+                                    <span className="text-red-600 font-bold">Anda dihentikan otomatis.</span>
                                 </p>
                             ) : (
                                 <p className="text-xs text-slate-500 font-medium">
-                                    Harap tetap di halaman ujian. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
+                                    Harap tetap pada halaman soal. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
                                 </p>
                             )}
 
@@ -533,7 +537,7 @@ const PublicExam: React.FC = () => {
                                 </div>
                             ) : (
                                 <p className="text-center text-slate-500 font-medium text-sm">
-                                    Anda telah menjawab semua soal. Yakin ingin mengakhiri ujian ini?
+                                    Anda telah menjawab semua soal. Yakin ingin selesai?
                                 </p>
                             )}
 
@@ -640,14 +644,14 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-md mx-auto min-h-[60vh] flex flex-col items-center justify-center px-4 animate-slideUp text-center">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100 animate-bounce"><CheckCircle size={48} strokeWidth={3} /></div>
-        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
-        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
+        <h1 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
+        <p className="text-xs text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl w-full space-y-2 mb-8 relative overflow-hidden">
            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nilai Kamu</p>
-           <p className="text-5xl font-black text-slate-800 tracking-tighter">{score}</p>
+           <p className="text-5xl font-black text-emerald-700 tracking-tighter">{score}</p>
         </div>
-        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
+        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-emerald-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-emerald-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
       </div>
     );
   }
