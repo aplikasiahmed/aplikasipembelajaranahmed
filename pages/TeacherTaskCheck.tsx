@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ExternalLink, Image as ImageIcon, Link as LinkIcon, Trash2, Loader2, Calendar, FileText, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
@@ -117,6 +116,48 @@ const TeacherTaskCheck: React.FC = () => {
          });
       }
     }
+  };
+
+  // --- ACTIONS: DELETE TASK (NEW FEATURE) ---
+  const handleDeleteTask = async (task: TaskSubmission) => {
+      // 1. Konfirmasi Awal
+      const confirm = await Swal.fire({
+          title: 'Hapus Tugas?',
+          text: `Anda akan menghapus tugas "${task.task_name}" milik ${task.student_name}.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc2626',
+          confirmButtonText: 'Ya, Hapus',
+          cancelButtonText: 'Batal',
+          heightAuto: false
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      // 2. Layer Keamanan Ganda (Token)
+      const { value: token } = await Swal.fire({
+          title: 'Verifikasi Keamanan',
+          text: 'Masukkan Token ID Server PAI',
+          input: 'password',
+          inputPlaceholder: 'Token Keamanan',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc2626',
+          heightAuto: false
+      });
+
+      if (token === "PAI_ADMIN_GURU") {
+          Swal.fire({ title: 'Menghapus...', didOpen: () => Swal.showLoading(), heightAuto: false });
+          try {
+              await db.deleteTaskSubmission(task.id);
+              await loadTasks(); // Reload data
+              Swal.fire({icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false, heightAuto: false});
+          } catch (e) {
+              Swal.fire({icon: 'error', title: 'Gagal', text: 'Gagal menghapus data.', heightAuto: false});
+          }
+      } else if (token !== undefined) {
+          Swal.fire({ icon: 'error', title: 'Token Salah', text: 'Penghapusan dibatalkan.', heightAuto: false });
+      }
   };
 
   // --- ACTIONS: EXAMS ---
@@ -276,12 +317,13 @@ const TeacherTaskCheck: React.FC = () => {
             <p className="text-slate-400 text-[9px] md:text-xs font-bold uppercase tracking-widest">Memuat Data...</p>
           </div>
         ) : filteredData.length > 0 ? (
-          <div className="overflow-x-auto">
+          /* REVISI SCROLLBAR & MAX-HEIGHT UNTUK KEDUA TABEL (KIRA-KIRA 10 BARIS = 550px) */
+          <div className="max-h-[550px] overflow-y-auto scrollbar-thin relative">
             {activeTab === 'tasks' ? (
                 /* ================= TABEL TUGAS UPLOAD ================= */
                 <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100">
+                  <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-100 shadow-sm">
+                    <tr>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Siswa</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Judul</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipe</th>
@@ -313,15 +355,26 @@ const TeacherTaskCheck: React.FC = () => {
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => viewContent(task)}
-                            className="bg-slate-900 text-white px-2.5 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-bold hover:bg-purple-600 transition-all active:scale-95 flex items-center gap-1.5 mx-auto"
-                          >
-                            {task.submission_type === 'link' ? <ExternalLink size={10} /> : <Search size={10} />}
-                            <span className="hidden md:inline">Lihat Konten</span>
-                            <span className="md:hidden">Cek</span>
-                          </button>
+                        <td className="px-4 py-3 text-center align-middle">
+                          {/* REVISI AKSI: TAMBAH TOMBOL HAPUS */}
+                          <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => viewContent(task)}
+                                className="bg-slate-900 text-white px-2.5 py-2 md:px-4 md:py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-bold hover:bg-purple-600 transition-all active:scale-95 flex items-center gap-1.5"
+                              >
+                                {task.submission_type === 'link' ? <ExternalLink size={10} /> : <Search size={10} />}
+                                <span className="hidden md:inline">Lihat Konten</span>
+                                <span className="md:hidden">Cek</span>
+                              </button>
+                              
+                              <button
+                                onClick={() => handleDeleteTask(task)}
+                                className="bg-red-50 text-red-500 p-2 md:p-2.5 rounded-lg md:rounded-xl hover:bg-red-600 hover:text-white transition-all active:scale-95 border border-red-100"
+                                title="Hapus Tugas"
+                              >
+                                <Trash2 size={14} className="md:w-3.5 md:h-3.5" />
+                              </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -330,8 +383,8 @@ const TeacherTaskCheck: React.FC = () => {
             ) : (
                 /* ================= TABEL HASIL UJIAN ================= */
                 <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100">
+                  <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-100 shadow-sm">
+                    <tr>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Siswa</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Nama Ujian</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Nilai</th>

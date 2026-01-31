@@ -126,7 +126,7 @@ const PublicExam: React.FC = () => {
     
     // PERINGATAN AWAL (Masih pakai SweetAlert tidak apa-apa karena belum masuk mode ujian)
     const rules = await Swal.fire({
-      title: 'PERATURAN UJIAN',
+      title: 'PERATURAN',
       html: `
         <div class="text-left space-y-3">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">

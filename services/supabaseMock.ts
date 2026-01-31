@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { Student, AttendanceRecord, GradeRecord, Material, GradeLevel, TaskSubmission, AdminUser, Exam, Question, ExamResult } from '../types';
 
@@ -149,6 +148,11 @@ class DatabaseService {
     if (grade) query = query.like('kelas', `${grade}.%`);
     const { data, error } = await query;
     return (data || []) as TaskSubmission[];
+  }
+  
+  async deleteTaskSubmission(id: string): Promise<void> {
+    const { error } = await supabase.from('data_TugasSiswa').delete().eq('id', id);
+    if (error) throw error;
   }
 
   async getMaterials(grade?: GradeLevel): Promise<Material[]> {
