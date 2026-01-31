@@ -102,7 +102,7 @@ const PublicExam: React.FC = () => {
         Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
       }
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server ujian.', heightAuto: false });
+      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke soal.', heightAuto: false });
     } finally {
       setLoadingExams(false);
     }
@@ -133,12 +133,13 @@ const PublicExam: React.FC = () => {
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
                     <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, WA, atau Tab Lain.</p>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, AI, WA, atau sumber lain.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Dilarang keluar dari halaman ujian.</li>
-                <li>Jika melanggar 3x, ujian otomatis DISKUALIFIKASI.</li>
+                <li>Dilarang keluar dari halaman mengerjakan soal</li>
+                <li>Jika melanggar 3x, halaman soal otomatis DISKUALIFIKASI</li>
+                <li>Berdo'alah sebelum mengerjakan soal</li>
             </ul>
         </div>
       `,
@@ -329,14 +330,14 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-black text-slate-800 uppercase">Kerjakan Soal</h1>
-          <p className="text-xs text-slate-500 font-medium">Pilih Semester & masukkan NIS.</p>
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan nomor NIS untuk mengerjakan soal</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <select 
-                className="w-full px-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all cursor-pointer"
+                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
                 value={semester} 
                 onChange={(e) => setSemester(e.target.value)}
               >
@@ -349,7 +350,7 @@ const PublicExam: React.FC = () => {
                 <input 
                   type="text" 
                   inputMode="numeric" 
-                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
+                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
                   placeholder="Masukkan NIS..." 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
@@ -480,11 +481,11 @@ const PublicExam: React.FC = () => {
                             {violationCount >= 3 ? (
                                 <p className="text-xs text-slate-500 font-medium">
                                     Maaf, Anda telah melanggar aturan sebanyak 3 kali. <br/>
-                                    <span className="text-red-600 font-bold">Ujian Anda dihentikan otomatis.</span>
+                                    <span className="text-red-600 font-bold">Anda tidak bisa mengerjakan soal kembali.</span>
                                 </p>
                             ) : (
                                 <p className="text-xs text-slate-500 font-medium">
-                                    Harap tetap di halaman ujian. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
+                                    Harap berada pada halaman mengerjakan soal. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
                                 </p>
                             )}
 
@@ -530,7 +531,7 @@ const PublicExam: React.FC = () => {
                                 </div>
                             ) : (
                                 <p className="text-center text-slate-500 font-medium text-sm">
-                                    Anda telah menjawab semua soal. Yakin ingin mengakhiri ujian ini?
+                                    Anda telah menjawab semua soal. Yakin ingin di selesaikan ?
                                 </p>
                             )}
 
