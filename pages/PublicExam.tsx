@@ -374,7 +374,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa</p>
             <h1 className="text-lg font-black uppercase">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • Jenis Kelamin {student.jeniskelamin}</p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • {student.jeniskelamin}</p>
           </div>
         </div>
         <h2 className="text-sm font-black text-slate-800 uppercase ml-1">Daftar Soal</h2>
