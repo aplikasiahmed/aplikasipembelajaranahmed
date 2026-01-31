@@ -621,14 +621,14 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-md mx-auto min-h-[60vh] flex flex-col items-center justify-center px-4 animate-slideUp text-center">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100 animate-bounce"><CheckCircle size={48} strokeWidth={3} /></div>
-        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
-        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
+        <h1 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
+        <p className="text-xs text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl w-full space-y-2 mb-8 relative overflow-hidden">
            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nilai Kamu</p>
            <p className="text-5xl font-black text-slate-800 tracking-tighter">{score}</p>
         </div>
-        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
+        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-emeraldd-700 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
       </div>
     );
   }
