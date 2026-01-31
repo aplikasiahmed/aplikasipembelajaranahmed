@@ -26,11 +26,10 @@ const PublicExam: React.FC = () => {
   const [score, setScore] = useState(0);
   
   // --- ANTI-CURANG STATES & REFS ---
-  const [violationCount, setViolationCount] = useState(0); // Untuk UI Saja
-  const violationRef = useRef(0); // Untuk Logika (Real-time)
+  const [violationCount, setViolationCount] = useState(0); // Untuk UI (Render)
+  const violationRef = useRef(0); // Untuk Logika (Real-time Value)
   const isAlertOpen = useRef(false); // Kunci agar alert tidak tumpuk
-  const isHiddenRef = useRef(false); // Melacak status hidden document
-
+  
   // Navigation
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
@@ -141,94 +140,93 @@ const PublicExam: React.FC = () => {
       setViolationCount(0); 
       violationRef.current = 0; 
       isAlertOpen.current = false;
-      isHiddenRef.current = false;
       
       setStep('exam');
     }
   };
 
-  // --- LOGIKA ANTI-CURANG 3 STRIKES (REFINED) ---
+  // --- LOGIKA ANTI-CURANG 3 STRIKES (FIXED LOGIC) ---
   useEffect(() => {
     if (step !== 'exam') return;
 
-    // Fungsi Menampilkan Alert Pelanggaran
-    const showViolationAlert = async (currentCount: number) => {
+    // Fungsi Utama Trigger Pelanggaran
+    const triggerViolation = async (reason: string) => {
+        // Jika sudah diskualifikasi atau alert sedang terbuka, abaikan
+        if (violationRef.current >= 3 || isAlertOpen.current) return;
+
+        // Kunci Alert agar tidak spam
         isAlertOpen.current = true;
 
-        if (currentCount === 1) {
-            await Swal.fire({
-                title: 'PERINGATAN 1/3',
-                html: `<p class="text-sm">Anda terdeteksi <b>keluar dari aplikasi</b>.<br/>Jangan ulangi atau nilai Anda akan dibatalkan.</p>`,
-                icon: 'warning',
-                confirmButtonColor: '#f59e0b',
-                confirmButtonText: 'Kembali Mengerjakan',
-                allowOutsideClick: false,
-                heightAuto: false,
-                customClass: { popup: 'z-[99999]' }
-            });
-            isAlertOpen.current = false; 
-        } 
-        else if (currentCount === 2) {
-            await Swal.fire({
-                title: 'PERINGATAN TERAKHIR (2/3)',
-                html: `<p class="text-sm font-bold text-red-600">JANGAN KELUAR LAGI!</p><p class="text-xs">Sekali lagi Anda melanggar, ujian otomatis disubmit (DISKUALIFIKASI).</p>`,
-                icon: 'error',
-                confirmButtonColor: '#dc2626',
-                confirmButtonText: 'SAYA MENGERTI',
-                allowOutsideClick: false,
-                heightAuto: false,
-                customClass: { popup: 'z-[99999]' }
-            });
-            isAlertOpen.current = false; 
-        } 
-        else if (currentCount >= 3) {
-            await Swal.fire({
-                title: 'DISKUALIFIKASI',
-                text: 'Anda telah melanggar aturan 3 kali. Sistem menghentikan ujian Anda.',
-                icon: 'error',
-                showConfirmButton: false,
-                timer: 3000,
-                allowOutsideClick: false,
-                heightAuto: false,
-                customClass: { popup: 'z-[99999]' }
-            });
-            handleSubmitExam(true); 
+        // Tambah Counter
+        violationRef.current += 1;
+        setViolationCount(violationRef.current);
+
+        const count = violationRef.current;
+
+        // Tentukan Pesan & Warna berdasarkan Tingkat Pelanggaran
+        let title = `PELANGGARAN ${count}/3`;
+        let text = `Anda terdeteksi ${reason}. Fokus pada layar ujian!`;
+        let icon: 'warning' | 'error' = 'warning';
+        let btnColor = '#f59e0b'; // Kuning
+        let btnText = 'Kembali Mengerjakan';
+
+        if (count === 2) {
+            title = 'PERINGATAN TERAKHIR (2/3)';
+            text = 'JANGAN KELUAR LAGI! Sekali lagi melanggar, Anda akan DIDISKUALIFIKASI otomatis.';
+            icon = 'error';
+            btnColor = '#dc2626'; // Merah
+            btnText = 'Saya Mengerti';
+        } else if (count >= 3) {
+            title = 'DISKUALIFIKASI';
+            text = 'Anda telah melanggar aturan 3 kali. Sistem menghentikan ujian Anda sekarang.';
+            icon = 'error';
+            btnColor = '#000000'; // Hitam
+            btnText = 'Tutup';
+        }
+
+        // Tampilkan Alert (Blocking)
+        await Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            confirmButtonColor: btnColor,
+            confirmButtonText: btnText,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            heightAuto: false,
+            customClass: { popup: 'z-[99999]' }
+        });
+
+        // Buka Kunci Alert
+        isAlertOpen.current = false;
+
+        // Jika Pelanggaran ke-3, Auto Submit
+        if (count >= 3) {
+            handleSubmitExam(true);
         }
     };
 
-    // 1. Event Ganti Tab (Logic: Hitung saat keluar, Alert saat kembali)
+    // 1. Event Ganti Tab / Minimize (Visibility Change)
+    // Langsung trigger tanpa delay karena ini aksi yang jelas disengaja
     const handleVisibilityChange = () => {
         if (document.hidden) {
-            // User keluar -> Hitung pelanggaran
-            isHiddenRef.current = true;
-            violationRef.current += 1;
-            setViolationCount(violationRef.current);
-        } else {
-            // User kembali -> Tampilkan Alert jika tadi keluar
-            if (isHiddenRef.current) {
-                isHiddenRef.current = false;
-                if (!isAlertOpen.current) {
-                    showViolationAlert(violationRef.current);
-                }
-            }
+            triggerViolation("keluar dari aplikasi / ganti tab");
         }
     };
 
-    // 2. Event Hilang Fokus (Blur) - Hanya jika layar masih visible
+    // 2. Event Hilang Fokus (Blur)
+    // Diberi delay 1 detik untuk membedakan klik popup/alert sistem vs klik luar app
     const handleBlur = () => {
-        // Delay sedikit untuk memastikan bukan klik elemen internal
         setTimeout(() => {
-            // Cek: Dokumen tidak hidden (artinya masih di layar tapi hilang fokus, misal split screen)
-            // Dan tidak sedang ada alert terbuka
-            if (!document.hidden && !document.hasFocus() && !isAlertOpen.current) {
-                 violationRef.current += 1;
-                 setViolationCount(violationRef.current);
-                 showViolationAlert(violationRef.current);
+            // Cek apakah fokus benar-benar hilang dari dokumen & tab tidak hidden
+            // Juga cek apakah alert sedang terbuka (karena klik alert memicu blur juga)
+            if (!document.hasFocus() && !document.hidden && !isAlertOpen.current) {
+                 triggerViolation("memindah fokus layar / membuka aplikasi lain");
             }
-        }, 500); 
+        }, 1000); 
     };
 
-    // 3. Prevent Back Button
+    // 3. Prevent Back Button Browser
     const handlePopState = () => {
         window.history.pushState(null, "", window.location.href);
         if (!isAlertOpen.current) {
@@ -244,18 +242,21 @@ const PublicExam: React.FC = () => {
         }
     };
 
+    // Attach Listeners
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
     
+    // Push state untuk mencegah back
     window.history.pushState(null, "", window.location.href);
     window.addEventListener('popstate', handlePopState);
 
+    // Cleanup
     return () => {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
         window.removeEventListener("blur", handleBlur);
         window.removeEventListener('popstate', handlePopState);
     };
-  }, [step]); // Dependency step agar listener aktif saat ujian mulai
+  }, [step]); // Dependency: hanya reset saat step berubah (mulai ujian)
 
   // TIMER
   useEffect(() => {
@@ -284,58 +285,7 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- LOGIKA VALIDASI GANDA TOMBOL SELESAI ---
-  const handleDoubleConfirmation = async () => {
-      const answered = Object.keys(answers).length;
-      const total = questions.length;
-      const empty = total - answered;
-
-      // VALIDASI 1: Cek Kelengkapan
-      let title1 = 'Konfirmasi Selesai';
-      let text1 = `Anda sudah menjawab ${answered} dari ${total} soal.`;
-      let type1: 'question' | 'warning' = 'question';
-      
-      if (empty > 0) {
-          title1 = 'Masih Ada Soal Kosong!';
-          text1 = `Hati-hati! Masih ada ${empty} soal belum dijawab. Yakin mau kumpulkan?`;
-          type1 = 'warning';
-      }
-
-      const confirm1 = await Swal.fire({
-          title: title1,
-          text: text1,
-          icon: type1,
-          showCancelButton: true,
-          confirmButtonColor: empty > 0 ? '#d97706' : '#059669', // Kuning jika ada kosong, Hijau jika lengkap
-          cancelButtonColor: '#64748b',
-          confirmButtonText: 'Ya, Lanjutkan',
-          cancelButtonText: 'Periksa Lagi',
-          heightAuto: false,
-          customClass: { popup: 'z-[99999]' }
-      });
-
-      if (!confirm1.isConfirmed) return;
-
-      // VALIDASI 2: Peringatan Final
-      const confirm2 = await Swal.fire({
-          title: 'PERINGATAN TERAKHIR',
-          html: `<span style="color:red; font-weight:bold">JAWABAN TIDAK BISA DIUBAH!</span><br/>Apakah Anda benar-benar yakin ingin mengakhiri ujian ini?`,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#dc2626', // Merah
-          cancelButtonColor: '#64748b',
-          confirmButtonText: 'YA, KUMPULKAN SEKARANG',
-          cancelButtonText: 'Batal',
-          heightAuto: false,
-          customClass: { popup: 'z-[99999]' }
-      });
-
-      if (confirm2.isConfirmed) {
-          handleSubmitExam(false);
-      }
-  };
-
-  // SUBMIT KE DB
+  // --- SUBMIT KE DB ---
   const handleSubmitExam = async (auto = false) => {
     // Exit Fullscreen
     if (document.fullscreenElement) {
@@ -373,6 +323,60 @@ const PublicExam: React.FC = () => {
     setStep('result');
   };
 
+  // --- LOGIKA VALIDASI GANDA TOMBOL SELESAI (DIPANGGIL OLEH HEADER & FOOTER) ---
+  const handleDoubleConfirmation = async () => {
+      // Logic ini harus ada di dalam komponen agar bisa akses 'answers' dan 'questions'
+      const answered = Object.keys(answers).length;
+      const total = questions.length;
+      const empty = total - answered;
+
+      // VALIDASI 1: Cek Kelengkapan
+      let title1 = 'Konfirmasi Selesai';
+      let text1 = `Anda sudah menjawab ${answered} dari ${total} soal.`;
+      let icon1: 'question' | 'warning' = 'question';
+      let btnColor1 = '#059669'; // Hijau
+      
+      if (empty > 0) {
+          title1 = 'Masih Ada Soal Kosong!';
+          text1 = `Hati-hati! Masih ada ${empty} soal belum dijawab. Yakin mau kumpulkan?`;
+          icon1 = 'warning';
+          btnColor1 = '#d97706'; // Kuning/Orange
+      }
+
+      const confirm1 = await Swal.fire({
+          title: title1,
+          text: text1,
+          icon: icon1,
+          showCancelButton: true,
+          confirmButtonColor: btnColor1,
+          cancelButtonColor: '#64748b',
+          confirmButtonText: 'Ya, Lanjutkan',
+          cancelButtonText: 'Periksa Lagi',
+          heightAuto: false,
+          customClass: { popup: 'z-[99999]' }
+      });
+
+      if (!confirm1.isConfirmed) return;
+
+      // VALIDASI 2: Peringatan Final
+      const confirm2 = await Swal.fire({
+          title: 'PERINGATAN TERAKHIR',
+          html: `<span style="color:red; font-weight:bold">JAWABAN TIDAK BISA DIUBAH!</span><br/>Apakah Anda benar-benar yakin ingin mengakhiri ujian ini?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc2626', // Merah
+          cancelButtonColor: '#64748b',
+          confirmButtonText: 'YA, KUMPULKAN SEKARANG',
+          cancelButtonText: 'Batal',
+          heightAuto: false,
+          customClass: { popup: 'z-[99999]' }
+      });
+
+      if (confirm2.isConfirmed) {
+          handleSubmitExam(false);
+      }
+  };
+
   // --- VIEWS ---
 
   if (step === 'login') {
@@ -380,12 +384,12 @@ const PublicExam: React.FC = () => {
       <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-black text-slate-800 uppercase">Kerjakan Soal</h1>
-          <p className="text-xs text-slate-500 font-medium">Pilih Semester & masukkan NIS untuk menegrjakan soal</p>
+          <p className="text-xs text-slate-500 font-medium">Pilih Semester & masukkan NIS untuk mengerjakan soal</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {/* RESTORED: WARNA INPUT GELAP (SESUAI REQUEST) */}
+              {/* WARNA INPUT TETAP GELAP SESUAI PERMINTAAN */}
               <select 
                 className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
                 value={semester} 
@@ -397,12 +401,12 @@ const PublicExam: React.FC = () => {
               </select>
               <div className="relative md:col-span-2">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                {/* RESTORED: WARNA INPUT GELAP */}
+                {/* WARNA INPUT TETAP GELAP SESUAI PERMINTAAN */}
                 <input 
                   type="text" 
                   inputMode="numeric" 
                   className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
-                  placeholder="Masukkan NIS siswa..." 
+                  placeholder="Masukkan nomor NIS siswa" 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
                 />
@@ -479,7 +483,7 @@ const PublicExam: React.FC = () => {
                   <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Sisa Waktu</p>
                   <p className={`text-lg md:text-2xl font-black font-mono leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>{formatTime(timeLeft)}</p>
                </div>
-               {/* TOMBOL SELESAI HEADER: MENGGUNAKAN VALIDASI GANDA */}
+               {/* TOMBOL SELESAI HEADER: SUDAH DIPERBAIKI MEMANGGIL handleDoubleConfirmation */}
                <button onClick={handleDoubleConfirmation} className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center gap-2">
                  <LogOut size={14} strokeWidth={3} /> <span className="hidden md:inline">Selesai</span>
                </button>
@@ -515,7 +519,7 @@ const PublicExam: React.FC = () => {
                   <button onClick={() => currentQIndex > 0 && setCurrentQIndex(p => p - 1)} disabled={currentQIndex === 0} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 disabled:opacity-50"><ChevronLeft size={16}/> Sebelumnya</button>
                   <button onClick={() => setShowNavMobile(!showNavMobile)} className="md:hidden flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-white font-bold text-xs"><Grid size={16}/> <span className="text-[10px]">NO. SOAL</span></button>
                   {currentQIndex === questions.length - 1 ? (
-                      // TOMBOL SELESAI BAWAH: JUGA MENGGUNAKAN VALIDASI GANDA
+                      // TOMBOL SELESAI BAWAH: MENGGUNAKAN VALIDASI GANDA
                       <button onClick={handleDoubleConfirmation} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase hover:bg-emerald-700 shadow-lg"><CheckCircle size={16}/> Selesai</button>
                   ) : (
                       <button onClick={() => setCurrentQIndex(p => p + 1)} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-lg">Selanjutnya <ChevronRight size={16}/></button>
