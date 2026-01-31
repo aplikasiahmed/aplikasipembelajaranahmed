@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen } from 'lucide-react';
 import { db } from '../services/supabaseMock';
@@ -24,15 +25,11 @@ const PublicExam: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0); 
   const [score, setScore] = useState(0);
   
-  // --- ANTI-CURANG SYSTEM (CRITICAL FIX) ---
+  // --- ANTI-CURANG SYSTEM ---
   const [violationCount, setViolationCount] = useState(0); 
   const violationRef = useRef(0); 
   
-  // LOCK SYSTEM: Jika true, sensor anti-curang MATI total.
-  // Digunakan saat:
-  // 1. Popup Peringatan sedang muncul (menunggu siswa klik OK).
-  // 2. Popup Konfirmasi Selesai sedang muncul.
-  // 3. Proses Submit sedang berjalan.
+  // LOCK SYSTEM: Kunci sensor anti-curang saat ada Popup/Alert muncul
   const isLocked = useRef(false); 
   
   // Navigation
@@ -132,39 +129,36 @@ const PublicExam: React.FC = () => {
       return;
     }
     
+    // PERINGATAN (TANPA FULLSCREEN)
     const rules = await Swal.fire({
-      title: 'MODE UJIAN AMAN',
+      title: 'ATURAN UJIAN',
       html: `
         <div class="text-left space-y-3">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
-                    <h4 class="font-bold text-red-600 text-sm">PERINGATAN KERAS</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Dilarang keluar aplikasi/pindah tab. Pelanggaran 3x = DISKUALIFIKASI.</p>
+                    <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG</h4>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Aplikasi Lain, atau Pindah Tab.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Tampilan akan dikunci Fullscreen.</li>
-                <li>Dilarang membuka Google / Browser lain.</li>
+                <li>Jangan keluar dari halaman ini.</li>
+                <li>Jika melanggar 3x, ujian otomatis selesai.</li>
             </ul>
         </div>
       `,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#059669',
-      confirmButtonText: 'SAYA SIAP',
+      confirmButtonText: 'SAYA SIAP MENGERJAKAN',
       cancelButtonText: 'Batal',
       heightAuto: false,
       allowOutsideClick: false
     });
 
     if (rules.isConfirmed) {
-      try {
-        if (document.documentElement.requestFullscreen) {
-            await document.documentElement.requestFullscreen();
-        }
-      } catch (e) { console.log("Fullscreen blocked", e); }
-
+      // TIDAK ADA REQUEST FULLSCREEN DISINI
+      
       const startTimeIso = new Date().toISOString();
       const endTimeIso = new Date(new Date().getTime() + exam.duration * 60000).toISOString();
 
@@ -201,10 +195,7 @@ const PublicExam: React.FC = () => {
     // 1. KUNCI TOTAL (Agar tidak ada violation lagi)
     isLocked.current = true;
 
-    // 2. Exit Fullscreen
-    if (document.fullscreenElement) {
-        try { await document.exitFullscreen(); } catch(e) {}
-    }
+    // TIDAK ADA EXIT FULLSCREEN DISINI
 
     // 3. Hapus Session
     localStorage.removeItem('pai_exam_session');
@@ -219,8 +210,8 @@ const PublicExam: React.FC = () => {
 
     // 5. Tampilkan Loading
     Swal.fire({ 
-        title: forced ? 'WAKTU HABIS / DISKUALIFIKASI' : 'Menyimpan...', 
-        text: forced ? 'Jawaban otomatis dikirim.' : 'Sedang mengirim jawaban...',
+        title: forced ? 'DISKUALIFIKASI!' : 'Menyimpan...', 
+        text: forced ? 'Anda melanggar aturan 3 kali. Jawaban otomatis dikirim.' : 'Sedang mengirim jawaban...',
         icon: forced ? 'error' : 'info',
         allowOutsideClick: false, 
         showConfirmButton: false,
@@ -249,7 +240,7 @@ const PublicExam: React.FC = () => {
     Swal.close();
   };
 
-  // --- LOGIKA ANTI-CURANG (DIPERBAIKI 100%) ---
+  // --- LOGIKA ANTI-CURANG (TANPA FULLSCREEN) ---
   useEffect(() => {
     if (step !== 'exam') return;
 
@@ -258,7 +249,7 @@ const PublicExam: React.FC = () => {
         // CEK KUNCI: Jika sedang locked (karena popup lain atau proses submit), ABAIKAN.
         if (isLocked.current) return;
 
-        // 1. KUNCI SEMENTARA (Agar tidak ditimpa event lain)
+        // 1. KUNCI SEMENTARA
         isLocked.current = true;
 
         // 2. Tambah Counter
@@ -267,20 +258,19 @@ const PublicExam: React.FC = () => {
         const count = violationRef.current;
 
         // 3. Tentukan Pesan & Tombol
-        let title = `PELANGGARAN KE-${count}`;
-        let text = `Anda terdeteksi ${reason}. Jangan ulangi!`;
+        let title = `PELANGGARAN ${count}/3`;
+        let text = `Anda terdeteksi ${reason}. Harap tetap di halaman ujian!`;
         let confirmBtnText = 'Saya Mengerti (OK)';
         let icon: 'warning' | 'error' = 'warning';
 
         if (count >= 3) {
-            title = 'DISKUALIFIKASI (3/3)';
-            text = 'Anda telah melanggar aturan 3 kali. Klik OK untuk mengumpulkan paksa.';
+            title = 'DISKUALIFIKASI';
+            text = 'Anda telah melanggar aturan 3 kali. Klik OK untuk mengakhiri ujian.';
             icon = 'error';
             confirmBtnText = 'OK, Kumpulkan';
         }
 
-        // 4. TAMPILKAN SWEETALERT & TUNGGU (AWAIT) INTERAKSI SISWA
-        // Kode akan PAUSE disini sampai siswa klik OK.
+        // 4. TAMPILKAN SWEETALERT & TUNGGU (AWAIT)
         await Swal.fire({
             title: title,
             text: text,
@@ -295,37 +285,26 @@ const PublicExam: React.FC = () => {
 
         // 5. SETELAH KLIK OK
         if (count >= 3) {
-            // Jika Pelanggaran ke-3 -> Submit Paksa
             handleSubmitExam(true);
         } else {
-            // Jika Pelanggaran 1 atau 2 -> BUKA KUNCI (Resume)
+            // BUKA KUNCI (Resume)
             isLocked.current = false;
-            
-            // Coba Fullscreen Lagi
-            try {
-                if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-                    await document.documentElement.requestFullscreen();
-                }
-            } catch(e) {}
         }
     };
 
-    // EVENT LISTENER 1: Visibility Change (Pindah Tab/Minimize)
+    // EVENT LISTENER: Pindah Tab / Minimize
     const handleVisibilityChange = () => {
-        if (document.hidden) triggerViolation("keluar dari aplikasi / ganti tab");
+        if (document.hidden) triggerViolation("keluar dari aplikasi / pindah tab");
     };
 
-    // EVENT LISTENER 2: Blur (Klik di luar / Notifikasi)
+    // EVENT LISTENER: Blur (Klik di luar window)
     const handleBlur = () => {
-        // PENTING: Gunakan timeout agar jika user mengklik tombol "Selesai",
-        // event onClick tombol tersebut sempat dijalankan (set isLocked=true)
-        // SEBELUM pengecekan blur ini berjalan.
+        // Timeout kecil untuk memastikan bukan interaksi tombol internal
         setTimeout(() => {
-            // Cek: Dokumen tidak fokus DAN sistem TIDAK sedang dikunci (oleh tombol selesai/popup)
             if (!document.hasFocus() && !document.hidden && !isLocked.current) {
-                triggerViolation("memindah fokus layar / membuka aplikasi lain");
+                triggerViolation("membuka aplikasi lain");
             }
-        }, 500); // Delay 500ms aman
+        }, 300);
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -384,9 +363,9 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- TOMBOL SELESAI (FIXED: LOCKING PRIORITY) ---
+  // --- TOMBOL SELESAI ---
   const handleFinishButton = async () => {
-      // 1. KUNCI LANGSUNG! (Ini mencegah handleBlur mendeteksi pelanggaran)
+      // 1. KUNCI LANGSUNG! (Cegah blur terdeteksi)
       isLocked.current = true;
 
       const answered = Object.keys(answers).length;
@@ -409,7 +388,7 @@ const PublicExam: React.FC = () => {
       });
 
       if (!confirm1.isConfirmed) {
-          // JIKA BATAL: BUKA KUNCI (Resume Anti-Curang)
+          // JIKA BATAL: BUKA KUNCI
           isLocked.current = false;
           return;
       }
@@ -430,10 +409,8 @@ const PublicExam: React.FC = () => {
       });
 
       if (confirm2.isConfirmed) {
-          // LANJUT SUBMIT (Tetap biarkan locked)
           handleSubmitExam(false);
       } else {
-          // JIKA BATAL: BUKA KUNCI (Resume Anti-Curang)
           isLocked.current = false; 
       }
   };
@@ -543,7 +520,7 @@ const PublicExam: React.FC = () => {
                   <p className={`text-lg md:text-2xl font-black font-mono leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>{formatTime(timeLeft)}</p>
                </div>
                
-               {/* TOMBOL SELESAI HEADER: MEMANGGIL FUNGSI YANG SUDAH DIPERBAIKI */}
+               {/* TOMBOL SELESAI */}
                <button onClick={handleFinishButton} className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center gap-2">
                  <LogOut size={14} strokeWidth={3} /> <span className="hidden md:inline">Selesai</span>
                </button>
@@ -579,7 +556,6 @@ const PublicExam: React.FC = () => {
                   <button onClick={() => currentQIndex > 0 && setCurrentQIndex(p => p - 1)} disabled={currentQIndex === 0} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 disabled:opacity-50"><ChevronLeft size={16}/> Sebelumnya</button>
                   <button onClick={() => setShowNavMobile(!showNavMobile)} className="md:hidden flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-white font-bold text-xs"><Grid size={16}/> <span className="text-[10px]">NO. SOAL</span></button>
                   {currentQIndex === questions.length - 1 ? (
-                      // TOMBOL SELESAI BAWAH: MEMANGGIL FUNGSI YANG SUDAH DIPERBAIKI
                       <button onClick={handleFinishButton} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase hover:bg-emerald-700 shadow-lg"><CheckCircle size={16}/> Selesai</button>
                   ) : (
                       <button onClick={() => setCurrentQIndex(p => p + 1)} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-lg">Selanjutnya <ChevronRight size={16}/></button>
