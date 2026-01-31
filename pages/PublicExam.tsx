@@ -102,7 +102,7 @@ const PublicExam: React.FC = () => {
         Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
       }
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke soal.', heightAuto: false });
+      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server ujian.', heightAuto: false });
     } finally {
       setLoadingExams(false);
     }
@@ -126,22 +126,19 @@ const PublicExam: React.FC = () => {
     
     // PERINGATAN AWAL (Masih pakai SweetAlert tidak apa-apa karena belum masuk mode ujian)
     const rules = await Swal.fire({
-      title: 'PERATURAN',
+      title: 'PERATURAN UJIAN',
       html: `
-        <div class="text-left space-y-1">
+        <div class="text-left space-y-3">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
-                    <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG / MENCONTEK !</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau sumber lain</p>
+                    <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, WA, atau Tab Lain.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Dilarang keluar dari halaman soal</li>
-                <li>Jika melanggar 3x. Anda DISKUALIFIKASI tidak dapat mengerjakan soal berikutnya, dan jawaban akan otomatis masuk secara sistem</li>
-                <li>Perhatikan Waktu saat mengerjakan soal</li>
-                <li>Apabila waktu sudah habis. Maka tidak dapat mengerjakan soal berikutnya, dan jawaban akan otomatis masuk secara sistem </li>
-                <li>Jangan lupa membaca do'a sebelum mengerjakan</li>
+                <li>Dilarang keluar dari halaman ujian.</li>
+                <li>Jika melanggar 3x, ujian otomatis DISKUALIFIKASI.</li>
             </ul>
         </div>
       `,
@@ -333,7 +330,7 @@ const PublicExam: React.FC = () => {
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
         <div className="text-center space-y-1">
           <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mengerjakan soal.</p>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mulai ujian.</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
@@ -376,7 +373,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa</p>
             <h1 className="text-lg font-black uppercase">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis}. • {student.jeniskelamin}</p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis}</p>
           </div>
         </div>
         <h2 className="text-sm font-black text-slate-800 uppercase ml-1">Daftar Soal</h2>
@@ -388,11 +385,11 @@ const PublicExam: React.FC = () => {
                <div key={exam.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-300 transition-all">
                  <div className="flex justify-between items-start mb-4">
                     <div>
-                       <div className="flex items-center gap-2 mb-1"><BookOpen size={12} className="text-emerald-600"/><span className="text-[9px] font-black text-emerald-600 uppercase">semester {exam.semester}</span></div>
+                       <div className="flex items-center gap-2 mb-1"><BookOpen size={12} className="text-emerald-600"/><span className="text-[9px] font-black text-emerald-600 uppercase">Sem {exam.semester}</span></div>
                        <h3 className="font-bold text-slate-800 text-sm">{exam.title}</h3>
                        <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
                     </div>
-                    <div className="bg-emerald-50 text-emerald-700 p-2 rounded-xl flex flex-col items-center"><Timer size={16} /><span className="text-[10px] font-black">Waktu {exam.duration} menit</span></div>
+                    <div className="bg-emerald-50 text-emerald-700 p-2 rounded-xl flex flex-col items-center"><Timer size={16} /><span className="text-[10px] font-black">{exam.duration}m</span></div>
                  </div>
                  <button onClick={() => startExam(exam)} className="w-full bg-red-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md active:scale-95">
                    <Play size={12} fill="currentColor" /> Kerjakan Sekarang
@@ -412,6 +409,7 @@ const PublicExam: React.FC = () => {
     const unansweredCount = questions.length - answeredCount;
     // Hitung jumlah soal ragu-ragu
     const flaggedCount = flaggedQuestions.size;
+    const isCurrentFlagged = flaggedQuestions.has(currentQ.id);
 
     return (
       <div className="fixed inset-0 z-[9000] bg-slate-100 flex flex-col overflow-hidden select-none" onContextMenu={(e) => e.preventDefault()}>
@@ -433,7 +431,7 @@ const PublicExam: React.FC = () => {
                {violationCount > 0 && (
                    <div className="flex items-center gap-1 bg-red-50 text-red-600 px-2 py-1 rounded-lg border border-red-100 animate-pulse">
                       <ShieldAlert size={12} className="md:w-3.5 md:h-3.5" />
-                      <span className="text-[8px] md:text-[10px] font-bold uppercase">Poin Pelanggaran {violationCount}/3</span>
+                      <span className="text-[8px] md:text-[10px] font-black uppercase">Poin Pelanggaran {violationCount}/3</span>
                    </div>
                )}
                
@@ -478,18 +476,18 @@ const PublicExam: React.FC = () => {
                         <div className="p-6 text-center space-y-4">
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                                 <p className="text-sm font-bold text-red-800 leading-relaxed">
-                                    Anda terdeteksi keluar dari halaman soal atau membuka sumber lain.
+                                    Anda terdeteksi keluar dari aplikasi atau membuka tab lain.
                                 </p>
                             </div>
                             
                             {violationCount >= 3 ? (
                                 <p className="text-xs text-slate-500 font-medium">
                                     Maaf, Anda telah melanggar aturan sebanyak 3 kali. <br/>
-                                    <span className="text-red-600 font-bold">Anda sudah tidak dapat mengerjakan soal berikutnya</span>
+                                    <span className="text-red-600 font-bold">Ujian Anda dihentikan otomatis.</span>
                                 </p>
                             ) : (
                                 <p className="text-xs text-slate-500 font-medium">
-                                    Harap tetap di halaman soal. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
+                                    Harap tetap di halaman ujian. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
                                 </p>
                             )}
 
@@ -535,7 +533,7 @@ const PublicExam: React.FC = () => {
                                 </div>
                             ) : (
                                 <p className="text-center text-slate-500 font-medium text-sm">
-                                    Anda telah menjawab semua soal. Yakin ingin selesai?
+                                    Anda telah menjawab semua soal. Yakin ingin mengakhiri ujian ini?
                                 </p>
                             )}
 
@@ -565,7 +563,7 @@ const PublicExam: React.FC = () => {
                   <div className="bg-white p-3 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 relative min-h-[350px] md:min-h-[400px] flex flex-col">
                       <div className="flex justify-between items-start mb-4 md:mb-6">
                           <span className="bg-emerald-600 text-white px-3 py-1 md:px-4 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-sm font-black shadow-md uppercase">Soal No. {currentQIndex + 1}</span>
-                          <button onClick={() => toggleFlag(currentQ.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${flaggedQuestions.has(currentQ.id) ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}><Flag size={12} fill={flaggedQuestions.has(currentQ.id) ? "currentColor" : "none"} /> Ragu-ragu</button>
+                          <button onClick={() => toggleFlag(currentQ.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${isCurrentFlagged ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}><Flag size={12} fill={isCurrentFlagged ? "currentColor" : "none"} /> Ragu-ragu</button>
                       </div>
                       {currentQ.image_url && <div className="mb-4 md:mb-6 rounded-xl md:rounded-2xl overflow-hidden border border-slate-100 shadow-sm max-w-lg mx-auto bg-slate-50"><img src={currentQ.image_url} alt="Soal" className="w-full h-auto object-contain max-h-[250px] md:max-h-[300px]" /></div>}
                       <div className="flex-1 mb-4 md:mb-6"><p className="text-sm md:text-lg font-bold text-slate-800 leading-relaxed text-justify">{currentQ.text}</p></div>
@@ -574,10 +572,26 @@ const PublicExam: React.FC = () => {
                       <div className="grid grid-cols-1 gap-2 md:gap-3">
                          {currentQ.options?.map((opt, optIdx) => {
                            const isSelected = answers[currentQ.id] === String(optIdx);
+                           // Logic Warna Berubah jika Ragu-ragu
+                           let btnClass = 'bg-white border-slate-100 text-slate-600 hover:border-emerald-300';
+                           let badgeClass = 'bg-slate-50 border-slate-200 text-slate-400';
+
+                           if (isSelected) {
+                               if (isCurrentFlagged) {
+                                   // JIKA RAGU-RAGU: KUNING
+                                   btnClass = 'bg-amber-50 border-amber-500 text-amber-900 shadow-md ring-2 ring-amber-500/20';
+                                   badgeClass = 'bg-amber-500 border-amber-500 text-white';
+                               } else {
+                                   // JIKA NORMAL: HIJAU
+                                   btnClass = 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-md ring-2 ring-emerald-500/20';
+                                   badgeClass = 'bg-emerald-500 border-emerald-500 text-white';
+                               }
+                           }
+
                            return (
                              // REVISI MOBILE: PADDING OPSI DIPERKECIL (p-2.5)
-                             <button key={optIdx} onClick={() => handleAnswer(currentQ.id, optIdx)} className={`w-full text-left p-2.5 md:p-4 rounded-xl border-2 transition-all text-xs md:text-sm flex items-center gap-3 md:gap-4 group active:scale-[0.98] ${isSelected ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-md ring-2 ring-emerald-500/20' : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-300'}`}>
-                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg border-2 flex items-center justify-center text-[10px] md:text-xs font-black shrink-0 transition-colors ${isSelected ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>{['A','B','C','D'][optIdx]}</div>
+                             <button key={optIdx} onClick={() => handleAnswer(currentQ.id, optIdx)} className={`w-full text-left p-2.5 md:p-4 rounded-xl border-2 transition-all text-xs md:text-sm flex items-center gap-3 md:gap-4 group active:scale-[0.98] ${btnClass}`}>
+                                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg border-2 flex items-center justify-center text-[10px] md:text-xs font-black shrink-0 transition-colors ${badgeClass}`}>{['A','B','C','D'][optIdx]}</div>
                                 <span className="leading-relaxed font-medium">{opt}</span>
                              </button>
                            );
@@ -601,7 +615,8 @@ const PublicExam: React.FC = () => {
             {/* NAVIGATOR (KANAN) */}
             <div className={`fixed inset-y-0 right-0 z-[9050] w-64 bg-white shadow-2xl transform transition-transform duration-300 md:relative md:transform-none md:w-80 md:border-l md:border-slate-200 md:shadow-none flex flex-col ${showNavMobile ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"><h3 className="font-black text-slate-700 text-sm uppercase flex items-center gap-2"><Grid size={16} className="text-emerald-600"/> Navigasi Soal</h3><button onClick={() => setShowNavMobile(false)} className="md:hidden p-1 text-slate-400 hover:text-red-500"><X size={20} /></button></div>
-                <div className="flex-1 overflow-y-auto p-4"><div className="grid grid-cols-4 gap-2">{questions.map((q, idx) => {
+                {/* REVISI: MENGUBAH GRID MENJADI 5 KOLOM AGAR KOTAK LEBIH KECIL DI MOBILE */}
+                <div className="flex-1 overflow-y-auto p-4"><div className="grid grid-cols-5 gap-2">{questions.map((q, idx) => {
                     const isAnswered = !!answers[q.id]; const isFlagged = flaggedQuestions.has(q.id); const isCurrent = currentQIndex === idx;
                     let bgClass = 'bg-slate-50 border-slate-200 text-slate-500';
                     if (isAnswered) bgClass = 'bg-emerald-500 border-emerald-600 text-white';
@@ -625,14 +640,14 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-md mx-auto min-h-[60vh] flex flex-col items-center justify-center px-4 animate-slideUp text-center">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100 animate-bounce"><CheckCircle size={48} strokeWidth={3} /></div>
-        <h1 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
-        <p className="text-xs text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
+        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
+        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl w-full space-y-2 mb-8 relative overflow-hidden">
            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nilai Kamu</p>
-           <p className="text-5xl font-black text-emerald-600 tracking-tighter">{score}</p>
+           <p className="text-5xl font-black text-slate-800 tracking-tighter">{score}</p>
         </div>
-        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-emerald-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
+        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
       </div>
     );
   }
