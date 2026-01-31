@@ -28,8 +28,10 @@ const PublicExam: React.FC = () => {
   // --- ANTI-CURANG STATES & REFS ---
   const [violationCount, setViolationCount] = useState(0); 
   const violationRef = useRef(0); 
-  // Flag krusial: Jika true, sensor anti-curang dimatikan sementara (misal saat konfirmasi selesai)
-  const isAlertOpen = useRef(false); 
+  
+  // FLAGS PENTING
+  const isAlertOpen = useRef(false); // Sedang ada alert pelanggaran terbuka?
+  const isConfirming = useRef(false); // Sedang dalam proses konfirmasi "Selesai"?
   
   // Navigation
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -70,7 +72,7 @@ const PublicExam: React.FC = () => {
     }
   }, []);
 
-  // --- 2. UPDATE SESSION (SETIAP JAWAB / PELANGGARAN) ---
+  // --- 2. UPDATE SESSION ---
   useEffect(() => {
     if (step === 'exam' && selectedExam && student) {
         const endTime = new Date(new Date(startTime).getTime() + selectedExam.duration * 60000).toISOString();
@@ -185,6 +187,7 @@ const PublicExam: React.FC = () => {
       setViolationCount(0); 
       violationRef.current = 0; 
       isAlertOpen.current = false;
+      isConfirming.current = false;
       
       const sessionData = {
           student,
@@ -201,34 +204,17 @@ const PublicExam: React.FC = () => {
     }
   };
 
-  // --- FUNGSI SUBMIT KE DB (DIPISAH SUPAYA BISA DIPANGGIL) ---
-  const submitToDB = async (finalScore: number) => {
-      // Hapus Session
-      localStorage.removeItem('pai_exam_session');
-      
-      try {
-        await db.submitExamResult({
-            exam_id: selectedExam!.id,
-            student_nis: student!.nis,
-            student_name: student!.namalengkap,
-            student_class: student!.kelas,
-            semester: selectedExam!.semester, 
-            answers: answers,
-            score: finalScore,
-            started_at: startTime
-        });
-      } catch (e) {
-        console.error("Gagal simpan ke DB", e);
-      }
-  };
-
+  // --- SUBMIT FUNCTION ---
   const handleSubmitExam = async (forced = false) => {
-    // 1. Matikan Fullscreen
+    // Exit Fullscreen
     if (document.fullscreenElement) {
         try { await document.exitFullscreen(); } catch(e) {}
     }
 
-    // 2. Hitung Nilai
+    // Hapus Session
+    localStorage.removeItem('pai_exam_session');
+
+    // Hitung Nilai
     let correct = 0;
     questions.forEach(q => {
       if (answers[q.id] === q.correct_answer) correct++;
@@ -236,67 +222,93 @@ const PublicExam: React.FC = () => {
     const finalScore = Math.round((correct / questions.length) * 100);
     setScore(finalScore);
 
-    // 3. Tampilkan Loading & Simpan
+    // Tampilkan Loading
     Swal.fire({ 
         title: forced ? 'DISKUALIFIKASI!' : 'Menyimpan...', 
         text: forced ? 'Anda melanggar aturan 3 kali. Jawaban otomatis dikirim.' : 'Sedang mengirim jawaban...',
         icon: forced ? 'error' : 'info',
         allowOutsideClick: false, 
         showConfirmButton: false,
-        timer: 2000, // Tahan 2 detik biar user baca
-        didOpen: () => {
-            Swal.showLoading();
-        }
+        timer: 2000, 
+        didOpen: () => Swal.showLoading(),
+        heightAuto: false,
+        customClass: { popup: 'z-[99999]' }
     });
 
-    // Proses simpan async
-    await submitToDB(finalScore);
+    try {
+      await db.submitExamResult({
+          exam_id: selectedExam!.id,
+          student_nis: student!.nis,
+          student_name: student!.namalengkap,
+          student_class: student!.kelas,
+          semester: selectedExam!.semester, 
+          answers: answers,
+          score: finalScore,
+          started_at: startTime
+      });
+    } catch (e) {
+      console.error(e);
+    }
 
-    // 4. Pindah Halaman
     setStep('result');
     Swal.close();
   };
 
-  // --- LOGIKA ANTI-CURANG (DIPERBAIKI) ---
+  // --- LOGIKA ANTI-CURANG (DIPERBAIKI SESUAI PERMINTAAN) ---
   useEffect(() => {
     if (step !== 'exam') return;
 
-    const handleViolation = async (reason: string) => {
-        // JANGAN trigger jika alert sedang terbuka (misal konfirmasi selesai)
-        // atau jika sudah mencapai batas
-        if (isAlertOpen.current || violationRef.current >= 3) return;
+    const triggerViolation = async (reason: string) => {
+        // 1. JANGAN trigger jika sedang KONFIRMASI SELESAI (Manual Lock)
+        if (isConfirming.current) return;
 
-        // Tambah pelanggaran
+        // 2. JANGAN trigger jika ALERT PELANGGARAN sedang terbuka (Stacking Lock)
+        if (isAlertOpen.current) return;
+
+        // 3. JANGAN trigger jika sudah lewat batas (dan sedang proses submit)
+        if (violationRef.current >= 3) return;
+
+        // --- MULAI PROSES PELANGGARAN ---
         violationRef.current += 1;
         setViolationCount(violationRef.current);
         const count = violationRef.current;
 
-        // KUNCI ALERT
+        // Lock Alert agar tidak ditimpa
         isAlertOpen.current = true;
 
+        let title = `PELANGGARAN ${count}/3`;
+        let text = `Anda terdeteksi ${reason}. Fokus pada layar!`;
+        let confirmBtnText = 'Kembali Mengerjakan';
+        let icon: 'warning' | 'error' = 'warning';
+
         if (count >= 3) {
-            // === LOGIKA DISKUALIFIKASI ===
-            // Langsung panggil submit tanpa menunggu user klik OK
-            // Alert hanya sebagai info transisi
+            title = 'DISKUALIFIKASI';
+            text = 'Anda telah melanggar aturan 3 kali. Klik OK untuk mengumpulkan paksa.';
+            confirmBtnText = 'OK, Kumpulkan';
+            icon = 'error';
+        }
+
+        // TAMPILKAN ALERT (DAN TUNGGU RESPON USER - SESUAI PERMINTAAN)
+        await Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            confirmButtonColor: count >= 3 ? '#d33' : '#f59e0b',
+            confirmButtonText: confirmBtnText,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            heightAuto: false,
+            customClass: { popup: 'z-[99999]' }
+        });
+
+        // BUKA KUNCI ALERT SETELAH USER KLIK
+        isAlertOpen.current = false;
+
+        // JIKA KE-3, BARU SUBMIT
+        if (count >= 3) {
             handleSubmitExam(true);
         } else {
-            // === LOGIKA PERINGATAN (1 & 2) ===
-            await Swal.fire({
-                title: `PELANGGARAN ${count}/3`,
-                text: `Anda terdeteksi ${reason}. Fokus pada layar!`,
-                icon: 'warning',
-                confirmButtonColor: '#f59e0b',
-                confirmButtonText: 'Kembali Mengerjakan',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                heightAuto: false,
-                customClass: { popup: 'z-[99999]' }
-            });
-            
-            // Buka Kunci Alert setelah ditutup user
-            isAlertOpen.current = false;
-            
-            // Paksa Fullscreen lagi
+            // Fullscreen ulang jika masih 1 atau 2
             try {
                 if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
                     await document.documentElement.requestFullscreen();
@@ -305,27 +317,30 @@ const PublicExam: React.FC = () => {
         }
     };
 
-    const onVisibilityChange = () => {
-        if (document.hidden) handleViolation("keluar dari aplikasi / ganti tab");
+    const handleVisibilityChange = () => {
+        if (document.hidden) triggerViolation("keluar dari aplikasi / ganti tab");
     };
 
-    const onBlur = () => {
-        // Beri jeda 1 detik untuk memastikan bukan interaksi internal (seperti klik tombol)
+    const handleBlur = () => {
+        // Beri jeda kecil untuk memastikan bukan interaksi internal (seperti klik tombol)
         setTimeout(() => {
-            // Cek: Dokumen tidak fokus, tidak hidden, dan tidak ada alert yang sedang terbuka
-            if (!document.hasFocus() && !document.hidden && !isAlertOpen.current) {
-                handleViolation("memindah fokus layar / membuka aplikasi lain");
+            // Cek kondisi:
+            // 1. Dokumen tidak fokus
+            // 2. Tidak sedang hidden (kalau hidden sudah dihandle visibilityChange)
+            // 3. TIDAK sedang konfirmasi selesai (isConfirming)
+            // 4. TIDAK sedang ada alert terbuka (isAlertOpen)
+            if (!document.hasFocus() && !document.hidden && !isConfirming.current && !isAlertOpen.current) {
+                triggerViolation("memindah fokus layar / membuka aplikasi lain");
             }
-        }, 1000);
+        }, 500); // 500ms delay aman
     };
 
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
     
-    // Prevent Back Button
-    const onPopState = () => {
+    const handlePopState = () => {
         window.history.pushState(null, "", window.location.href);
-        if (!isAlertOpen.current) {
+        if (!isAlertOpen.current && !isConfirming.current) {
             Swal.fire({
                 title: 'Dilarang Kembali!',
                 text: 'Gunakan tombol SELESAI jika ingin mengumpulkan.',
@@ -338,14 +353,14 @@ const PublicExam: React.FC = () => {
         }
     };
     window.history.pushState(null, "", window.location.href);
-    window.addEventListener('popstate', onPopState);
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
-        document.removeEventListener("visibilitychange", onVisibilityChange);
-        window.removeEventListener("blur", onBlur);
-        window.removeEventListener('popstate', onPopState);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("blur", handleBlur);
+        window.removeEventListener('popstate', handlePopState);
     };
-  }, [step]); // Dependency step penting agar reset saat ganti status
+  }, [step]); 
 
   // TIMER
   useEffect(() => {
@@ -353,7 +368,7 @@ const PublicExam: React.FC = () => {
     if (step === 'exam' && timeLeft > 0) {
       timer = setInterval(() => setTimeLeft(p => p - 1), 1000);
     } else if (step === 'exam' && timeLeft <= 0) {
-      handleSubmitExam(true); // Waktu Habis -> Auto Submit (dianggap forced)
+      handleSubmitExam(true); 
     }
     return () => clearInterval(timer);
   }, [step, timeLeft]);
@@ -375,10 +390,11 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- LOGIKA TOMBOL SELESAI (FIXED) ---
+  // --- TOMBOL SELESAI (DENGAN LOCKING ANTI-CURANG) ---
   const handleDoubleConfirmation = async () => {
-      // 1. KUNCI ALERT AGAR SENSOR TIDAK BUNYI SAAT POPUP MUNCUL
-      isAlertOpen.current = true;
+      // 1. KUNCI SENSOR ANTI-CURANG
+      // Ini mencegah event 'blur' saat popup muncul dianggap sebagai pelanggaran
+      isConfirming.current = true;
 
       const answered = Object.keys(answers).length;
       const total = questions.length;
@@ -395,12 +411,13 @@ const PublicExam: React.FC = () => {
           confirmButtonText: 'Ya, Lanjutkan',
           cancelButtonText: 'Periksa Lagi',
           heightAuto: false,
-          allowOutsideClick: false, 
+          allowOutsideClick: false, // Penting!
           customClass: { popup: 'z-[99999]' }
       });
 
       if (!confirm1.isConfirmed) {
-          isAlertOpen.current = false; // Buka kunci jika batal
+          // JIKA BATAL, BUKA KUNCI
+          isConfirming.current = false;
           return;
       }
 
@@ -420,10 +437,11 @@ const PublicExam: React.FC = () => {
       });
 
       if (confirm2.isConfirmed) {
-          // Tetap biarkan isAlertOpen = true agar tidak kena pelanggaran saat transisi
+          // Jangan buka kunci, lanjut submit
           handleSubmitExam(false);
       } else {
-          isAlertOpen.current = false; // Buka kunci jika batal
+          // JIKA BATAL, BUKA KUNCI
+          isConfirming.current = false; 
       }
   };
 
