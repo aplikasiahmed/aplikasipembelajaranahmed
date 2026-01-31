@@ -327,37 +327,37 @@ const PublicExam: React.FC = () => {
 
   if (step === 'login') {
     return (
-      <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
+      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-black text-slate-800 uppercase">Kerjakan Soal</h1>
-          <p className="text-xs text-slate-500 font-medium">Pilih Semester & masukkan NIS.</p>
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mulai ujian.</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <select 
-                className="w-full px-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all cursor-pointer"
+                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-normal outline-none focus:ring-2 focus:ring-emerald-500/10 cursor-pointer"
                 value={semester} 
                 onChange={(e) => setSemester(e.target.value)}
               >
                 <option value="0">Pilih Semester</option>
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
+                <option value="1">Semester 1 (Ganjil)</option>
+                <option value="2">Semester 2 (Genap)</option>
               </select>
               <div className="relative md:col-span-2">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                 <input 
                   type="text" 
                   inputMode="numeric" 
-                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
-                  placeholder="Masukkan NIS..." 
+                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:border-emerald-500 transition-all shadow-sm placeholder:text-slate-400" 
+                  placeholder="Masukkan nomor NIS siswa" 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
                 />
               </div>
             </div>
-            <button type="submit" disabled={loadingExams} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-800 transition-all">
-               {loadingExams ? 'Mencari...' : 'CARI SOAL'}
+            <button type="submit" disabled={loadingExams} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all">
+               {loadingExams ? 'Mencari...' : <><Search size={14} /> CARI SOAL</>}
             </button>
           </form>
         </div>
