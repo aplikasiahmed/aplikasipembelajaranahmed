@@ -28,7 +28,7 @@ const PublicExam: React.FC = () => {
   // --- ANTI-CURANG STATES & REFS ---
   const [violationCount, setViolationCount] = useState(0); 
   const violationRef = useRef(0); 
-  const isAlertOpen = useRef(false);
+  const isAlertOpen = useRef(false); // Flag penting agar alert tidak tumpuk
   
   // Navigation
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -38,13 +38,13 @@ const PublicExam: React.FC = () => {
   // Data Waktu
   const [startTime, setStartTime] = useState<string>('');
 
-  // --- 1. CEK RELOAD / RESTORE SESSION (PROTEKSI REFRESH) ---
+  // --- 1. RESTORE SESSION (PROTEKSI RELOAD) ---
   useEffect(() => {
     const savedSession = localStorage.getItem('pai_exam_session');
     if (savedSession) {
         try {
             const session = JSON.parse(savedSession);
-            // Hitung sisa waktu berdasarkan waktu target selesai yang disimpan
+            // Cek apakah waktu masih ada
             const now = new Date().getTime();
             const end = new Date(session.endTime).getTime();
             const remaining = Math.floor((end - now) / 1000);
@@ -61,7 +61,7 @@ const PublicExam: React.FC = () => {
                 setViolationCount(session.violationCount || 0);
                 violationRef.current = session.violationCount || 0;
             } else {
-                // Waktu habis saat offline/reload
+                // Sesi kadaluarsa
                 localStorage.removeItem('pai_exam_session');
             }
         } catch (e) {
@@ -71,7 +71,7 @@ const PublicExam: React.FC = () => {
     }
   }, []);
 
-  // --- 2. UPDATE SESSION STORAGE SAAT JAWAB / VIOLATION ---
+  // --- 2. UPDATE SESSION (SETIAP JAWAB) ---
   useEffect(() => {
     if (step === 'exam' && selectedExam && student) {
         const endTime = new Date(new Date(startTime).getTime() + selectedExam.duration * 60000).toISOString();
@@ -81,12 +81,12 @@ const PublicExam: React.FC = () => {
             questions,
             answers,
             startTime,
-            endTime, // Simpan waktu selesai absolut
+            endTime, 
             violationCount: violationRef.current
         };
         localStorage.setItem('pai_exam_session', JSON.stringify(sessionData));
     }
-  }, [answers, violationCount, step]); // Update setiap kali jawaban atau pelanggaran berubah
+  }, [answers, violationCount, step]); 
 
   // --- HANDLERS ---
 
@@ -124,7 +124,6 @@ const PublicExam: React.FC = () => {
 
   // STEP 2: START EXAM
   const startExam = async (exam: Exam) => {
-    // Cek Double Login
     if (student) {
         Swal.fire({ title: 'Memeriksa Data...', didOpen: () => Swal.showLoading(), heightAuto: false });
         const hasTaken = await db.checkStudentExamResult(student.nis, exam.id);
@@ -194,7 +193,7 @@ const PublicExam: React.FC = () => {
       violationRef.current = 0; 
       isAlertOpen.current = false;
       
-      // INISIALISASI STORAGE UNTUK RELOAD PROTECTION
+      // INISIALISASI STORAGE
       const sessionData = {
           student,
           exam,
@@ -216,6 +215,7 @@ const PublicExam: React.FC = () => {
 
     // Trigger Pelanggaran
     const triggerViolation = async (reason: string) => {
+        // Jika Alert sedang terbuka (misal konfirmasi selesai), JANGAN trigger pelanggaran
         if (violationRef.current >= 3 || isAlertOpen.current) return;
 
         isAlertOpen.current = true;
@@ -223,6 +223,7 @@ const PublicExam: React.FC = () => {
         setViolationCount(violationRef.current);
 
         const count = violationRef.current;
+        
         let title = `PELANGGARAN ${count}/3`;
         let text = `Anda terdeteksi ${reason}. Fokus pada layar ujian!`;
         let icon: 'warning' | 'error' = 'warning';
@@ -249,9 +250,9 @@ const PublicExam: React.FC = () => {
             customClass: { popup: 'z-[99999]' }
         });
 
-        isAlertOpen.current = false;
+        isAlertOpen.current = false; // Buka kunci alert setelah user klik tombol
 
-        // Auto Fullscreen lagi setelah alert tutup
+        // Auto Fullscreen lagi
         try {
             if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
                 await document.documentElement.requestFullscreen();
@@ -263,16 +264,16 @@ const PublicExam: React.FC = () => {
         }
     };
 
-    // 1. Deteksi Pindah Tab / Minimize
     const handleVisibilityChange = () => {
         if (document.hidden) {
             triggerViolation("keluar dari aplikasi / ganti tab");
         }
     };
 
-    // 2. Deteksi Klik di Luar (Split Screen / Pop-up lain)
     const handleBlur = () => {
+        // Delay untuk memastikan bukan interaksi UI internal
         setTimeout(() => {
+            // Cek ulang: Tidak fokus, tidak hidden, dan TIDAK ada alert terbuka
             if (!document.hasFocus() && !document.hidden && !isAlertOpen.current) {
                  triggerViolation("memindah fokus layar / membuka aplikasi lain");
             }
@@ -335,13 +336,16 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- LOGIKA TOMBOL SELESAI (DIPERBAIKI) ---
+  // --- LOGIKA TOMBOL SELESAI (FIXED: LOCK ANTI-CURANG) ---
   const handleDoubleConfirmation = async () => {
+      // 1. Kunci Alert agar tidak tertimpa peringatan "Hilang Fokus"
+      isAlertOpen.current = true;
+
       const answered = Object.keys(answers).length;
       const total = questions.length;
       const empty = total - answered;
 
-      // VALIDASI 1
+      // VALIDASI 1: Cek Kelengkapan
       const confirm1 = await Swal.fire({
           title: empty > 0 ? 'Masih Ada Soal Kosong!' : 'Konfirmasi Selesai',
           text: empty > 0 ? `Masih ada ${empty} soal belum dijawab. Yakin mau kumpulkan?` : `Anda sudah menjawab semua soal.`,
@@ -352,12 +356,16 @@ const PublicExam: React.FC = () => {
           confirmButtonText: 'Ya, Lanjutkan',
           cancelButtonText: 'Periksa Lagi',
           heightAuto: false,
+          allowOutsideClick: false, // Wajib false agar tidak close accidental
           customClass: { popup: 'z-[99999]' }
       });
 
-      if (!confirm1.isConfirmed) return;
+      if (!confirm1.isConfirmed) {
+          isAlertOpen.current = false; // Buka kunci jika batal
+          return;
+      }
 
-      // VALIDASI 2
+      // VALIDASI 2: Peringatan Final
       const confirm2 = await Swal.fire({
           title: 'PERINGATAN TERAKHIR',
           html: `<span style="color:red; font-weight:bold">JAWABAN TIDAK BISA DIUBAH!</span><br/>Yakin ingin mengakhiri ujian ini?`,
@@ -368,11 +376,15 @@ const PublicExam: React.FC = () => {
           confirmButtonText: 'YA, KUMPULKAN',
           cancelButtonText: 'Batal',
           heightAuto: false,
+          allowOutsideClick: false,
           customClass: { popup: 'z-[99999]' }
       });
 
       if (confirm2.isConfirmed) {
           handleSubmitExam(false);
+          // Tidak perlu buka kunci isAlertOpen karena akan pindah halaman
+      } else {
+          isAlertOpen.current = false; // Buka kunci jika batal
       }
   };
 
@@ -383,7 +395,7 @@ const PublicExam: React.FC = () => {
         try { await document.exitFullscreen(); } catch(e) {}
     }
 
-    // HAPUS SESSION STORAGE (PENTING AGAR TIDAK BISA RELOAD MASUK LAGI)
+    // HAPUS SESSION STORAGE (PENTING)
     localStorage.removeItem('pai_exam_session');
 
     // Hitung Nilai
@@ -410,7 +422,6 @@ const PublicExam: React.FC = () => {
         Swal.close();
       } catch (e) {
         console.error(e);
-        // Tetap lanjut ke result meskipun gagal simpan DB (agar siswa tidak panik), tapi log error
         Swal.fire({title: 'Info', text: 'Nilai tersimpan lokal.', icon: 'info', timer: 1000, heightAuto: false, customClass: { popup: 'z-[99999]' }});
       }
     }
@@ -429,9 +440,9 @@ const PublicExam: React.FC = () => {
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {/* INPUT WARNA GELAP (JANGAN DIUBAH) */}
+              {/* WARNA INPUT TETAP HITAM/GELAP (BG-SLATE-800) */}
               <select 
-                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
+                className="w-full px-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all cursor-pointer"
                 value={semester} 
                 onChange={(e) => setSemester(e.target.value)}
               >
@@ -441,11 +452,11 @@ const PublicExam: React.FC = () => {
               </select>
               <div className="relative md:col-span-2">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                {/* INPUT WARNA GELAP (JANGAN DIUBAH) */}
+                {/* WARNA INPUT TETAP HITAM/GELAP */}
                 <input 
                   type="text" 
                   inputMode="numeric" 
-                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
+                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-transparent bg-slate-800 text-white font-bold outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
                   placeholder="Masukkan NIS..." 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
@@ -523,7 +534,7 @@ const PublicExam: React.FC = () => {
                   <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Sisa Waktu</p>
                   <p className={`text-lg md:text-2xl font-black font-mono leading-none ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>{formatTime(timeLeft)}</p>
                </div>
-               {/* TOMBOL SELESAI HEADER: SUDAH DIPERBAIKI MEMANGGIL handleDoubleConfirmation */}
+               {/* TOMBOL SELESAI HEADER: MEMANGGIL FUNGSI YANG SUDAH DIPERBAIKI */}
                <button onClick={handleDoubleConfirmation} className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center gap-2">
                  <LogOut size={14} strokeWidth={3} /> <span className="hidden md:inline">Selesai</span>
                </button>
@@ -559,7 +570,7 @@ const PublicExam: React.FC = () => {
                   <button onClick={() => currentQIndex > 0 && setCurrentQIndex(p => p - 1)} disabled={currentQIndex === 0} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 disabled:opacity-50"><ChevronLeft size={16}/> Sebelumnya</button>
                   <button onClick={() => setShowNavMobile(!showNavMobile)} className="md:hidden flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-white font-bold text-xs"><Grid size={16}/> <span className="text-[10px]">NO. SOAL</span></button>
                   {currentQIndex === questions.length - 1 ? (
-                      // TOMBOL SELESAI BAWAH: MENGGUNAKAN VALIDASI GANDA
+                      // TOMBOL SELESAI BAWAH: MEMANGGIL FUNGSI YANG SUDAH DIPERBAIKI
                       <button onClick={handleDoubleConfirmation} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase hover:bg-emerald-700 shadow-lg"><CheckCircle size={16}/> Selesai</button>
                   ) : (
                       <button onClick={() => setCurrentQIndex(p => p + 1)} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-lg">Selanjutnya <ChevronRight size={16}/></button>
