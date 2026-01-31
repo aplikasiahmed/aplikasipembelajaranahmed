@@ -134,7 +134,7 @@ const PublicExam: React.FC = () => {
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
                     <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau Tab Lain.</p>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
@@ -480,7 +480,7 @@ const PublicExam: React.FC = () => {
                         <div className="p-6 text-center space-y-4">
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                                 <p className="text-sm font-bold text-red-800 leading-relaxed">
-                                    Anda terdeteksi keluar dari aplikasi atau membuka tab lain.
+                                    Anda terdeteksi keluar dari soal.
                                 </p>
                             </div>
                             
