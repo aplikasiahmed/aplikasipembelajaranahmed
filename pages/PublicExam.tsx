@@ -1,47 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen } from 'lucide-react';
+import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
 import Swal from 'sweetalert2';
 
 const PublicExam: React.FC = () => {
-  // --- STATES ---
+  // --- STATES UTAMA ---
   const [step, setStep] = useState<'login' | 'list' | 'exam' | 'result'>('login');
   
-  // Login Data
+  // Data User & Ujian
   const [nis, setNis] = useState('');
   const [semester, setSemester] = useState('0'); 
   const [student, setStudent] = useState<Student | null>(null);
-  
-  // Exam Selection
   const [activeExams, setActiveExams] = useState<Exam[]>([]);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loadingExams, setLoadingExams] = useState(false);
   
-  // Exam Execution
+  // State Pengerjaan
   const [answers, setAnswers] = useState<Record<string, string>>({}); 
   const [timeLeft, setTimeLeft] = useState(0); 
   const [score, setScore] = useState(0);
-  
-  // --- ANTI-CURANG SYSTEM (INTI LOGIKA) ---
-  const [violationCount, setViolationCount] = useState(0); 
-  
-  // REF: Menyimpan jumlah pelanggaran real-time tanpa render ulang
-  const violationRef = useRef(0); 
-  
-  // REF: "isPaused" adalah KUNCI UTAMA.
-  // Saat true = Sensor Mati (misal: saat popup muncul, atau saat loading).
-  // Saat false = Sensor Hidup (mendeteksi pindah tab).
-  const isPaused = useRef(false); 
-  
-  // Navigation
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
   const [showNavMobile, setShowNavMobile] = useState(false);
-  
-  // Data Waktu
   const [startTime, setStartTime] = useState<string>('');
+
+  // --- ANTI-CURANG SYSTEM (CUSTOM MODAL) ---
+  const [violationCount, setViolationCount] = useState(0); 
+  const [showViolationModal, setShowViolationModal] = useState(false); // Modal Pelanggaran
+  
+  // Refs untuk logika realtime tanpa render ulang
+  const violationRef = useRef(0); 
+  const isPaused = useRef(false); // Kunci sensor utama
 
   // --- 1. RESTORE SESSION ---
   useEffect(() => {
@@ -61,7 +52,6 @@ const PublicExam: React.FC = () => {
                 setStartTime(session.startTime);
                 setTimeLeft(remaining);
                 setStep('exam');
-                // Restore status pelanggaran
                 setViolationCount(session.violationCount || 0);
                 violationRef.current = session.violationCount || 0;
             } else {
@@ -133,7 +123,7 @@ const PublicExam: React.FC = () => {
       return;
     }
     
-    // PERINGATAN AWAL (TANPA FULLSCREEN)
+    // PERINGATAN AWAL
     const rules = await Swal.fire({
       title: 'PERATURAN UJIAN',
       html: `
@@ -146,8 +136,8 @@ const PublicExam: React.FC = () => {
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Jangan keluar dari halaman ini.</li>
-                <li>Jika melanggar 3x, ujian otomatis dihentikan (DISKUALIFIKASI).</li>
+                <li>Dilarang keluar dari halaman ujian.</li>
+                <li>Jika melanggar 3x, ujian otomatis DISKUALIFIKASI.</li>
             </ul>
         </div>
       `,
@@ -161,7 +151,6 @@ const PublicExam: React.FC = () => {
     });
 
     if (rules.isConfirmed) {
-      // SET DATA AWAL
       const startTimeIso = new Date().toISOString();
       const endTimeIso = new Date(new Date().getTime() + exam.duration * 60000).toISOString();
 
@@ -173,10 +162,11 @@ const PublicExam: React.FC = () => {
       setTimeLeft(exam.duration * 60);
       setStartTime(startTimeIso);
 
-      // RESET ANTI-CURANG
+      // RESET
       setViolationCount(0); 
       violationRef.current = 0; 
-      isPaused.current = false; // SENSOR AKTIF
+      isPaused.current = false; 
+      setShowViolationModal(false);
       
       const sessionData = {
           student,
@@ -193,15 +183,13 @@ const PublicExam: React.FC = () => {
     }
   };
 
-  // --- SUBMIT FUNCTION (Kirim Jawaban) ---
+  // --- SUBMIT FUNCTION ---
   const handleSubmitExam = async (forced = false) => {
-    // 1. MATIKAN SENSOR (Agar saat loading tidak dianggap curang)
-    isPaused.current = true;
+    isPaused.current = true; // Matikan sensor
+    setShowViolationModal(false); // Tutup modal pelanggaran jika ada
 
-    // 2. Hapus Session
     localStorage.removeItem('pai_exam_session');
 
-    // 3. Hitung Nilai
     let correct = 0;
     questions.forEach(q => {
       if (answers[q.id] === q.correct_answer) correct++;
@@ -209,21 +197,10 @@ const PublicExam: React.FC = () => {
     const finalScore = Math.round((correct / questions.length) * 100);
     setScore(finalScore);
 
-    // 4. Tampilkan Loading
-    let title = 'Menyimpan...';
-    let text = 'Sedang mengirim jawaban...';
-    let icon: 'info' | 'error' = 'info';
-    
-    if (forced) {
-        title = 'DISKUALIFIKASI!';
-        text = 'Anda melanggar 3x. Jawaban otomatis dikirim seadanya.';
-        icon = 'error';
-    }
-
     Swal.fire({ 
-        title: title, 
-        text: text,
-        icon: icon,
+        title: forced ? 'DISKUALIFIKASI!' : 'Menyimpan...', 
+        text: forced ? 'Anda melanggar 3x. Jawaban dikirim otomatis.' : 'Sedang mengirim jawaban...',
+        icon: forced ? 'error' : 'info',
         allowOutsideClick: false, 
         showConfirmButton: false,
         timer: 2500, 
@@ -248,114 +225,51 @@ const PublicExam: React.FC = () => {
     }
 
     setStep('result');
-    // Swal akan close sendiri saat komponen berubah atau timer habis
+    Swal.close();
   };
 
-  // --- LOGIKA ANTI-CURANG (SESUAI PERMINTAAN BAPAK) ---
+  // --- LOGIKA ANTI-CURANG (CUSTOM) ---
   useEffect(() => {
     if (step !== 'exam') return;
 
-    // FUNGSI INI DIPANGGIL SAAT SISWA PINDAH TAB / KLIK DILUAR
-    const handleViolationTrigger = async (reason: string) => {
-        // JIKA SEDANG PAUSED (Misal sedang ada popup lain), JANGAN JALANKAN
+    const triggerViolation = () => {
+        // Jika sedang pause (misal lagi submit atau lagi baca modal), abaikan
         if (isPaused.current) return;
 
-        // 1. PAUSE DULU (Agar tidak muncul popup berkali-kali)
+        // 1. Kunci Sensor Langsung
         isPaused.current = true;
 
-        // 2. HITUNG PELANGGARAN
+        // 2. Tambah Counter
         violationRef.current += 1;
         setViolationCount(violationRef.current);
-        const count = violationRef.current;
 
-        // 3. TENTUKAN ISI POPUP SESUAI URUTAN
-        let title = '';
-        let text = '';
-        let icon: 'warning' | 'error' = 'warning';
-        let btnText = 'OK, Saya Mengerti';
-
-        if (count === 1) {
-            title = 'PELANGGARAN KE-1';
-            text = `Anda terdeteksi ${reason}. Ini peringatan pertama.`;
-        } else if (count === 2) {
-            title = 'PELANGGARAN KE-2';
-            text = `Hati-hati! Satu kali lagi Anda akan dikeluarkan dari ujian.`;
-            icon = 'warning';
-        } else {
-            // PELANGGARAN KE-3
-            title = 'PELANGGARAN KE-3 (DISKUALIFIKASI)';
-            text = 'Anda telah melanggar aturan 3 kali. Ujian dihentikan otomatis.';
-            icon = 'error';
-            btnText = 'Kirim Jawaban';
-        }
-
-        // 4. MUNCULKAN POPUP & TUNGGU USER KLIK OK (AWAIT)
-        // Code akan berhenti disini sampai user klik tombol
-        await Swal.fire({
-            title: title,
-            text: text,
-            icon: icon,
-            confirmButtonColor: count >= 3 ? '#d33' : '#f59e0b',
-            confirmButtonText: btnText,
-            allowOutsideClick: false, // User WAJIB klik tombol
-            allowEscapeKey: false,
-            heightAuto: false,
-            customClass: { popup: 'z-[99999]' }
-        });
-
-        // 5. SETELAH KLIK OK
-        if (count >= 3) {
-            // Jika sudah 3x -> KIRIM PAKSA
-            handleSubmitExam(true);
-        } else {
-            // Jika belum 3x -> LANJUTKAN UJIAN (Buka Pause)
-            // Kasih delay dikit biar aman
-            setTimeout(() => {
-                isPaused.current = false;
-            }, 500);
-        }
+        // 3. Tampilkan Modal Custom (Bukan SweetAlert)
+        setShowViolationModal(true);
     };
 
-    // EVENT LISTENER 1: Visibility Change (Pindah Tab/Minimize Browser)
     const handleVisibility = () => {
-        if (document.hidden) {
-            handleViolationTrigger("keluar dari halaman soal");
-        }
+        if (document.hidden) triggerViolation();
     };
 
-    // EVENT LISTENER 2: Blur (Klik di luar area browser / Buka aplikasi lain)
     const handleBlur = () => {
-        // Gunakan timeout agar tidak langsung menuduh curang jika hanya klik elemen UI sendiri
+        // Timeout kecil untuk membedakan klik internal vs external
         setTimeout(() => {
-            // Cek fokus dan status pause
             if (!document.hasFocus() && !document.hidden && !isPaused.current) {
-                handleViolationTrigger("membuka aplikasi lain / tidak fokus");
+                triggerViolation();
             }
-        }, 500);
+        }, 300);
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("blur", handleBlur);
     
-    // Cegah Tombol Back Browser
+    // Prevent Back
     const handlePopState = () => {
         window.history.pushState(null, "", window.location.href);
-        if (!isPaused.current) {
-            Swal.fire({
-                title: 'Dilarang Kembali!',
-                text: 'Gunakan tombol SELESAI jika ingin mengumpulkan.',
-                icon: 'warning',
-                timer: 1500,
-                showConfirmButton: false,
-                heightAuto: false,
-                customClass: { popup: 'z-[99999]' }
-            });
-        }
     };
     window.history.pushState(null, "", window.location.href);
     window.addEventListener('popstate', handlePopState);
 
-    // CLEANUP SAAT COMPONENT HILANG
     return () => {
         document.removeEventListener("visibilitychange", handleVisibility);
         window.removeEventListener("blur", handleBlur);
@@ -363,13 +277,57 @@ const PublicExam: React.FC = () => {
     };
   }, [step]); 
 
-  // TIMER MUNDUR
+  // --- HANDLER TOMBOL DI MODAL PELANGGARAN ---
+  const handleCloseViolationModal = () => {
+      if (violationCount >= 3) {
+          // Jika sudah 3x, submit paksa
+          handleSubmitExam(true);
+      } else {
+          // Jika belum 3x, lanjutkan ujian
+          setShowViolationModal(false);
+          // Beri jeda sedikit sebelum mengaktifkan sensor lagi
+          setTimeout(() => {
+              isPaused.current = false;
+          }, 1000);
+      }
+  };
+
+  // --- HANDLER TOMBOL SELESAI ---
+  const handleFinishClick = async () => {
+      // 1. Matikan sensor segera
+      isPaused.current = true;
+
+      const empty = questions.length - Object.keys(answers).length;
+
+      const confirm1 = await Swal.fire({
+          title: empty > 0 ? 'Masih Ada Soal Kosong!' : 'Konfirmasi Selesai',
+          text: empty > 0 ? `Masih ada ${empty} soal belum dijawab.` : `Anda sudah menjawab semua soal.`,
+          icon: empty > 0 ? 'warning' : 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#059669',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Ya, Kumpulkan',
+          cancelButtonText: 'Batal',
+          heightAuto: false
+      });
+
+      if (confirm1.isConfirmed) {
+          handleSubmitExam(false);
+      } else {
+          // Jika batal, aktifkan sensor lagi setelah jeda
+          setTimeout(() => {
+              isPaused.current = false;
+          }, 1000);
+      }
+  };
+
+  // Timer
   useEffect(() => {
     let timer: any;
     if (step === 'exam' && timeLeft > 0) {
       timer = setInterval(() => setTimeLeft(p => p - 1), 1000);
     } else if (step === 'exam' && timeLeft <= 0) {
-      handleSubmitExam(true); // Waktu Habis -> dianggap forced submit
+      handleSubmitExam(true); 
     }
     return () => clearInterval(timer);
   }, [step, timeLeft]);
@@ -391,61 +349,7 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- LOGIKA TOMBOL SELESAI (YANG KEMARIN ERROR) ---
-  const handleFinishButton = async () => {
-      // 1. KUNCI SENSOR DULU! (Penting agar saat klik tombol, tidak dianggap curang karena blur)
-      isPaused.current = true;
-
-      const answered = Object.keys(answers).length;
-      const total = questions.length;
-      const empty = total - answered;
-
-      // 2. MUNCULKAN KONFIRMASI 1
-      const confirm1 = await Swal.fire({
-          title: empty > 0 ? 'Masih Ada Soal Kosong!' : 'Konfirmasi Selesai',
-          text: empty > 0 ? `Masih ada ${empty} soal belum dijawab. Yakin mau kumpulkan?` : `Anda sudah menjawab semua soal.`,
-          icon: empty > 0 ? 'warning' : 'question',
-          showCancelButton: true,
-          confirmButtonColor: empty > 0 ? '#d97706' : '#059669',
-          cancelButtonColor: '#64748b',
-          confirmButtonText: 'Ya, Lanjutkan',
-          cancelButtonText: 'Periksa Lagi',
-          heightAuto: false,
-          allowOutsideClick: false,
-          customClass: { popup: 'z-[99999]' }
-      });
-
-      if (!confirm1.isConfirmed) {
-          // JIKA BATAL: BUKA KUNCI SENSOR (Lanjut Ujian)
-          isPaused.current = false;
-          return;
-      }
-
-      // 3. MUNCULKAN KONFIRMASI 2 (Final)
-      const confirm2 = await Swal.fire({
-          title: 'Yakin Kirim Jawaban?',
-          text: 'Jawaban yang sudah dikirim tidak bisa diubah lagi.',
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#dc2626',
-          cancelButtonColor: '#64748b',
-          confirmButtonText: 'YA, KUMPULKAN',
-          cancelButtonText: 'Batal',
-          heightAuto: false,
-          allowOutsideClick: false,
-          customClass: { popup: 'z-[99999]' }
-      });
-
-      if (confirm2.isConfirmed) {
-          // JIKA OK: PROSES SUBMIT
-          handleSubmitExam(false);
-      } else {
-          // JIKA BATAL: BUKA KUNCI SENSOR
-          isPaused.current = false; 
-      }
-  };
-
-  // --- UI RENDER ---
+  // --- RENDER ---
 
   if (step === 'login') {
     return (
@@ -528,8 +432,7 @@ const PublicExam: React.FC = () => {
   if (step === 'exam' && selectedExam && questions.length > 0) {
     const currentQ = questions[currentQIndex];
     return (
-      // Pastikan div utama memblokir klik kanan
-      <div className="fixed inset-0 z-[9999] bg-slate-100 flex flex-col overflow-hidden select-none" onContextMenu={(e) => e.preventDefault()}>
+      <div className="fixed inset-0 z-[9000] bg-slate-100 flex flex-col overflow-hidden select-none" onContextMenu={(e) => e.preventDefault()}>
         {/* HEADER */}
         <div className="bg-white border-b border-emerald-100 shadow-md p-3 z-50 flex items-center justify-between shrink-0 h-20">
            <div className="flex items-center gap-3">
@@ -552,14 +455,58 @@ const PublicExam: React.FC = () => {
                </div>
                
                {/* TOMBOL SELESAI */}
-               <button onClick={handleFinishButton} className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center gap-2">
+               <button 
+                 onMouseEnter={() => { isPaused.current = true; }} // Cegah blur saat hover
+                 onMouseLeave={() => { if(!showViolationModal) isPaused.current = false; }} 
+                 onClick={handleFinishClick} 
+                 className="bg-red-600 text-white px-4 py-2.5 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center gap-2"
+               >
                  <LogOut size={14} strokeWidth={3} /> <span className="hidden md:inline">Selesai</span>
                </button>
            </div>
         </div>
 
         {/* BODY */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
+            
+            {/* === CUSTOM VIOLATION MODAL === */}
+            {showViolationModal && (
+                <div className="absolute inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+                    <div className="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl animate-scaleUp">
+                        <div className="bg-red-600 p-6 text-center text-white">
+                            <ShieldAlert size={60} className="mx-auto mb-2 opacity-90" />
+                            <h2 className="text-2xl font-black uppercase tracking-tighter leading-none">PELANGGARAN {violationCount}/3</h2>
+                            <p className="text-xs font-medium text-red-100 mt-1 uppercase tracking-widest">Sistem Anti-Curang Terdeteksi</p>
+                        </div>
+                        <div className="p-6 text-center space-y-4">
+                            <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                                <p className="text-sm font-bold text-red-800 leading-relaxed">
+                                    Anda terdeteksi keluar dari aplikasi atau membuka tab lain.
+                                </p>
+                            </div>
+                            
+                            {violationCount >= 3 ? (
+                                <p className="text-xs text-slate-500 font-medium">
+                                    Maaf, Anda telah melanggar aturan sebanyak 3 kali. <br/>
+                                    <span className="text-red-600 font-bold">Ujian Anda dihentikan otomatis.</span>
+                                </p>
+                            ) : (
+                                <p className="text-xs text-slate-500 font-medium">
+                                    Harap tetap di halaman ujian. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
+                                </p>
+                            )}
+
+                            <button 
+                                onClick={handleCloseViolationModal}
+                                className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all ${violationCount >= 3 ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-amber-500 text-white hover:bg-amber-600'}`}
+                            >
+                                {violationCount >= 3 ? 'KUMPULKAN JAWABAN' : 'SAYA MENGERTI (OK)'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex-1 flex flex-col h-full relative overflow-y-auto bg-slate-50">
                <div className="w-full bg-slate-200 h-1"><div className="bg-emerald-500 h-1 transition-all duration-300" style={{ width: `${((currentQIndex + 1) / questions.length) * 100}%` }}></div></div>
                <div className="p-4 md:p-8 flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
@@ -587,7 +534,7 @@ const PublicExam: React.FC = () => {
                   <button onClick={() => currentQIndex > 0 && setCurrentQIndex(p => p - 1)} disabled={currentQIndex === 0} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 disabled:opacity-50"><ChevronLeft size={16}/> Sebelumnya</button>
                   <button onClick={() => setShowNavMobile(!showNavMobile)} className="md:hidden flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-white font-bold text-xs"><Grid size={16}/> <span className="text-[10px]">NO. SOAL</span></button>
                   {currentQIndex === questions.length - 1 ? (
-                      <button onClick={handleFinishButton} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase hover:bg-emerald-700 shadow-lg"><CheckCircle size={16}/> Selesai</button>
+                      <button onClick={handleFinishClick} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase hover:bg-emerald-700 shadow-lg"><CheckCircle size={16}/> Selesai</button>
                   ) : (
                       <button onClick={() => setCurrentQIndex(p => p + 1)} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-lg">Selanjutnya <ChevronRight size={16}/></button>
                   )}
@@ -595,7 +542,7 @@ const PublicExam: React.FC = () => {
             </div>
             
             {/* NAVIGATOR (KANAN) */}
-            <div className={`fixed inset-y-0 right-0 z-[100] w-64 bg-white shadow-2xl transform transition-transform duration-300 md:relative md:transform-none md:w-80 md:border-l md:border-slate-200 md:shadow-none flex flex-col ${showNavMobile ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+            <div className={`fixed inset-y-0 right-0 z-[9050] w-64 bg-white shadow-2xl transform transition-transform duration-300 md:relative md:transform-none md:w-80 md:border-l md:border-slate-200 md:shadow-none flex flex-col ${showNavMobile ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"><h3 className="font-black text-slate-700 text-sm uppercase flex items-center gap-2"><Grid size={16} className="text-emerald-600"/> Navigasi Soal</h3><button onClick={() => setShowNavMobile(false)} className="md:hidden p-1 text-slate-400 hover:text-red-500"><X size={20} /></button></div>
                 <div className="flex-1 overflow-y-auto p-4"><div className="grid grid-cols-4 gap-2">{questions.map((q, idx) => {
                     const isAnswered = !!answers[q.id]; const isFlagged = flaggedQuestions.has(q.id); const isCurrent = currentQIndex === idx;
@@ -611,7 +558,7 @@ const PublicExam: React.FC = () => {
                     <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium"><div className="w-3 h-3 bg-slate-200 rounded-sm border border-slate-300"></div> Belum Dijawab</div>
                 </div>
             </div>
-            {showNavMobile && <div className="fixed inset-0 bg-black/50 z-[90] md:hidden backdrop-blur-sm" onClick={() => setShowNavMobile(false)}></div>}
+            {showNavMobile && <div className="fixed inset-0 bg-black/50 z-[9040] md:hidden backdrop-blur-sm" onClick={() => setShowNavMobile(false)}></div>}
         </div>
       </div>
     );
