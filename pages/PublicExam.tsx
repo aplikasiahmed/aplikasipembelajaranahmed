@@ -334,7 +334,7 @@ const PublicExam: React.FC = () => {
           <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan nomor NIS untuk mengerjakan soal</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
-          <form onSubmit={handleLogin} className="space-y-3">
+          <form onSubmit={handleLogin} className="space-y-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <select 
                 className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
