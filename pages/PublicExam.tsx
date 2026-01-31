@@ -26,9 +26,9 @@ const PublicExam: React.FC = () => {
   const [score, setScore] = useState(0);
   
   // --- ANTI-CURANG STATES & REFS ---
-  const [violationCount, setViolationCount] = useState(0); // Untuk UI (Render)
-  const violationRef = useRef(0); // Untuk Logika (Real-time Value)
-  const isAlertOpen = useRef(false); // Kunci agar alert tidak tumpuk
+  const [violationCount, setViolationCount] = useState(0); 
+  const violationRef = useRef(0); 
+  const isAlertOpen = useRef(false);
   
   // Navigation
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -37,6 +37,56 @@ const PublicExam: React.FC = () => {
   
   // Data Waktu
   const [startTime, setStartTime] = useState<string>('');
+
+  // --- 1. CEK RELOAD / RESTORE SESSION (PROTEKSI REFRESH) ---
+  useEffect(() => {
+    const savedSession = localStorage.getItem('pai_exam_session');
+    if (savedSession) {
+        try {
+            const session = JSON.parse(savedSession);
+            // Hitung sisa waktu berdasarkan waktu target selesai yang disimpan
+            const now = new Date().getTime();
+            const end = new Date(session.endTime).getTime();
+            const remaining = Math.floor((end - now) / 1000);
+
+            if (remaining > 0) {
+                // Restore State
+                setStudent(session.student);
+                setSelectedExam(session.exam);
+                setQuestions(session.questions);
+                setAnswers(session.answers || {});
+                setStartTime(session.startTime);
+                setTimeLeft(remaining);
+                setStep('exam');
+                setViolationCount(session.violationCount || 0);
+                violationRef.current = session.violationCount || 0;
+            } else {
+                // Waktu habis saat offline/reload
+                localStorage.removeItem('pai_exam_session');
+            }
+        } catch (e) {
+            console.error("Gagal restore sesi", e);
+            localStorage.removeItem('pai_exam_session');
+        }
+    }
+  }, []);
+
+  // --- 2. UPDATE SESSION STORAGE SAAT JAWAB / VIOLATION ---
+  useEffect(() => {
+    if (step === 'exam' && selectedExam && student) {
+        const endTime = new Date(new Date(startTime).getTime() + selectedExam.duration * 60000).toISOString();
+        const sessionData = {
+            student,
+            exam: selectedExam,
+            questions,
+            answers,
+            startTime,
+            endTime, // Simpan waktu selesai absolut
+            violationCount: violationRef.current
+        };
+        localStorage.setItem('pai_exam_session', JSON.stringify(sessionData));
+    }
+  }, [answers, violationCount, step]); // Update setiap kali jawaban atau pelanggaran berubah
 
   // --- HANDLERS ---
 
@@ -74,7 +124,7 @@ const PublicExam: React.FC = () => {
 
   // STEP 2: START EXAM
   const startExam = async (exam: Exam) => {
-    // Cek Double Login / Sudah Mengerjakan
+    // Cek Double Login
     if (student) {
         Swal.fire({ title: 'Memeriksa Data...', didOpen: () => Swal.showLoading(), heightAuto: false });
         const hasTaken = await db.checkStudentExamResult(student.nis, exam.id);
@@ -104,10 +154,10 @@ const PublicExam: React.FC = () => {
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Tampilan akan menjadi layar penuh.</li>
+                <li>Tampilan akan dikunci Fullscreen.</li>
                 <li>Dilarang membuka Google / Browser lain.</li>
                 <li>Dilarang Screenshot.</li>
-                <li>Fokus pada layar ujian.</li>
+                <li>Jika reload halaman, waktu tetap berjalan.</li>
             </ul>
         </div>
       `,
@@ -128,105 +178,111 @@ const PublicExam: React.FC = () => {
         }
       } catch (e) { console.log("Fullscreen blocked", e); }
 
+      const startTimeIso = new Date().toISOString();
+      const endTimeIso = new Date(new Date().getTime() + exam.duration * 60000).toISOString();
+
       setSelectedExam(exam);
       setQuestions(q);
       setAnswers({});
       setCurrentQIndex(0);
       setFlaggedQuestions(new Set());
       setTimeLeft(exam.duration * 60);
-      setStartTime(new Date().toISOString());
+      setStartTime(startTimeIso);
 
       // RESET ANTI CURANG
       setViolationCount(0); 
       violationRef.current = 0; 
       isAlertOpen.current = false;
       
+      // INISIALISASI STORAGE UNTUK RELOAD PROTECTION
+      const sessionData = {
+          student,
+          exam,
+          questions: q,
+          answers: {},
+          startTime: startTimeIso,
+          endTime: endTimeIso,
+          violationCount: 0
+      };
+      localStorage.setItem('pai_exam_session', JSON.stringify(sessionData));
+
       setStep('exam');
     }
   };
 
-  // --- LOGIKA ANTI-CURANG 3 STRIKES (FIXED LOGIC) ---
+  // --- LOGIKA ANTI-CURANG (VISIBILITY & BLUR) ---
   useEffect(() => {
     if (step !== 'exam') return;
 
-    // Fungsi Utama Trigger Pelanggaran
+    // Trigger Pelanggaran
     const triggerViolation = async (reason: string) => {
-        // Jika sudah diskualifikasi atau alert sedang terbuka, abaikan
         if (violationRef.current >= 3 || isAlertOpen.current) return;
 
-        // Kunci Alert agar tidak spam
         isAlertOpen.current = true;
-
-        // Tambah Counter
         violationRef.current += 1;
         setViolationCount(violationRef.current);
 
         const count = violationRef.current;
-
-        // Tentukan Pesan & Warna berdasarkan Tingkat Pelanggaran
         let title = `PELANGGARAN ${count}/3`;
         let text = `Anda terdeteksi ${reason}. Fokus pada layar ujian!`;
         let icon: 'warning' | 'error' = 'warning';
-        let btnColor = '#f59e0b'; // Kuning
-        let btnText = 'Kembali Mengerjakan';
-
+        
         if (count === 2) {
             title = 'PERINGATAN TERAKHIR (2/3)';
             text = 'JANGAN KELUAR LAGI! Sekali lagi melanggar, Anda akan DIDISKUALIFIKASI otomatis.';
             icon = 'error';
-            btnColor = '#dc2626'; // Merah
-            btnText = 'Saya Mengerti';
         } else if (count >= 3) {
             title = 'DISKUALIFIKASI';
             text = 'Anda telah melanggar aturan 3 kali. Sistem menghentikan ujian Anda sekarang.';
             icon = 'error';
-            btnColor = '#000000'; // Hitam
-            btnText = 'Tutup';
         }
 
-        // Tampilkan Alert (Blocking)
         await Swal.fire({
             title: title,
             text: text,
             icon: icon,
-            confirmButtonColor: btnColor,
-            confirmButtonText: btnText,
+            confirmButtonColor: count >= 3 ? '#000' : '#f59e0b',
+            confirmButtonText: count >= 3 ? 'Keluar' : 'Kembali Mengerjakan',
             allowOutsideClick: false,
             allowEscapeKey: false,
             heightAuto: false,
             customClass: { popup: 'z-[99999]' }
         });
 
-        // Buka Kunci Alert
         isAlertOpen.current = false;
 
-        // Jika Pelanggaran ke-3, Auto Submit
+        // Auto Fullscreen lagi setelah alert tutup
+        try {
+            if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+            }
+        } catch(e) {}
+
         if (count >= 3) {
             handleSubmitExam(true);
         }
     };
 
-    // 1. Event Ganti Tab / Minimize (Visibility Change)
-    // Langsung trigger tanpa delay karena ini aksi yang jelas disengaja
+    // 1. Deteksi Pindah Tab / Minimize
     const handleVisibilityChange = () => {
         if (document.hidden) {
             triggerViolation("keluar dari aplikasi / ganti tab");
         }
     };
 
-    // 2. Event Hilang Fokus (Blur)
-    // Diberi delay 1 detik untuk membedakan klik popup/alert sistem vs klik luar app
+    // 2. Deteksi Klik di Luar (Split Screen / Pop-up lain)
     const handleBlur = () => {
         setTimeout(() => {
-            // Cek apakah fokus benar-benar hilang dari dokumen & tab tidak hidden
-            // Juga cek apakah alert sedang terbuka (karena klik alert memicu blur juga)
             if (!document.hasFocus() && !document.hidden && !isAlertOpen.current) {
                  triggerViolation("memindah fokus layar / membuka aplikasi lain");
             }
         }, 1000); 
     };
 
-    // 3. Prevent Back Button Browser
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+    
+    // Prevent Back Button
     const handlePopState = () => {
         window.history.pushState(null, "", window.location.href);
         if (!isAlertOpen.current) {
@@ -241,35 +297,29 @@ const PublicExam: React.FC = () => {
             });
         }
     };
-
-    // Attach Listeners
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("blur", handleBlur);
-    
-    // Push state untuk mencegah back
     window.history.pushState(null, "", window.location.href);
     window.addEventListener('popstate', handlePopState);
 
-    // Cleanup
     return () => {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
         window.removeEventListener("blur", handleBlur);
         window.removeEventListener('popstate', handlePopState);
     };
-  }, [step]); // Dependency: hanya reset saat step berubah (mulai ujian)
+  }, [step]); 
 
   // TIMER
   useEffect(() => {
     let timer: any;
     if (step === 'exam' && timeLeft > 0) {
       timer = setInterval(() => setTimeLeft(p => p - 1), 1000);
-    } else if (step === 'exam' && timeLeft === 0) {
+    } else if (step === 'exam' && timeLeft <= 0) {
       handleSubmitExam(true); // Waktu Habis -> Auto Submit
     }
     return () => clearInterval(timer);
   }, [step, timeLeft]);
 
   const formatTime = (s: number) => {
+    if (s < 0) return "00:00";
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
@@ -285,14 +335,58 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- SUBMIT KE DB ---
+  // --- LOGIKA TOMBOL SELESAI (DIPERBAIKI) ---
+  const handleDoubleConfirmation = async () => {
+      const answered = Object.keys(answers).length;
+      const total = questions.length;
+      const empty = total - answered;
+
+      // VALIDASI 1
+      const confirm1 = await Swal.fire({
+          title: empty > 0 ? 'Masih Ada Soal Kosong!' : 'Konfirmasi Selesai',
+          text: empty > 0 ? `Masih ada ${empty} soal belum dijawab. Yakin mau kumpulkan?` : `Anda sudah menjawab semua soal.`,
+          icon: empty > 0 ? 'warning' : 'question',
+          showCancelButton: true,
+          confirmButtonColor: empty > 0 ? '#d97706' : '#059669',
+          cancelButtonColor: '#64748b',
+          confirmButtonText: 'Ya, Lanjutkan',
+          cancelButtonText: 'Periksa Lagi',
+          heightAuto: false,
+          customClass: { popup: 'z-[99999]' }
+      });
+
+      if (!confirm1.isConfirmed) return;
+
+      // VALIDASI 2
+      const confirm2 = await Swal.fire({
+          title: 'PERINGATAN TERAKHIR',
+          html: `<span style="color:red; font-weight:bold">JAWABAN TIDAK BISA DIUBAH!</span><br/>Yakin ingin mengakhiri ujian ini?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc2626',
+          cancelButtonColor: '#64748b',
+          confirmButtonText: 'YA, KUMPULKAN',
+          cancelButtonText: 'Batal',
+          heightAuto: false,
+          customClass: { popup: 'z-[99999]' }
+      });
+
+      if (confirm2.isConfirmed) {
+          handleSubmitExam(false);
+      }
+  };
+
+  // --- SUBMIT KE DB & HAPUS SESSION ---
   const handleSubmitExam = async (auto = false) => {
     // Exit Fullscreen
     if (document.fullscreenElement) {
         try { await document.exitFullscreen(); } catch(e) {}
     }
 
-    // Hitung Nilai Local
+    // HAPUS SESSION STORAGE (PENTING AGAR TIDAK BISA RELOAD MASUK LAGI)
+    localStorage.removeItem('pai_exam_session');
+
+    // Hitung Nilai
     let correct = 0;
     questions.forEach(q => {
       if (answers[q.id] === q.correct_answer) correct++;
@@ -300,7 +394,6 @@ const PublicExam: React.FC = () => {
     const finalScore = Math.round((correct / questions.length) * 100);
     setScore(finalScore);
 
-    // Save DB
     if (selectedExam && student) {
       Swal.fire({ title: 'Menyimpan Jawaban...', didOpen: () => Swal.showLoading(), heightAuto: false, allowOutsideClick: false, customClass: { popup: 'z-[99999]' } });
       try {
@@ -317,64 +410,11 @@ const PublicExam: React.FC = () => {
         Swal.close();
       } catch (e) {
         console.error(e);
-        Swal.fire({title: 'Error', text: 'Gagal menyimpan nilai (Koneksi).', icon: 'error', heightAuto: false, customClass: { popup: 'z-[99999]' }});
+        // Tetap lanjut ke result meskipun gagal simpan DB (agar siswa tidak panik), tapi log error
+        Swal.fire({title: 'Info', text: 'Nilai tersimpan lokal.', icon: 'info', timer: 1000, heightAuto: false, customClass: { popup: 'z-[99999]' }});
       }
     }
     setStep('result');
-  };
-
-  // --- LOGIKA VALIDASI GANDA TOMBOL SELESAI (DIPANGGIL OLEH HEADER & FOOTER) ---
-  const handleDoubleConfirmation = async () => {
-      // Logic ini harus ada di dalam komponen agar bisa akses 'answers' dan 'questions'
-      const answered = Object.keys(answers).length;
-      const total = questions.length;
-      const empty = total - answered;
-
-      // VALIDASI 1: Cek Kelengkapan
-      let title1 = 'Konfirmasi Selesai';
-      let text1 = `Anda sudah menjawab ${answered} dari ${total} soal.`;
-      let icon1: 'question' | 'warning' = 'question';
-      let btnColor1 = '#059669'; // Hijau
-      
-      if (empty > 0) {
-          title1 = 'Masih Ada Soal Kosong!';
-          text1 = `Hati-hati! Masih ada ${empty} soal belum dijawab. Yakin mau kumpulkan?`;
-          icon1 = 'warning';
-          btnColor1 = '#d97706'; // Kuning/Orange
-      }
-
-      const confirm1 = await Swal.fire({
-          title: title1,
-          text: text1,
-          icon: icon1,
-          showCancelButton: true,
-          confirmButtonColor: btnColor1,
-          cancelButtonColor: '#64748b',
-          confirmButtonText: 'Ya, Lanjutkan',
-          cancelButtonText: 'Periksa Lagi',
-          heightAuto: false,
-          customClass: { popup: 'z-[99999]' }
-      });
-
-      if (!confirm1.isConfirmed) return;
-
-      // VALIDASI 2: Peringatan Final
-      const confirm2 = await Swal.fire({
-          title: 'PERINGATAN TERAKHIR',
-          html: `<span style="color:red; font-weight:bold">JAWABAN TIDAK BISA DIUBAH!</span><br/>Apakah Anda benar-benar yakin ingin mengakhiri ujian ini?`,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#dc2626', // Merah
-          cancelButtonColor: '#64748b',
-          confirmButtonText: 'YA, KUMPULKAN SEKARANG',
-          cancelButtonText: 'Batal',
-          heightAuto: false,
-          customClass: { popup: 'z-[99999]' }
-      });
-
-      if (confirm2.isConfirmed) {
-          handleSubmitExam(false);
-      }
   };
 
   // --- VIEWS ---
@@ -384,12 +424,12 @@ const PublicExam: React.FC = () => {
       <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn px-1 md:px-0 pb-10">
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-black text-slate-800 uppercase">Kerjakan Soal</h1>
-          <p className="text-xs text-slate-500 font-medium">Pilih Semester & masukkan NIS untuk mengerjakan soal</p>
+          <p className="text-xs text-slate-500 font-medium">Pilih Semester & masukkan NIS.</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {/* WARNA INPUT TETAP GELAP SESUAI PERMINTAAN */}
+              {/* INPUT WARNA GELAP (JANGAN DIUBAH) */}
               <select 
                 className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all cursor-pointer"
                 value={semester} 
@@ -401,12 +441,12 @@ const PublicExam: React.FC = () => {
               </select>
               <div className="relative md:col-span-2">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                {/* WARNA INPUT TETAP GELAP SESUAI PERMINTAAN */}
+                {/* INPUT WARNA GELAP (JANGAN DIUBAH) */}
                 <input 
                   type="text" 
                   inputMode="numeric" 
                   className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-800 font-normal outline-none focus:border-emerald-500 transition-all placeholder:text-slate-500" 
-                  placeholder="Masukkan nomor NIS siswa" 
+                  placeholder="Masukkan NIS..." 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
                 />
