@@ -1,6 +1,6 @@
 
 -- ============================================================================
--- SCRIPT FULL RESET & SETUP BANK SOAL ONLINE (FIXED PERMISSION)
+-- SCRIPT FULL RESET & SETUP BANK SOAL ONLINE (FIXED PERMISSION & DEADLINE)
 -- SILAKAN COPY DAN JALANKAN DI SQL EDITOR SUPABASE (KLIK "RUN")
 -- ============================================================================
 
@@ -17,6 +17,7 @@ CREATE TABLE "ujian" (
     category TEXT NOT NULL,       -- Kategori ('harian', 'uts', 'uas', 'praktik')
     semester TEXT NOT NULL,       -- Semester ('1' atau '2')
     duration INTEGER NOT NULL,    -- Durasi dalam menit
+    deadline TIMESTAMPTZ,         -- Batas Akhir Pengerjaan (NEW)
     status TEXT DEFAULT 'draft',  -- Status ('draft', 'active')
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
