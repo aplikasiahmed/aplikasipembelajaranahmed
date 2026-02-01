@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -49,6 +49,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       }
     });
   };
+
+  // --- REVISI: VALIDASI TOMBOL BACK BROWSER/HP ---
+  useEffect(() => {
+    if (isTeacherPage) {
+      // 1. Masukkan state dummy ke history agar ada yang bisa di-pop
+      window.history.pushState(null, '', window.location.href);
+
+      const handlePopState = (event: PopStateEvent) => {
+        // 2. Mencegah navigasi balik langsung dengan pushState lagi (tetap di halaman ini)
+        window.history.pushState(null, '', window.location.href);
+        
+        // 3. Tampilkan konfirmasi Logout
+        handleLogout();
+      };
+
+      // Pasang Event Listener
+      window.addEventListener('popstate', handlePopState);
+
+      // Bersihkan saat komponen unmount atau keluar dari halaman guru
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [isTeacherPage, location.pathname]); // Trigger ulang jika pindah halaman internal guru
 
   const navLinks = [
     { name: 'Beranda', path: '/', icon: Home },
