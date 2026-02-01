@@ -411,7 +411,7 @@ const PublicExam: React.FC = () => {
                          )}
                       </div>
                       <div className={`p-2 rounded-xl flex flex-col items-center ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
-                          <Timer size={16} /><span className="text-[10px] font-black">Waktu {exam.duration} Menit</span>
+                          <Timer size={16} /><span className="text-[10px] font-black text-center">Durasi {exam.duration} Menit</span>
                       </div>
                    </div>
                    
