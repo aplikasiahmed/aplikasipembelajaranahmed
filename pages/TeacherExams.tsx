@@ -210,7 +210,7 @@ const TeacherExams: React.FC = () => {
     });
 
     if (token === "PAI_ADMIN_GURU") {
-        Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading(), heightAuto: false });
+        Swal.fire({ title: 'Memproses....', didOpen: () => Swal.showLoading(), heightAuto: false });
         
         // 4. CEK APAKAH ADA HASIL UJIAN
         const hasResults = await db.hasExamResults(exam.id);
