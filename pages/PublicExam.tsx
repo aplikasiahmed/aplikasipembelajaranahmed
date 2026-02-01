@@ -507,7 +507,7 @@ const PublicExam: React.FC = () => {
                         <div className="p-6 text-center space-y-4">
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                                 <p className="text-sm font-bold text-red-800 leading-relaxed">
-                                    Anda terdeteksi keluar dari halaman soal.
+                                    Anda terdeteksi keluar dari halaman soal
                                 </p>
                             </div>
                             
