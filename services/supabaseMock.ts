@@ -276,7 +276,7 @@ class DatabaseService {
           subject_type: exam.category, 
           score: result.score,
           // REVISI: Mengubah deskripsi dari 'Ujian Online' menjadi 'Tugas Online'
-          description: `Tugas Online: ${exam.title}`,
+          description: `${exam.title}`,
           kelas: result.student_class,
           semester: exam.semester, 
           created_at: new Date().toISOString()
@@ -330,8 +330,8 @@ class DatabaseService {
         if (student && student.id && exam) {
             // 2. Hapus Nilai yang sesuai di Buku Nilai
             // Kita hapus baik yang format baru (Tugas Online) maupun format lama (Ujian Online)
-            const descBaru = `Tugas Online: ${exam.title}`;
-            const descLama = `Ujian Online: ${exam.title}`;
+            const descBaru = ` ${exam.title}`;
+            const descLama = `Tugas Online: ${exam.title}`;
 
             await supabase.from('Nilai')
                 .delete()

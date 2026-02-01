@@ -304,6 +304,8 @@ const TeacherExams: React.FC = () => {
                           className={`w-full pl-9 pr-3 py-3 rounded-xl border text-xs font-normal outline-none focus:bg-white focus:border-emerald-500 transition-all appearance-none ${formData.category ? 'bg-slate-50 text-slate-800 border-slate-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
                        >
                           <option value="" disabled>-- Pilih Tugas --</option>
+                          <option value="Tugas Online">Tugas Online</option>
+                          <option value="Ujian Online">Ujian Online</option>
                           <option value="Harian">Harian</option>
                           <option value="UTS">UTS</option>
                           <option value="UAS">UAS</option>
