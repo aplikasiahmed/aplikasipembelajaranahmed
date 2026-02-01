@@ -404,9 +404,9 @@ const PublicExam: React.FC = () => {
                          
                          {/* TAMPILKAN BATAS WAKTU JIKA ADA */}
                          {exam.deadline && (
-                             <div className={`mt-2 flex items-center gap-1.5 text-[10px] font-black uppercase pt-0.5 ${isExpired ? 'text-red-600 bg-red-100 px-2 py-1 rounded-md w-fit' : 'text-red-600'}`}>
-                                 <Clock size={12} />
-                                 Batas Mengerjakan Soal : {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                             <div className={`mt-2 flex items-center gap-1.5 text-[8px] font-black uppercase pt-0.5 ${isExpired ? 'text-red-600 bg-red-100 px-2 py-1 rounded-md w-fit' : 'text-red-600'}`}>
+                                 <Clock size={14} />
+                                 Batas Mengerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
                              </div>
                          )}
                       </div>
