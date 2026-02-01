@@ -396,24 +396,39 @@ const PublicExam: React.FC = () => {
                
                return (
                  <div key={exam.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all ${isExpired ? 'border-red-100 bg-red-50/30' : 'border-slate-100 hover:border-emerald-300'}`}>
-                   <div className="flex justify-between items-start mb-4">
-                      <div>
-                         <div className="flex items-center gap-2 mb-1"><BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/><span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Semester {exam.semester}</span></div>
-                         <h3 className={`font-bold text-sm ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
-                         <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
-                         
-                         {/* TAMPILKAN BATAS WAKTU JIKA ADA */}
-                         {exam.deadline && (
-                             <div className={`mt-2 flex items-center gap-1.5 text-[8px] font-black uppercase pt-0.5 ${isExpired ? 'text-red-600 bg-red-100 px-2 py-1 rounded-md w-fit' : 'text-red-600'}`}>
-                                 <Clock size={14} />
-                                 Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
-                             </div>
-                         )}
+                   {/* LAYOUT KARTU SOAL DIPERBAIKI SESUAI PERMINTAAN */}
+                   <div className="mb-4">
+                      
+                      {/* BARIS 1: SEMESTER & DURASI (SEJAJAR HORIZONTAL) */}
+                      <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-1.5 text-emerald-600">
+                             <BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/>
+                             <span className={`text-[10px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Semester {exam.semester}</span>
+                          </div>
+                          
+                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                             <Timer size={12} />
+                             <span className="text-[10px] font-black uppercase">Durasi {exam.duration} Menit</span>
+                          </div>
                       </div>
-                      <div className={`p-1 px-3 rounded-full flex flex-row items-center gap-2 ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
-                        <Timer size={14} />
-                        <span className="text-[10px] font-black">Durasi {exam.duration} Menit</span>
-                      </div>
+
+                      {/* JUDUL & KATEGORI (MEMANJANG KE KANAN) */}
+                      <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold">{exam.category}</p>
+                      
+                      {/* BARIS DEADLINE (MEMANJANG KE KANAN - FULL WIDTH) */}
+                      {exam.deadline && (
+                          <div className="mt-2">
+                              <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase w-full ${isExpired ? 'text-red-600 bg-red-100 px-3 py-2 rounded-lg' : 'text-red-600 pt-1'}`}>
+                                  <Clock size={12} />
+                                  <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
+                              </div>
+                              {/* TEKS PERINGATAN KECIL DI BAWAH DEADLINE */}
+                              <p className="text-[7px] text-black italic mt-1 font-medium">
+                                 *Soal bisa hilang apabila lewat dari tanggal & waktu ini
+                              </p>
+                          </div>
+                      )}
                    </div>
                    
                    {/* TOMBOL BERUBAH JIKA EXPIRED */}
