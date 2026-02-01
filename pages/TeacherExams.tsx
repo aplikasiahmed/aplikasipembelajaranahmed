@@ -55,7 +55,7 @@ const TeacherExams: React.FC = () => {
 
   const handleEditClick = (exam: Exam) => {
     if (exam.status === 'active') {
-       Swal.fire({ icon: 'warning', title: 'Ujian Aktif', text: 'Nonaktifkan ujian terlebih dahulu untuk mengedit.', heightAuto: false });
+       Swal.fire({ icon: 'warning', title: 'Soal Aktif', text: 'Nonaktifkan soal terlebih dahulu untuk mengedit.', heightAuto: false });
        return;
     }
     
@@ -96,7 +96,7 @@ const TeacherExams: React.FC = () => {
     
     // Validasi Wajib Pilih Dropdown
     if (!formData.title.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Judul Kosong', text: 'Judul ujian wajib diisi.', heightAuto: false });
+      Swal.fire({ icon: 'warning', title: 'Judul Kosong', text: 'Judul tugas wajib diisi.', heightAuto: false });
       return;
     }
     if (!formData.category) {
@@ -112,7 +112,7 @@ const TeacherExams: React.FC = () => {
       return;
     }
     if (!formData.duration) {
-      Swal.fire({ icon: 'warning', title: 'Durasi Kosong', text: 'Durasi ujian wajib diisi.', heightAuto: false });
+      Swal.fire({ icon: 'warning', title: 'Durasi Kosong', text: 'Durasi tugas wajib diisi.', heightAuto: false });
       return;
     }
 
@@ -130,7 +130,7 @@ const TeacherExams: React.FC = () => {
       if (editingId) {
           // UPDATE
           await db.updateExam(editingId, payload);
-          Swal.fire({ icon: 'success', title: 'Diperbarui', text: 'Data ujian berhasil diupdate.', timer: 1000, showConfirmButton: false, heightAuto: false });
+          Swal.fire({ icon: 'success', title: 'Diperbarui', text: 'Data tugas berhasil diupdate.', timer: 1000, showConfirmButton: false, heightAuto: false });
       } else {
           // CREATE
           await db.createExam({
@@ -178,7 +178,7 @@ const TeacherExams: React.FC = () => {
        Swal.fire({
           icon: 'error',
           title: 'Akses Ditolak',
-          text: 'Ujian sedang AKTIF. Silakan nonaktifkan (draft) terlebih dahulu untuk menghapus.',
+          text: 'Tugas sedang AKTIF. Silakan nonaktifkan (draft) terlebih dahulu untuk menghapus.',
           heightAuto: false
        });
        return;
@@ -186,8 +186,8 @@ const TeacherExams: React.FC = () => {
 
     // 2. Konfirmasi Awal
     const result = await Swal.fire({
-      title: 'Hapus Ujian?',
-      text: 'Anda akan menghapus data ujian ini.',
+      title: 'Hapus Tugas?',
+      text: 'Anda akan menghapus data tugas ini.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#dc2626',
@@ -224,13 +224,13 @@ const TeacherExams: React.FC = () => {
             Swal.fire({
                 icon: 'success',
                 title: 'Diarsipkan',
-                text: 'Ujian memiliki data hasil siswa. Hanya soal yang dihapus untuk menjaga arsip nilai.',
+                text: 'Tugas memiliki data hasil siswa. Hanya soal yang dihapus untuk menjaga arsip nilai.',
                 heightAuto: false
             });
         } else {
             // JIKA TIDAK ADA HASIL: HAPUS SEMUA (CLEAN DELETE)
             await db.deleteExam(exam.id);
-            Swal.fire({ icon: 'success', title: 'Terhapus', text: 'Data ujian berhasil dihapus permanen.', timer: 1500, showConfirmButton: false, heightAuto: false });
+            Swal.fire({ icon: 'success', title: 'Terhapus', text: 'Data tugas berhasil dihapus permanen.', timer: 1500, showConfirmButton: false, heightAuto: false });
         }
         
         fetchExams();
@@ -272,15 +272,15 @@ const TeacherExams: React.FC = () => {
                      <FileEdit size={20} />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">{editingId ? 'Edit Data Ujian' : 'Form Ujian Baru'}</h2>
-                    <p className="text-[10px] text-slate-400 font-medium leading-none">Lengkapi detail ujian di bawah ini</p>
+                    <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">{editingId ? 'Edit Data Tugas' : 'Form Tugas Baru'}</h2>
+                    <p className="text-[10px] text-slate-400 font-medium leading-none">Lengkapi detail Tugas Online di bawah ini</p>
                   </div>
              </div>
 
              <form onSubmit={handleFormSubmit} className="space-y-4 relative z-10">
                {/* 1. Judul Ujian */}
                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul Ujian</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul Tugas Online</label>
                   <input 
                     type="text" 
                     name="title"
@@ -440,7 +440,7 @@ const TeacherExams: React.FC = () => {
                  <button 
                    onClick={() => {
                        if(exam.status === 'active') {
-                           Swal.fire({ icon: 'warning', title: 'Akses Dibatasi', text: 'Nonaktifkan ujian terlebih dahulu untuk mengedit soal.', heightAuto: false });
+                           Swal.fire({ icon: 'warning', title: 'Akses Dibatasi', text: 'Nonaktifkan soal terlebih dahulu untuk mengedit soal.', heightAuto: false });
                        } else {
                            navigate(`/guru/ujian/edit/${exam.id}`)
                        }
@@ -454,7 +454,7 @@ const TeacherExams: React.FC = () => {
                  <button 
                     onClick={() => handleEditClick(exam)}
                     className={`p-2.5 rounded-xl border transition-all active:scale-95 ${exam.status === 'active' ? 'bg-slate-100 text-slate-300 border-transparent cursor-not-allowed' : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'}`}
-                    title="Edit Data Ujian"
+                    title="Edit Data Soal"
                  >
                     <Pencil size={18} />
                  </button>
