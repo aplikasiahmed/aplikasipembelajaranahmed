@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileEdit, Plus, Trash2, Edit, PlayCircle, PauseCircle, Loader2, ArrowLeft, X, Save, BookOpen, Clock, Layers, Pencil } from 'lucide-react';
+import { FileEdit, Plus, Trash2, Edit, PlayCircle, PauseCircle, Loader2, ArrowLeft, X, Save, BookOpen, Clock, Layers, Pencil, CalendarClock } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Exam, GradeLevel } from '../types';
 import Swal from 'sweetalert2';
@@ -21,7 +20,8 @@ const TeacherExams: React.FC = () => {
     grade: '',     // Default kosong untuk "Pilih Kelas"
     category: '',  // Default kosong untuk "Pilih Tugas"
     duration: '60',
-    semester: ''   // Default kosong untuk "Pilih Semester"
+    semester: '',   // Default kosong untuk "Pilih Semester"
+    deadline: ''    // New: Batas Waktu
   });
 
   // Load Exams
@@ -45,7 +45,8 @@ const TeacherExams: React.FC = () => {
         grade: '',
         category: '',
         duration: '60',
-        semester: ''
+        semester: '',
+        deadline: ''
       });
       setEditingId(null);
     }
@@ -57,12 +58,27 @@ const TeacherExams: React.FC = () => {
        Swal.fire({ icon: 'warning', title: 'Ujian Aktif', text: 'Nonaktifkan ujian terlebih dahulu untuk mengedit.', heightAuto: false });
        return;
     }
+    
+    // Format deadline untuk input datetime-local (YYYY-MM-DDTHH:mm)
+    let formattedDeadline = '';
+    if (exam.deadline) {
+        try {
+            const d = new Date(exam.deadline);
+            // Mengatasi konversi zona waktu agar sesuai tampilan lokal
+            const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            formattedDeadline = localIso;
+        } catch (e) {
+            console.error("Date parse error", e);
+        }
+    }
+
     setFormData({
         title: exam.title,
         grade: exam.grade,
         category: exam.category,
         duration: String(exam.duration),
-        semester: exam.semester
+        semester: exam.semester,
+        deadline: formattedDeadline
     });
     setEditingId(exam.id);
     setShowForm(true);
@@ -107,7 +123,8 @@ const TeacherExams: React.FC = () => {
         grade: formData.grade as GradeLevel,
         category: formData.category as any,
         semester: formData.semester,
-        duration: parseInt(formData.duration) || 60, 
+        duration: parseInt(formData.duration) || 60,
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined
       };
 
       if (editingId) {
@@ -340,6 +357,22 @@ const TeacherExams: React.FC = () => {
                   </div>
                </div>
 
+               {/* NEW: Input Batas Pengerjaan (Deadline) */}
+               <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Batas Waktu (Opsional)</label>
+                  <div className="relative">
+                     <CalendarClock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                     <input 
+                        type="datetime-local" 
+                        name="deadline"
+                        value={formData.deadline}
+                        onChange={handleInputChange}
+                        className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-normal text-slate-800 outline-none focus:bg-white focus:border-emerald-500 transition-all cursor-pointer"
+                     />
+                  </div>
+                  <p className="text-[9px] text-slate-400 italic ml-1">*Jika diisi, soal otomatis non-aktif setelah tanggal ini.</p>
+               </div>
+
                <div className="pt-2">
                   <button 
                     type="submit" 
@@ -383,7 +416,13 @@ const TeacherExams: React.FC = () => {
                    </span>
                 </div>
                 <h3 className="text-sm md:text-base font-black text-slate-800 leading-tight">{exam.title}</h3>
-                <p className="text-[10px] text-slate-400 font-medium">Semester {exam.semester}</p>
+                {/* Tampilkan Deadline di List jika ada */}
+                {exam.deadline && (
+                    <p className="text-[9px] text-red-500 font-bold uppercase flex items-center gap-1">
+                        <Clock size={10} /> Batas: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                    </p>
+                )}
+                {!exam.deadline && <p className="text-[10px] text-slate-400 font-medium">Semester {exam.semester}</p>}
               </div>
 
               {/* REVISI URUTAN TOMBOL: STATUS -> KELOLA -> EDIT -> HAPUS */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle, Loader2, HelpCircle } from 'lucide-react';
+import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle, Loader2, HelpCircle, AlertOctagon, Clock } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
 import Swal from 'sweetalert2';
@@ -102,13 +102,19 @@ const PublicExam: React.FC = () => {
         Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
       }
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server soal', heightAuto: false });
+      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server soal.', heightAuto: false });
     } finally {
       setLoadingExams(false);
     }
   };
 
   const startExam = async (exam: Exam) => {
+    // CEK ULANG DEADLINE SEBELUM MULAI (Proteksi Ganda)
+    if (exam.deadline && new Date() > new Date(exam.deadline)) {
+        Swal.fire({ icon: 'error', title: 'Waktu Habis', text: 'Maaf, batas waktu pengerjaan soal ini sudah berakhir.', heightAuto: false });
+        return;
+    }
+
     // [REVISI] HAPUS Loading SweetAlert disini
     if (student) {
         const hasTaken = await db.checkStudentExamResult(student.nis, exam.id);
@@ -126,23 +132,19 @@ const PublicExam: React.FC = () => {
     
     // PERINGATAN AWAL (Masih pakai SweetAlert tidak apa-apa karena belum masuk mode ujian)
     const rules = await Swal.fire({
-      title: 'PERATURAN',
-      text:'Wajib dibaca',
+      title: 'PERATURAN UJIAN',
       html: `
         <div class="text-left space-y-3">
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
                     <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, WA, atau Tab Lain.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Dilarang keluar dari halaman soal.</li>
-                <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya, Jawabanya yang sudah dijawab akan terkirim langsung ke sistem.</li>
-                <li>Perhatikan waktu saat mengerjakan soal.</li>
-                <li>Apabila waktu telah habis saat mengerjakan soal. Maka, akan selesai dan tidak dapat mengerjakan soal berikutnya, jawaban akan terkirim langsung ke sistem.</li>
-                <li>Jangan Lupa untuk berdoa sebelum mengerjakan soal.</li>
+                <li>Dilarang keluar dari halaman ujian.</li>
+                <li>Jika melanggar 3x, ujian otomatis DISKUALIFIKASI.</li>
             </ul>
         </div>
       `,
@@ -334,7 +336,7 @@ const PublicExam: React.FC = () => {
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
         <div className="text-center space-y-1">
           <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mengerjakan soal.</p>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mulai ujian.</p>
         </div>
         <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
           <form onSubmit={handleLogin} className="space-y-3">
@@ -377,7 +379,7 @@ const PublicExam: React.FC = () => {
           <div className="relative z-10">
             <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa</p>
             <h1 className="text-lg font-black uppercase">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • {student.jeniskelamin}</p>
+            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis}</p>
           </div>
         </div>
         <h2 className="text-sm font-black text-slate-800 uppercase ml-1">Daftar Soal</h2>
@@ -385,21 +387,42 @@ const PublicExam: React.FC = () => {
           {activeExams.length === 0 ? (
              <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-200"><p className="text-slate-400 text-xs font-bold">Tidak ada soal tersedia.</p></div>
           ) : (
-             activeExams.map(exam => (
-               <div key={exam.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-300 transition-all">
-                 <div className="flex justify-between items-start mb-4">
-                    <div>
-                       <div className="flex items-center gap-2 mb-1"><BookOpen size={12} className="text-emerald-600"/><span className="text-[9px] font-black text-emerald-600 uppercase">Semerter {exam.semester}</span></div>
-                       <h3 className="font-bold text-slate-800 text-sm">{exam.title}</h3>
-                       <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
-                    </div>
-                    <div className="bg-emerald-50 text-emerald-700 p-2 rounded-xl flex flex-col items-center"><Timer size={16} /><span className="text-[10px] font-black">Waktu {exam.duration} Menit</span></div>
+             activeExams.map(exam => {
+               // LOGIKA OTOMATIS NON-AKTIF (EXPIRED)
+               const isExpired = exam.deadline && new Date() > new Date(exam.deadline);
+               
+               return (
+                 <div key={exam.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all ${isExpired ? 'border-red-100 bg-red-50/30' : 'border-slate-100 hover:border-emerald-300'}`}>
+                   <div className="flex justify-between items-start mb-4">
+                      <div>
+                         <div className="flex items-center gap-2 mb-1"><BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/><span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Sem {exam.semester}</span></div>
+                         <h3 className={`font-bold text-sm ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
+                         <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
+                         
+                         {/* TAMPILKAN BATAS WAKTU JIKA ADA */}
+                         {exam.deadline && (
+                             <div className={`mt-2 flex items-center gap-1.5 text-[9px] font-black uppercase ${isExpired ? 'text-red-600 bg-red-100 px-2 py-1 rounded-md w-fit' : 'text-slate-500'}`}>
+                                 <Clock size={10} />
+                                 Batas: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}
+                             </div>
+                         )}
+                      </div>
+                      <div className={`p-2 rounded-xl flex flex-col items-center ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                          <Timer size={16} /><span className="text-[10px] font-black">{exam.duration}m</span>
+                      </div>
+                   </div>
+                   
+                   {/* TOMBOL BERUBAH JIKA EXPIRED */}
+                   <button 
+                     onClick={() => !isExpired && startExam(exam)} 
+                     disabled={!!isExpired}
+                     className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${isExpired ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-red-500 text-white hover:bg-emerald-600'}`}
+                   >
+                     {isExpired ? <><AlertOctagon size={12}/> Waktu Habis</> : <><Play size={12} fill="currentColor" /> Kerjakan Sekarang</>}
+                   </button>
                  </div>
-                 <button onClick={() => startExam(exam)} className="w-full bg-red-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md active:scale-95">
-                   <Play size={12} fill="currentColor" /> Kerjakan Sekarang
-                 </button>
-               </div>
-             ))
+               );
+             })
           )}
         </div>
       </div>
@@ -480,18 +503,18 @@ const PublicExam: React.FC = () => {
                         <div className="p-6 text-center space-y-4">
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                                 <p className="text-sm font-bold text-red-800 leading-relaxed">
-                                    Anda terdeteksi keluar dari halaman soal.
+                                    Anda terdeteksi keluar dari aplikasi atau membuka tab lain.
                                 </p>
                             </div>
                             
                             {violationCount >= 3 ? (
                                 <p className="text-xs text-slate-500 font-medium">
                                     Maaf, Anda telah melanggar aturan sebanyak 3 kali. <br/>
-                                    <span className="text-red-600 font-bold">Anda dihentikan otomatis.</span>
+                                    <span className="text-red-600 font-bold">Ujian Anda dihentikan otomatis.</span>
                                 </p>
                             ) : (
                                 <p className="text-xs text-slate-500 font-medium">
-                                    Harap tetap pada halaman soal. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
+                                    Harap tetap di halaman ujian. Pelanggaran ke-3 akan menyebabkan diskualifikasi.
                                 </p>
                             )}
 
@@ -537,7 +560,7 @@ const PublicExam: React.FC = () => {
                                 </div>
                             ) : (
                                 <p className="text-center text-slate-500 font-medium text-sm">
-                                    Anda telah menjawab semua soal. Yakin ingin selesai?
+                                    Anda telah menjawab semua soal. Yakin ingin mengakhiri ujian ini?
                                 </p>
                             )}
 
@@ -644,14 +667,14 @@ const PublicExam: React.FC = () => {
     return (
       <div className="max-w-md mx-auto min-h-[60vh] flex flex-col items-center justify-center px-4 animate-slideUp text-center">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100 animate-bounce"><CheckCircle size={48} strokeWidth={3} /></div>
-        <h1 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
-        <p className="text-xs text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
+        <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">Mengerjakan Soal Selesai!</h1>
+        <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">Nilai telah tersimpan otomatis ke Buku Nilai, Nilai bisa langsung di lihat pada menu Cek Nilai</p>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl w-full space-y-2 mb-8 relative overflow-hidden">
            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nilai Kamu</p>
-           <p className="text-5xl font-black text-emerald-700 tracking-tighter">{score}</p>
+           <p className="text-5xl font-black text-slate-800 tracking-tighter">{score}</p>
         </div>
-        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-emerald-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-emerald-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
+        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
       </div>
     );
   }

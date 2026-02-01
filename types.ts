@@ -1,6 +1,3 @@
-
-
-
 export type GradeLevel = '7' | '8' | '9';
 
 export interface AdminUser {
@@ -72,6 +69,7 @@ export interface Exam {
   category: 'harian' | 'uts' | 'uas' | 'praktik'; // Added category
   semester: string;
   duration: number; // in minutes
+  deadline?: string; // New: Batas Akhir Pengerjaan (ISO Date String)
   status: 'draft' | 'active' | 'closed';
   created_at: string;
 }
