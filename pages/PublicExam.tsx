@@ -410,8 +410,9 @@ const PublicExam: React.FC = () => {
                              </div>
                          )}
                       </div>
-                      <div className={`p-2 rounded-xl flex flex-col items-center ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
-                          <Timer size={16} /><span className="text-[10px] font-black text-center">Durasi {exam.duration} Menit</span>
+                      <div className={`p-1 px-3 rounded-full flex flex-row items-center gap-2 ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                        <Timer size={14} />
+                        <span className="text-[10px] font-black">Durasi {exam.duration} Menit</span>
                       </div>
                    </div>
                    
