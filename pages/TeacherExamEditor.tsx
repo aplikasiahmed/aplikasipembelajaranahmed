@@ -340,7 +340,7 @@ const TeacherExamEditor: React.FC = () => {
                                         <img src={q.image_url} alt="Soal" className="w-full h-auto object-cover" />
                                       </div>
                                     )}
-                                    <p className="text-[11px] font-normal text-slate-800 leading-relaxed">{q.text}</p>
+                                    <p className="text-[12px] font-normal text-slate-800 leading-relaxed">{q.text}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {q.options?.map((opt, oIdx) => (
                                             <div key={oIdx} className={`text-xs px-3 py-2 rounded-lg border flex items-center gap-2 ${String(oIdx) === q.correct_answer ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold' : 'bg-slate-50 border-transparent text-slate-500'}`}>
