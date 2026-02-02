@@ -36,6 +36,16 @@ const PublicExam: React.FC = () => {
   const violationRef = useRef(0); 
   const isPaused = useRef(false); // Kunci sensor utama
 
+  // --- HELPER: SHUFFLE ARRAY (PENGACAK SOAL) ---
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
   // --- 1. RESTORE SESSION ---
   useEffect(() => {
     const savedSession = localStorage.getItem('pai_exam_session');
@@ -164,8 +174,11 @@ const PublicExam: React.FC = () => {
       const startTimeIso = new Date().toISOString();
       const endTimeIso = new Date(new Date().getTime() + exam.duration * 60000).toISOString();
 
+      // PENGACAKAN SOAL (SHUFFLE) SEBELUM DISIMPAN KE STATE
+      const shuffledQuestions = shuffleArray(q);
+
       setSelectedExam(exam);
-      setQuestions(q);
+      setQuestions(shuffledQuestions);
       setAnswers({});
       setCurrentQIndex(0);
       setFlaggedQuestions(new Set());
@@ -183,7 +196,7 @@ const PublicExam: React.FC = () => {
       const sessionData = {
           student,
           exam,
-          questions: q,
+          questions: shuffledQuestions, // Simpan urutan acak ke sesi agar tetap sama saat reload
           answers: {},
           startTime: startTimeIso,
           endTime: endTimeIso,
@@ -255,8 +268,42 @@ const PublicExam: React.FC = () => {
         }, 300);
     };
 
+    // TAMBAHAN: DETEKSI TOMBOL SCREENSHOT (KEYUP - DESKTOP)
+    const handleKeyUp = (e: KeyboardEvent) => {
+        if (isPaused.current) return;
+
+        // 1. Tombol PrintScreen (Windows)
+        if (e.key === 'PrintScreen') {
+            e.preventDefault();
+            triggerViolation();
+        }
+
+        // 2. Kombinasi Shortcut Screenshot (Mac & Windows)
+        // Mac: Command + Shift + 3/4/5
+        // Windows: Win + Shift + S
+        if ((e.metaKey || e.ctrlKey || e.key === 'Meta') && e.shiftKey) {
+            if (['3', '4', '5', 's', 'S'].includes(e.key)) {
+                e.preventDefault();
+                triggerViolation();
+            }
+        }
+    };
+
+    // TAMBAHAN BARU: DETEKSI GESTUR 3 JARI (MOBILE)
+    const handleTouchStart = (e: TouchEvent) => {
+        if (isPaused.current) return;
+        // Jika terdeteksi lebih dari 2 jari (3, 4, dst) menyentuh layar
+        // Ini biasa digunakan untuk screenshot 3 jari di Android/iOS atau gestures multitasking
+        if (e.touches.length > 2) {
+            triggerViolation();
+        }
+    };
+
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("blur", handleBlur);
+    window.addEventListener("keyup", handleKeyUp); 
+    // Tambahkan Event Listener Touch
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
     
     // Prevent Back
     const handlePopState = () => {
@@ -268,6 +315,8 @@ const PublicExam: React.FC = () => {
     return () => {
         document.removeEventListener("visibilitychange", handleVisibility);
         window.removeEventListener("blur", handleBlur);
+        window.removeEventListener("keyup", handleKeyUp);
+        window.removeEventListener("touchstart", handleTouchStart);
         window.removeEventListener('popstate', handlePopState);
     };
   }, [step]); 
@@ -403,18 +452,18 @@ const PublicExam: React.FC = () => {
                       <div className="flex items-center gap-3 mb-2">
                           <div className="flex items-center gap-1.5 text-emerald-600">
                              <BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/>
-                             <span className={`text-[10px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Semester {exam.semester}</span>
+                             <span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Semester {exam.semester}</span>
                           </div>
                           
                           <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
                              <Timer size={12} />
-                             <span className="text-[10px] font-black uppercase">Durasi {exam.duration} Menit</span>
+                             <span className="text-[9px] font-black uppercase">Durasi {exam.duration} Menit</span>
                           </div>
                       </div>
 
                       {/* JUDUL & KATEGORI (MEMANJANG KE KANAN) */}
                       <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
-                      <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold">{exam.category}</p>
+                      <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
                       
                       {/* BARIS DEADLINE (MEMANJANG KE KANAN - FULL WIDTH) */}
                       {exam.deadline && (
@@ -424,7 +473,7 @@ const PublicExam: React.FC = () => {
                                   <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
                               </div>
                               {/* TEKS PERINGATAN KECIL DI BAWAH DEADLINE */}
-                              <p className="text-[7px] text-black italic mt-1 font-medium">
+                              <p className="text-[8px] text-black italic mt-1 font-medium">
                                  *Soal bisa hilang apabila lewat dari tanggal & waktu ini
                               </p>
                           </div>
@@ -521,8 +570,9 @@ const PublicExam: React.FC = () => {
                         </div>
                         <div className="p-6 text-center space-y-4">
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                                {/* UPDATE TEKS PERINGATAN SCREENSHOT */}
                                 <p className="text-sm font-bold text-red-800 leading-relaxed">
-                                    Anda terdeteksi keluar dari halaman soal
+                                    Anda terdeteksi keluar dari halaman soal atau melakukan Screenshot
                                 </p>
                             </div>
                             
