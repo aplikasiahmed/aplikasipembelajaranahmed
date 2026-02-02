@@ -330,7 +330,7 @@ const TeacherExamEditor: React.FC = () => {
                     <div key={q.id} className={`bg-white p-4 rounded-2xl border shadow-sm transition-all group ${editingQId === q.id ? 'border-blue-500 ring-2 ring-blue-500/10' : 'border-slate-100 hover:border-emerald-100'}`}>
                         <div className="flex justify-between items-start gap-3">
                             <div className="flex gap-3 w-full">
-                                <span className={`flex-shrink-0 w-6 h-6 rounded-full font-normal text-[8px] flex items-center justify-center border ${editingQId === q.id ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                                <span className={`flex-shrink-0 w-6 h-6 rounded-full font-normal text-[7px] flex items-center justify-center border ${editingQId === q.id ? 'bg-blue-100 text-blue-600 border-blue-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
                                     {idx + 1}
                                 </span>
                                 <div className="space-y-3 w-full">
