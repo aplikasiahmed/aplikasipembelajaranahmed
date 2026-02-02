@@ -421,7 +421,7 @@ const TeacherExams: React.FC = () => {
                 {/* Tampilkan Deadline di List jika ada */}
                 {exam.deadline && (
                     <p className="text-[9px] text-red-500 font-bold uppercase flex items-center gap-1">
-                        <Clock size={10} /> Batas: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                        <Clock size={10} /> Batas Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
                     </p>
                 )}
                 {!exam.deadline && <p className="text-[10px] text-slate-400 font-medium">Semester {exam.semester}</p>}
