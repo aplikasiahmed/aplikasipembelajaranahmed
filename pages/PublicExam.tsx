@@ -725,7 +725,7 @@ const PublicExam: React.FC = () => {
                 })}</div></div>
                 <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
                     <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Sudah Dijawab</div>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium"><div className="w-3 h-3 bg-amber-400 rounded-sm"></div> Ragu-ragu</div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium"><div className="w-3 h-3 bg-amber-400 rounded-sm"></div> Klik Ragu-ragu</div>
                     <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium"><div className="w-3 h-3 bg-slate-200 rounded-sm border border-slate-300"></div> Belum Dijawab</div>
                 </div>
             </div>
