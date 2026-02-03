@@ -153,7 +153,7 @@ const PublicExam: React.FC = () => {
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
-                <li>Soal hanya dapat dikerjakan 1x.</li>
+                <li>Soal hanya dapat siswa kerjakan 1x.</li>
                 <li>Dilarang Screenshoot soal & menyebarluaskan.</li>
                 <li>Dilarang keluar dari halaman soal.</li>
                 <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya, Jawabanya yang sudah dijawab akan terkirim langsung ke sistem.</li>
