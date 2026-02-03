@@ -148,8 +148,8 @@ const PublicExam: React.FC = () => {
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
-                    <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
+                    <h4 class="font-bold text-center text-red-600 text-sm">DILARANG CURANG!</h4>
+                    <p class="text-xs text-red-500 text-center leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-1 text-slate-600 list-disc pl-4 font-medium">
