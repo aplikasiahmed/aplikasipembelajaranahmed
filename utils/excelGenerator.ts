@@ -70,6 +70,7 @@ const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
             else if (key === 'NIS') width = 15;
             else if (key === 'NAMA SISWA') width = 35;
             else if (key.startsWith('HARIAN')) width = 10;
+            else if (key === 'TO') width = 8; // Kolom TO (Tugas Online)
             return { header: key, key: key, width: width };
         });
 

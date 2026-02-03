@@ -83,20 +83,29 @@ const TeacherReports: React.FC = () => {
                   harian: [],
                   uts: null,
                   uas: null,
-                  praktik: null
+                  praktik: null,
+                  to: null // Inisialisasi kolom TO (Tugas Online)
               });
           }
 
           const s = studentsMap.get(sid);
-          if (item.subject_type === 'harian') {
+          // Normalisasi tipe subject agar tidak case sensitive
+          const type = item.subject_type ? item.subject_type.toLowerCase() : '';
+
+          if (type === 'harian') {
               s.harian.push(item.score);
               if (s.harian.length > maxHarianCount) maxHarianCount = s.harian.length;
-          } else if (item.subject_type === 'uts') {
+          } else if (type === 'uts') {
               s.uts = item.score;
-          } else if (item.subject_type === 'uas') {
+          } else if (type === 'uas') {
               s.uas = item.score;
-          } else if (item.subject_type === 'praktik') {
+          } else if (type === 'praktik') {
               s.praktik = item.score;
+          } else if (type === 'tugas online' || type === 'ujian online') {
+              // REVISI: Menangkap nilai Tugas Online / Ujian Online
+              // Jika ada multiple TO, logika ini mengambil yang terakhir.
+              // (Sesuai behavior UTS/UAS).
+              s.to = item.score;
           }
       });
 
@@ -107,9 +116,10 @@ const TeacherReports: React.FC = () => {
           let count = 0;
           
           s.harian.forEach((h: number) => { totalScore += h; count++; });
+          if (s.to !== null) { totalScore += s.to; count++; } // Tambahkan TO ke rata-rata
+          if (s.praktik !== null) { totalScore += s.praktik; count++; }
           if (s.uts !== null) { totalScore += s.uts; count++; }
           if (s.uas !== null) { totalScore += s.uas; count++; }
-          if (s.praktik !== null) { totalScore += s.praktik; count++; }
 
           const average = count > 0 ? (totalScore / count).toFixed(1) : '0';
 
@@ -125,10 +135,12 @@ const TeacherReports: React.FC = () => {
               row[`HARIAN ${i + 1}`] = s.harian[i] !== undefined ? s.harian[i] : '';
           }
 
-          // Fixed Columns
+          // REVISI: Menambahkan Kolom TO sebelum Praktik/UTS
+          row['TO'] = s.to !== null ? s.to : ''; 
+          
+          row['PRAKTIK'] = s.praktik !== null ? s.praktik : '';
           row['UTS'] = s.uts !== null ? s.uts : '';
           row['UAS'] = s.uas !== null ? s.uas : '';
-          row['PRAKTIK'] = s.praktik !== null ? s.praktik : '';
           row['RATA-RATA'] = average;
 
           return row;
