@@ -152,7 +152,7 @@ const PublicExam: React.FC = () => {
                     <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
                 </div>
             </div>
-            <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
+            <ul class="text-xs space-y-1 text-slate-600 list-disc pl-4 font-medium">
                 <li>Soal hanya dapat siswa kerjakan 1x.</li>
                 <li>Dilarang Screenshoot soal & menyebarluaskan.</li>
                 <li>Dilarang keluar dari halaman soal.</li>
