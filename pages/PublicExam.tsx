@@ -157,6 +157,7 @@ const PublicExam: React.FC = () => {
                 <li>Dilarang Screenshoot soal & menyebarluaskan.</li>
                 <li>Dilarang keluar dari halaman soal.</li>
                 <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya, Jawabanya yang sudah dijawab akan terkirim langsung ke sistem.</li>
+                <li>Guru akan mengetahui Jika Curang.</li>
                 <li>Perhatikan waktu saat mengerjakan soal.</li>
                 <li>Apabila waktu telah habis saat mengerjakan soal. Maka, akan selesai dan tidak dapat mengerjakan soal berikutnya, jawaban akan terkirim langsung ke sistem.</li>
                 <li>Jangan Lupa untuk berdoa sebelum mengerjakan soal.</li>
