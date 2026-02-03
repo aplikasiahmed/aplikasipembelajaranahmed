@@ -148,8 +148,8 @@ const PublicExam: React.FC = () => {
             <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                 <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                 <div>
-                    <h4 class="font-bold text-center text-red-600 text-sm">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 text-center leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
+                    <h4 class="font-bold text-red-600 text-sm">DILARANG CURANG!</h4>
+                    <p class="text-xs text-red-500 leading-tight mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
                 </div>
             </div>
             <ul class="text-xs space-y-1 text-slate-600 list-disc pl-4 font-medium">
@@ -157,7 +157,6 @@ const PublicExam: React.FC = () => {
                 <li>Dilarang Screenshoot soal & menyebarluaskan.</li>
                 <li>Dilarang keluar dari halaman soal.</li>
                 <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya, Jawabanya yang sudah dijawab akan terkirim langsung ke sistem.</li>
-                <li>Guru akan mengetahui Jika Curang.</li>
                 <li>Perhatikan waktu saat mengerjakan soal.</li>
                 <li>Apabila waktu telah habis saat mengerjakan soal. Maka, akan selesai dan tidak dapat mengerjakan soal berikutnya, jawaban akan terkirim langsung ke sistem.</li>
                 <li>Jangan Lupa untuk berdoa sebelum mengerjakan soal.</li>
@@ -663,7 +662,7 @@ const PublicExam: React.FC = () => {
                   <div className="bg-white p-3 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 relative min-h-[350px] md:min-h-[400px] flex flex-col">
                       <div className="flex justify-between items-start mb-4 md:mb-6">
                           <span className="bg-emerald-600 text-white px-3 py-1 md:px-4 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-sm font-black shadow-md uppercase">Soal No. {currentQIndex + 1}</span>
-                          <button onClick={() => toggleFlag(currentQ.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${isCurrentFlagged ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}><Flag size={12} fill={isCurrentFlagged ? "currentColor" : "none"} /> Ragu-ragu</button>
+                          <button onClick={() => toggleFlag(currentQ.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${isCurrentFlagged ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}><Flag size={12} fill={isCurrentFlagged ? "currentColor" : "none"} /> Klik Ragu-ragu</button>
                       </div>
                       {currentQ.image_url && <div className="mb-4 md:mb-6 rounded-xl md:rounded-2xl overflow-hidden border border-slate-100 shadow-sm max-w-lg mx-auto bg-slate-50"><img src={currentQ.image_url} alt="Soal" className="w-full h-auto object-contain max-h-[250px] md:max-h-[300px]" /></div>}
                       <div className="flex-1 mb-4 md:mb-6"><p className="text-sm md:text-lg font-bold text-slate-800 leading-relaxed text-justify">{currentQ.text}</p></div>
