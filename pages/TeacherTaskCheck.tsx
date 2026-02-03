@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, ExternalLink, Image as ImageIcon, Link as LinkIcon, Trash2, Loader2, Calendar, FileText, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
+import { Search, Filter, ExternalLink, Image as ImageIcon, Link as LinkIcon, Trash2, Loader2, Calendar, FileText, ArrowLeft, CheckCircle2, Clock, ShieldAlert } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { TaskSubmission, GradeLevel } from '../types';
 import Swal from 'sweetalert2';
@@ -424,6 +424,14 @@ const TeacherTaskCheck: React.FC = () => {
                               <span className="text-[9px] text-emerald-600 font-bold mt-1 block">
                                   Pengerjaan: {calculateRealDuration(res.started_at, res.submitted_at)}
                               </span>
+                              
+                              {/* BARU: MENAMPILKAN INDIKATOR PELANGGARAN JIKA ADA */}
+                              {res.violation_count > 0 && (
+                                  <span className="text-[9px] text-red-600 font-bold mt-1 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100 w-fit flex items-center gap-1 animate-pulse">
+                                     <ShieldAlert size={10} />
+                                     Pelanggaran: {res.violation_count}x
+                                  </span>
+                              )}
                            </div>
                         </td>
                         <td className="px-4 py-3 text-center align-top md:align-middle">

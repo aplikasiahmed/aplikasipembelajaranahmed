@@ -93,6 +93,7 @@ export interface ExamResult {
   semester: string; // NEW FIELD: Semester Wajib Ada di Tabel Hasil
   answers: Record<string, string>; // question_id: answer_value
   score: number;
+  violation_count?: number; // NEW: Jumlah Pelanggaran
   started_at?: string; // NEW: Waktu mulai mengerjakan
   submitted_at: string;
 }

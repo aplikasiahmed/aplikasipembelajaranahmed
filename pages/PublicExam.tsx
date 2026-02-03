@@ -129,7 +129,7 @@ const PublicExam: React.FC = () => {
     if (student) {
         const hasTaken = await db.checkStudentExamResult(student.nis, exam.id);
         if (hasTaken) {
-            Swal.fire({ icon: 'error', title: 'Akses Ditolak', text: 'Anda sudah mengerjakan soal ini.', heightAuto: false });
+            Swal.fire({ icon: 'error', title: 'Akses Ditolak', text: 'Anda sudah mengerjakan soal ini, soal dapat dikerjakan hanya 1x.', heightAuto: false });
             return;
         }
     }
@@ -153,6 +153,8 @@ const PublicExam: React.FC = () => {
                 </div>
             </div>
             <ul class="text-xs space-y-2 text-slate-600 list-disc pl-4 font-medium">
+                <li>Soal hanya dapat dikerjakan 1x.</li>
+                <li>Dilarang Screenshoot soal & menyebarluaskan.</li>
                 <li>Dilarang keluar dari halaman soal.</li>
                 <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya, Jawabanya yang sudah dijawab akan terkirim langsung ke sistem.</li>
                 <li>Perhatikan waktu saat mengerjakan soal.</li>
@@ -233,7 +235,8 @@ const PublicExam: React.FC = () => {
           semester: selectedExam!.semester, 
           answers: answers,
           score: finalScore,
-          started_at: startTime
+          started_at: startTime,
+          violation_count: violationRef.current // KIRIM DATA PELANGGARAN KE DB
       });
     } catch (e) {
       console.error(e);
