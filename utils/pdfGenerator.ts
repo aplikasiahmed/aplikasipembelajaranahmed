@@ -69,11 +69,24 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
         styles: { cellPadding: 1, valign: 'middle', halign: 'center' }
     });
 
-    // Tanda Tangan (DIPERTAHANKAN PERSIS)
+    // Tanda Tangan & Keterangan
     let finalY = (doc as any).lastAutoTable.finalY + 10;
     
-    // Cek jika TTD terpotong halaman, tambahkan halaman baru
-    // Namun untuk sekarang kita biarkan logic sederhana
+    // REVISI 2: Tambahkan Keterangan di Kiri Bawah
+    if (type === 'nilai') {
+        const legendX = 15;
+        // Posisikan legend sejajar dengan TTD atau sedikit dibawahnya
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text("Keterangan:", legendX, finalY);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text("H = Harian", legendX, finalY + 5);
+        doc.text("TO = Tugas Online", legendX, finalY + 9);
+        doc.text("UTS = Ujian Tengah Semester", legendX, finalY + 13);
+        doc.text("UAS = Ujian Akhir Semester", legendX, finalY + 17);
+    }
     
     const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     

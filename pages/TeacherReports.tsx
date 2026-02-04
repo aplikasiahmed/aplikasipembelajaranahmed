@@ -68,11 +68,17 @@ const TeacherReports: React.FC = () => {
     }
   };
 
-  // --- HELPER: TRANSFORM DATA NILAI KE PIVOT (KOLOM DINAMIS) ---
+  // --- HELPER: TRANSFORM DATA NILAI KE PIVOT (KOLOM DINAMIS & LOGIKA HIDE) ---
   const transformGradesToPivot = (data: any[]) => {
       // 1. Grouping by Student
       const studentsMap = new Map<string, any>();
+      
+      // Flags global untuk mendeteksi ketersediaan data dalam 1 kelas
       let maxHarianCount = 0;
+      let existTO = false;
+      let existUTS = false;
+      let existUAS = false;
+      let existPraktik = false;
 
       data.forEach(item => {
           const sid = item.student_id;
@@ -84,12 +90,11 @@ const TeacherReports: React.FC = () => {
                   uts: null,
                   uas: null,
                   praktik: null,
-                  to: null // Inisialisasi kolom TO (Tugas Online)
+                  to: null 
               });
           }
 
           const s = studentsMap.get(sid);
-          // Normalisasi tipe subject agar tidak case sensitive
           const type = item.subject_type ? item.subject_type.toLowerCase() : '';
 
           if (type === 'harian') {
@@ -97,15 +102,16 @@ const TeacherReports: React.FC = () => {
               if (s.harian.length > maxHarianCount) maxHarianCount = s.harian.length;
           } else if (type === 'uts') {
               s.uts = item.score;
+              existUTS = true;
           } else if (type === 'uas') {
               s.uas = item.score;
+              existUAS = true;
           } else if (type === 'praktik') {
               s.praktik = item.score;
+              existPraktik = true;
           } else if (type === 'tugas online' || type === 'ujian online') {
-              // REVISI: Menangkap nilai Tugas Online / Ujian Online
-              // Jika ada multiple TO, logika ini mengambil yang terakhir.
-              // (Sesuai behavior UTS/UAS).
               s.to = item.score;
+              existTO = true;
           }
       });
 
@@ -116,7 +122,7 @@ const TeacherReports: React.FC = () => {
           let count = 0;
           
           s.harian.forEach((h: number) => { totalScore += h; count++; });
-          if (s.to !== null) { totalScore += s.to; count++; } // Tambahkan TO ke rata-rata
+          if (s.to !== null) { totalScore += s.to; count++; } 
           if (s.praktik !== null) { totalScore += s.praktik; count++; }
           if (s.uts !== null) { totalScore += s.uts; count++; }
           if (s.uas !== null) { totalScore += s.uas; count++; }
@@ -130,24 +136,23 @@ const TeacherReports: React.FC = () => {
               'NAMA SISWA': s.nama
           };
 
-          // Dynamic Harian Columns
+          // REVISI 1: Dynamic Harian Columns dengan nama singkatan 'H-1'
           for (let i = 0; i < maxHarianCount; i++) {
-              row[`HARIAN ${i + 1}`] = s.harian[i] !== undefined ? s.harian[i] : '';
+              row[`H-${i + 1}`] = s.harian[i] !== undefined ? s.harian[i] : '';
           }
 
-          // REVISI: Menambahkan Kolom TO sebelum Praktik/UTS
-          row['TO'] = s.to !== null ? s.to : ''; 
+          // REVISI 3: Logika Hide Kolom (Hanya tampil jika existTO/UTS/UAS true)
+          if (existTO) row['TO'] = s.to !== null ? s.to : ''; 
+          if (existPraktik) row['PRAKTIK'] = s.praktik !== null ? s.praktik : '';
+          if (existUTS) row['UTS'] = s.uts !== null ? s.uts : '';
+          if (existUAS) row['UAS'] = s.uas !== null ? s.uas : '';
           
-          row['PRAKTIK'] = s.praktik !== null ? s.praktik : '';
-          row['UTS'] = s.uts !== null ? s.uts : '';
-          row['UAS'] = s.uas !== null ? s.uas : '';
           row['RATA-RATA'] = average;
 
           return row;
       });
 
       // 3. SORTING ABJAD (A-Z)
-      // Mengurutkan berdasarkan 'NAMA SISWA' agar Excel & PDF rapi
       return result.sort((a: any, b: any) => a['NAMA SISWA'].localeCompare(b['NAMA SISWA']));
   };
 
@@ -200,7 +205,8 @@ const TeacherReports: React.FC = () => {
             {
               title: titleLabel,
               kelas: targetKelas,
-              semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)'
+              semester: targetSem === '1' ? '1 (Ganjil)' : '2 (Genap)',
+              type: 'nilai' // Menandakan ini laporan nilai untuk memunculkan keterangan H, TO, dll
             }
           );
           Swal.close();
@@ -318,7 +324,8 @@ const TeacherReports: React.FC = () => {
                         meta: {
                             title: 'LAPORAN NILAI SISWA',
                             kelas: kelas,
-                            semester: targetSemLabel
+                            semester: targetSemLabel,
+                            type: 'nilai'
                         }
                     });
                 }

@@ -8,7 +8,8 @@ interface ExcelMeta {
   semester: string;
   bulan?: string;
   tahun?: string;
-  withValidation?: boolean; 
+  withValidation?: boolean;
+  type?: 'nilai' | 'absensi'; // NEW
 }
 
 const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
@@ -69,8 +70,13 @@ const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
             if (key === 'NO') width = 5;
             else if (key === 'NIS') width = 15;
             else if (key === 'NAMA SISWA') width = 35;
-            else if (key.startsWith('HARIAN')) width = 10;
-            else if (key === 'TO') width = 8; // Kolom TO (Tugas Online)
+            // REVISI 1: Kolom Harian 'H-' dibuat sempit (5)
+            else if (key.startsWith('H-')) width = 5;
+            else if (key === 'TO') width = 8; 
+            else if (key === 'H') width = 5; // Untuk Absensi
+            else if (key === 'S') width = 5;
+            else if (key === 'I') width = 5;
+            else if (key === 'A') width = 5;
             return { header: key, key: key, width: width };
         });
 
@@ -97,10 +103,34 @@ const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
                 };
             });
         });
+
+        // REVISI 2: Tambahkan Keterangan (Legend) di Bawah Tabel (Hanya untuk Laporan Nilai)
+        if (meta?.type === 'nilai') {
+            const lastRowIdx = 7 + data.length;
+            const legendStartRow = lastRowIdx + 2;
+
+            const legendFont = { name: 'Calibri', size: 10 };
+            
+            const cellL1 = sheet.getCell(`A${legendStartRow}`);
+            cellL1.value = "Keterangan:";
+            cellL1.font = { bold: true, name: 'Calibri', size: 10 };
+
+            const legendItems = [
+                "H = Harian",
+                "TO = Tugas Online",
+                "UTS = Ujian Tengah Semester",
+                "UAS = Ujian Akhir Semester"
+            ];
+
+            legendItems.forEach((item, idx) => {
+                const cell = sheet.getCell(`A${legendStartRow + 1 + idx}`);
+                cell.value = item;
+                cell.font = legendFont;
+            });
+        }
     }
 
     // 4. FITUR DATA VALIDATION (Hanya untuk Template Import Siswa/Nilai Manual)
-    // Jika data pivot, validation tidak diperlukan di kolom nilai
     if (meta?.withValidation) {
         const startRow = 7;
         const endRow = 100;
