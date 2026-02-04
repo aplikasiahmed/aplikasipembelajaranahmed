@@ -427,7 +427,7 @@ const TeacherTaskCheck: React.FC = () => {
                               
                               {/* BARU: MENAMPILKAN INDIKATOR PELANGGARAN JIKA ADA */}
                               {res.violation_count > 0 && (
-                                  <span className="text-[9px] text-red-600 font-bold mt-1 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100 w-fit flex items-center gap-1 animate-pulse">
+                                  <span className="text-[9px] text-red-600 font-bold mt-1 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100 w-fit flex items-center gap-1">
                                      <ShieldAlert size={10} />
                                      Pelanggaran: {res.violation_count}x
                                   </span>
