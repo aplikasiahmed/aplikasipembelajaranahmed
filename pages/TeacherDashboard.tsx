@@ -9,7 +9,8 @@ import {
   TrendingUp, 
   Clock,
   ArrowRight,
-  FileEdit
+  FileEdit,
+  CheckCircle2
 } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 
@@ -18,6 +19,7 @@ const TeacherDashboard: React.FC = () => {
   const [stats, setStats] = useState({
     totalStudents: 0,
     tasksToday: 0,
+    onlineExamsCount: 0, // NEW: Untuk menghitung jumlah yang sudah mengerjakan ujian
     attendanceDone: false
   });
 
@@ -28,10 +30,12 @@ const TeacherDashboard: React.FC = () => {
       const s8 = await db.getStudentsByGrade('8');
       const s9 = await db.getStudentsByGrade('9');
       const tasks = await db.getTaskSubmissions();
+      const exams = await db.getExamResults(); // NEW: Ambil data hasil ujian
       
       setStats({
         totalStudents: s7.length + s8.length + s9.length,
         tasksToday: tasks.length,
+        onlineExamsCount: exams.length, // NEW: Set jumlah ujian masuk
         attendanceDone: true
       });
     };
@@ -63,9 +67,11 @@ const TeacherDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* REVISI GRID: Menjadi 4 Kolom di layar besar agar muat 4 kartu */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KARTU 1: TOTAL SISWA */}
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
             <Users size={24} />
           </div>
           <div>
@@ -73,8 +79,10 @@ const TeacherDashboard: React.FC = () => {
             <p className="text-xl font-black text-slate-800">{stats.totalStudents}</p>
           </div>
         </div>
+
+        {/* KARTU 2: TUGAS MASUK (UPLOAD) */}
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shrink-0">
             <FileText size={24} />
           </div>
           <div>
@@ -82,8 +90,21 @@ const TeacherDashboard: React.FC = () => {
             <p className="text-xl font-black text-slate-800">{stats.tasksToday}</p>
           </div>
         </div>
+
+        {/* KARTU 3 (BARU): TUGAS ONLINE / UJIAN ONLINE */}
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center shrink-0">
+            <CheckCircle2 size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tugas Online</p>
+            <p className="text-xl font-black text-slate-800">{stats.onlineExamsCount}</p>
+          </div>
+        </div>
+
+        {/* KARTU 4: STATUS ABSENSI */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shrink-0">
             <ClipboardCheck size={24} />
           </div>
           <div>
