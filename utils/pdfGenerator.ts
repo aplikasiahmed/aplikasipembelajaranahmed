@@ -61,8 +61,8 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
         // Kolom 1 (NIS) -> Center
         // Kolom 2 (NAMA SISWA) -> LEFT (Sesuai Permintaan)
         columnStyles: {
-            0: { halign: 'center', cellWidth: 10 },
-            1: { halign: 'center', cellWidth: 25 },
+            0: { halign: 'center', cellWidth: 8 }, // REVISI: NO lebih kecil
+            1: { halign: 'center', cellWidth: 15 }, // REVISI: NIS Dikecilkan jadi 15
             2: { halign: 'left' }, // NAMA SISWA RATA KIRI
             // Sisanya biar autoTable yang atur (default center dari styles)
         },

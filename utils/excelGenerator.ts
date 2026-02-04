@@ -68,15 +68,18 @@ const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
         sheet.columns = headers.map(key => {
             let width = 12; // Default
             if (key === 'NO') width = 5;
-            else if (key === 'NIS') width = 15;
+            // REVISI: NIS Dikecilkan jadi 10 (sebelumnya 15)
+            else if (key === 'NIS') width = 10;
             else if (key === 'NAMA SISWA') width = 35;
-            // REVISI 1: Kolom Harian 'H-' dibuat sempit (5)
+            // REVISI: Kolom Harian 'H-' dibuat sempit (5)
             else if (key.startsWith('H-')) width = 5;
             else if (key === 'TO') width = 8; 
             else if (key === 'H') width = 5; // Untuk Absensi
             else if (key === 'S') width = 5;
             else if (key === 'I') width = 5;
             else if (key === 'A') width = 5;
+            // REVISI: Support RATA2
+            else if (key === 'RATA2') width = 8;
             return { header: key, key: key, width: width };
         });
 

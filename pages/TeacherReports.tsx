@@ -147,7 +147,8 @@ const TeacherReports: React.FC = () => {
           if (existUTS) row['UTS'] = s.uts !== null ? s.uts : '';
           if (existUAS) row['UAS'] = s.uas !== null ? s.uas : '';
           
-          row['RATA-RATA'] = average;
+          // REVISI FINAL: Ganti 'RATA-RATA' menjadi 'RATA2'
+          row['RATA2'] = average;
 
           return row;
       });
