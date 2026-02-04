@@ -522,7 +522,7 @@ const TeacherReports: React.FC = () => {
              <div className="space-y-0.5 col-span-2">
                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
                 <select 
-                  className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                  className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-normal outline-none bg-white text-slate-900"
                   value={semNilai} 
                   onChange={(e) => setSemNilai(e.target.value)}
                 >
@@ -542,7 +542,7 @@ const TeacherReports: React.FC = () => {
             </div>
             <div className="space-y-2">
                 <select 
-                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-normal outline-none bg-white text-slate-900"
                     value={kelasNilai} 
                     onChange={(e) => setKelasNilai(e.target.value)}
                 >
@@ -590,7 +590,7 @@ const TeacherReports: React.FC = () => {
                 <div className="space-y-0.5">
                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Semester</label>
                    <select 
-                     className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                     className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-normal outline-none bg-white text-slate-900"
                      value={semAbsen} 
                      onChange={(e) => setSemAbsen(e.target.value)}
                    >
@@ -602,7 +602,7 @@ const TeacherReports: React.FC = () => {
                 <div className="space-y-0.5">
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Dari Bulan</label>
                     <select 
-                        className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                        className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-normal outline-none bg-white text-slate-900"
                         value={monthAbsen} 
                         onChange={(e) => setMonthAbsen(e.target.value)}
                     >
@@ -614,7 +614,7 @@ const TeacherReports: React.FC = () => {
              <div className="space-y-0.5">
                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Sampai Bulan (Opsional)</label>
                 <select 
-                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-normal outline-none bg-white text-slate-900"
                     value={monthAbsenEnd} 
                     onChange={(e) => setMonthAbsenEnd(e.target.value)}
                 >
@@ -632,7 +632,7 @@ const TeacherReports: React.FC = () => {
              </div>
              <div className="space-y-2">
                 <select 
-                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-bold outline-none bg-white text-slate-900"
+                    className="w-full p-2 text-[10px] md:text-xs border border-slate-200 rounded-xl font-normal outline-none bg-white text-slate-900"
                     value={kelasAbsen} 
                     onChange={(e) => setKelasAbsen(e.target.value)}
                 >
