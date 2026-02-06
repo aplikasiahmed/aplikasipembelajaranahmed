@@ -211,7 +211,6 @@ const TeacherTaskCheck: React.FC = () => {
     }
 
     // 2. Filter Semester untuk TUGAS UPLOAD (Client Side Logic berdasarkan Tanggal)
-    // Karena DB Tugas hanya simpan tanggal, kita filter manual: Sem 1 (Jul-Des), Sem 2 (Jan-Jun)
     if (activeTab === 'tasks' && filterSemester !== 'all') {
         data = data.filter((t: TaskSubmission) => {
             const date = new Date(t.created_at);
@@ -225,12 +224,20 @@ const TeacherTaskCheck: React.FC = () => {
         });
     }
 
-    // 3. SORTING ALPHABETICAL (A-Z) BERDASARKAN NAMA SISWA
-    data.sort((a, b) => {
-        const nameA = (a.student_name || '').toLowerCase();
-        const nameB = (b.student_name || '').toLowerCase();
-        return nameA.localeCompare(nameB);
-    });
+    // 3. SORTING LOGIC (REVISI)
+    if (activeTab === 'tasks') {
+        // KHUSUS TUGAS UPLOAD: Urutkan berdasarkan Waktu Upload (Terbaru di atas)
+        data.sort((a, b) => {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+    } else {
+        // KHUSUS HASIL UJIAN: Tetap Urutkan Abjad (A-Z) Sesuai request sebelumnya
+        data.sort((a, b) => {
+            const nameA = (a.student_name || '').toLowerCase();
+            const nameB = (b.student_name || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+    }
 
     return data;
   };
