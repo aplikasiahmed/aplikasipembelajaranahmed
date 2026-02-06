@@ -118,7 +118,7 @@ const PublicAbsensi: React.FC = () => {
             </div>
           </div>
           <button type="submit" disabled={loading} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-700 active:scale-95 shadow-lg flex items-center justify-center gap-2 transition-all">
-            {loading ? 'Mencari...' : <><Search size={14} /> CARI DATA ABSENSI</>}
+            {loading ? 'Mencari...' : <><Search size={14} /> CARI ABSENSI SAYA</>}
           </button>
         </form>
       </div>

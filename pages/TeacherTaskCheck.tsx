@@ -225,7 +225,12 @@ const TeacherTaskCheck: React.FC = () => {
         });
     }
 
-    // Note: Untuk Exam Results, filter semester sudah ditangani di query `loadExamResults` via API
+    // 3. SORTING ALPHABETICAL (A-Z) BERDASARKAN NAMA SISWA
+    data.sort((a, b) => {
+        const nameA = (a.student_name || '').toLowerCase();
+        const nameB = (b.student_name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
 
     return data;
   };
@@ -324,6 +329,7 @@ const TeacherTaskCheck: React.FC = () => {
                 <table className="w-full text-left">
                   <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-100 shadow-sm">
                     <tr>
+                      <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-12">NO</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Siswa</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Judul</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipe</th>
@@ -331,8 +337,11 @@ const TeacherTaskCheck: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {filteredData.map((task: TaskSubmission) => (
+                    {filteredData.map((task: TaskSubmission, index: number) => (
                       <tr key={task.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3 text-center align-middle font-bold text-slate-500 text-[10px] md:text-xs">
+                            {index + 1}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-800 text-[11px] md:text-sm leading-tight">{task.student_name}</span>
@@ -385,6 +394,7 @@ const TeacherTaskCheck: React.FC = () => {
                 <table className="w-full text-left">
                   <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-100 shadow-sm">
                     <tr>
+                      <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-12">NO</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Siswa</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Nama Ujian</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Nilai</th>
@@ -393,8 +403,11 @@ const TeacherTaskCheck: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {filteredData.map((res: any) => (
+                    {filteredData.map((res: any, index: number) => (
                       <tr key={res.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3 text-center align-middle font-bold text-slate-500 text-[10px] md:text-xs">
+                            {index + 1}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-800 text-[11px] md:text-sm leading-tight">{res.student_name}</span>

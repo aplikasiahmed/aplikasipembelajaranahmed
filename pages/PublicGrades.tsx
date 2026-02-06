@@ -108,7 +108,7 @@ const PublicGrades: React.FC = () => {
             </div>
           </div>
           <button type="submit" disabled={loading} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all">
-            {loading ? 'Mencari...' : <><Search size={14} /> CARI DATA NILAI</>}
+            {loading ? 'Mencari...' : <><Search size={14} /> CARI NILAI SAYA</>}
           </button>
         </form>
       </div>
