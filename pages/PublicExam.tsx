@@ -477,7 +477,7 @@ const PublicExam: React.FC = () => {
                               </div>
                               {/* TEKS PERINGATAN KECIL DI BAWAH DEADLINE */}
                               <p className="text-[8px] text-black italic mt-1 font-medium">
-                                 *Soal bisa hilang apabila lewat dari tanggal & waktu ini
+                                 *Soal tidak bisa dikerjakan apabila lewat dari tanggal & waktu ini
                               </p>
                           </div>
                       )}
