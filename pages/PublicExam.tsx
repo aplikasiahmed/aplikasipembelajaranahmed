@@ -324,6 +324,7 @@ const PublicExam: React.FC = () => {
     };
 
     // TAMBAHAN: DETEKSI TOMBOL SCREENSHOT (KEYUP - DESKTOP)
+    // FIX: Gunakan 'any' untuk event agar aman dari strict type check saat build
     const handleKeyUp = (e: any) => {
         if (isPaused.current) return;
 
@@ -345,6 +346,7 @@ const PublicExam: React.FC = () => {
     };
 
     // TAMBAHAN BARU: DETEKSI GESTUR 3 JARI (MOBILE)
+    // FIX: Gunakan 'any' untuk event agar aman dari strict type check saat build
     const handleTouchStart = (e: any) => {
         if (isPaused.current) return;
         // Jika terdeteksi lebih dari 2 jari (3, 4, dst) menyentuh layar
