@@ -139,7 +139,7 @@ const PublicExam: React.FC = () => {
             icon: 'error',
             title: 'Gagal Masuk',
             text: text,
-            position: 'center', // Changed to top for visibility as requested
+            position: 'top', // FIXED: Position Top for better visibility
             timer: 3000,
             showConfirmButton: false,
             customClass: {
@@ -540,8 +540,8 @@ const PublicExam: React.FC = () => {
                         <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100 space-y-4">
                             <div className="text-center space-y-1 mb-2">
                                 {/* REVISI: Mengubah font-black menjadi font-bold dan text-slate-500 menjadi font-medium sesuai permintaan */}
-                                <p className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
-                                <p className="text-[9px] text-slate-500 font-medium">Pilih Semester & Masukkan NIS</p>
+                                <p className="text-xs font-bold text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
+                                <p className="text-[11px] text-slate-500 font-medium">Pilih Semester & Masukkan NIS</p>
                             </div>
                             
                             <form onSubmit={handleLoginAndStart} className="space-y-3">
