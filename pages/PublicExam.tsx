@@ -205,7 +205,7 @@ const PublicExam: React.FC = () => {
         title: `Halo, ${s.namalengkap}`,
         html: `
           <div class="text-left space-y-2 mt-2">
-              <p class="text-xs text-center text-slate-500 mb-2 font-bold">Anda akan mengerjakan: ${selectedExam.title}</p>
+              <p class="text-xs text-center text-emerald-600 mb-2 font-bold">Anda akan mengerjakan: ${selectedExam.title}</p>
               <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
                   <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
                   <div>
@@ -476,8 +476,8 @@ const PublicExam: React.FC = () => {
                       {/* HEADER CARD */}
                       <div className="flex items-center gap-3 mb-2">
                           <div className="flex items-center gap-1.5 text-emerald-600">
-                             <BookOpen size={12} className={isExpired ? "text-slate-500" : "text-emerald-600"}/>
-                             <span className={`text-[10px] font-black uppercase ${isExpired ? "text-slate-500" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
+                             <BookOpen size={12} className={isExpired ? "text-slate-400" : "text-emerald-600"}/>
+                             <span className={`text-[10px] font-black uppercase ${isExpired ? "text-slate-400" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
                           </div>
                           
                           <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -492,7 +492,7 @@ const PublicExam: React.FC = () => {
                       {exam.deadline && (
                           <div className="mt-2">
                               {/* REVISI: TAMPILAN DEADLINE AGAR LEBIH JELAS (TANGGAL & JAM DIPISAH) */}
-                              <div className={`flex items-center gap-1.5 text-[10px] font-black capitalize w-full ${isExpired ? 'text-slate-600 bg-slate-100 px-3 py-2 rounded-lg' : 'text-red-600 bg-red-100 px-3 py-2 rounded-lg'}`}>
+                              <div className={`flex items-center gap-1.5 text-[10px] font-black capitalize w-full ${isExpired ? 'text-slate-400 bg-slate-100 px-3 py-2 rounded-lg' : 'text-red-600 bg-red-100 px-3 py-2 rounded-lg'}`}>
                                   <Clock size={12} />
                                   <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} • Pukul {new Date(exam.deadline).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
@@ -540,7 +540,7 @@ const PublicExam: React.FC = () => {
                         <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100 space-y-4">
                             <div className="text-center space-y-1 mb-2">
                                 {/* REVISI: Mengubah font-black menjadi font-bold dan text-slate-500 menjadi font-medium sesuai permintaan */}
-                                <p className="text-xs font-bold text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
+                                <p className="text-xs font-normal text-slate-800 uppercase tracking-widest">Masuk Untuk Kerjakan Soal</p>
                                 <p className="text-[11px] text-slate-500 font-medium">Pilih Semester & Masukkan NIS</p>
                             </div>
                             
