@@ -70,12 +70,15 @@ const TeacherReports: React.FC = () => {
 
   // --- HELPER: TRANSFORM DATA NILAI KE PIVOT (KOLOM DINAMIS & LOGIKA HIDE) ---
   const transformGradesToPivot = (data: any[]) => {
+      // 0. Sort data secara Kronologis (Terlama ke Terbaru) agar H-1, TO-1 adalah yang pertama
+      data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
       // 1. Grouping by Student
       const studentsMap = new Map<string, any>();
       
       // Flags global untuk mendeteksi ketersediaan data dalam 1 kelas
       let maxHarianCount = 0;
-      let existTO = false;
+      let maxTOCount = 0; // NEW: Hitung jumlah maksimal TO
       let existUTS = false;
       let existUAS = false;
       let existPraktik = false;
@@ -90,7 +93,7 @@ const TeacherReports: React.FC = () => {
                   uts: null,
                   uas: null,
                   praktik: null,
-                  to: null 
+                  to: [] // NEW: Ubah TO menjadi array untuk menampung banyak nilai
               });
           }
 
@@ -110,8 +113,9 @@ const TeacherReports: React.FC = () => {
               s.praktik = item.score;
               existPraktik = true;
           } else if (type === 'tugas online' || type === 'ujian online') {
-              s.to = item.score;
-              existTO = true;
+              // REVISI: Masukkan ke array TO
+              s.to.push(item.score);
+              if (s.to.length > maxTOCount) maxTOCount = s.to.length;
           }
       });
 
@@ -122,7 +126,10 @@ const TeacherReports: React.FC = () => {
           let count = 0;
           
           s.harian.forEach((h: number) => { totalScore += h; count++; });
-          if (s.to !== null) { totalScore += s.to; count++; } 
+          
+          // Hitung Rata-rata dari Array TO juga
+          s.to.forEach((t: number) => { totalScore += t; count++; });
+          
           if (s.praktik !== null) { totalScore += s.praktik; count++; }
           if (s.uts !== null) { totalScore += s.uts; count++; }
           if (s.uas !== null) { totalScore += s.uas; count++; }
@@ -136,13 +143,23 @@ const TeacherReports: React.FC = () => {
               'NAMA SISWA': s.nama
           };
 
-          // REVISI 1: Dynamic Harian Columns dengan nama singkatan 'H-1'
+          // Dynamic Harian Columns 'H-1'
           for (let i = 0; i < maxHarianCount; i++) {
               row[`H-${i + 1}`] = s.harian[i] !== undefined ? s.harian[i] : '';
           }
 
-          // REVISI 3: Logika Hide Kolom (Hanya tampil jika existTO/UTS/UAS true)
-          if (existTO) row['TO'] = s.to !== null ? s.to : ''; 
+          // REVISI: Dynamic TO Columns (TO-1, TO-2, dst)
+          if (maxTOCount === 1) {
+              // Jika cuma ada 1 TO di seluruh kelas, namakan 'TO' saja agar simpel (opsional, bisa juga TO-1)
+              row['TO'] = s.to[0] !== undefined ? s.to[0] : '';
+          } else if (maxTOCount > 1) {
+              // Jika lebih dari 1, buat TO-1, TO-2, dst
+              for (let i = 0; i < maxTOCount; i++) {
+                  row[`TO-${i + 1}`] = s.to[i] !== undefined ? s.to[i] : '';
+              }
+          }
+
+          // Column Lain
           if (existPraktik) row['PRAKTIK'] = s.praktik !== null ? s.praktik : '';
           if (existUTS) row['UTS'] = s.uts !== null ? s.uts : '';
           if (existUAS) row['UAS'] = s.uas !== null ? s.uas : '';

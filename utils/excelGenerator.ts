@@ -74,6 +74,9 @@ const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
             // REVISI: Kolom Harian 'H-' dibuat sempit (5)
             else if (key.startsWith('H-')) width = 5;
             else if (key === 'TO') width = 8; 
+            // REVISI: Kolom Multiple TO 'TO-' dibuat sempit (8)
+            else if (key.startsWith('TO-')) width = 8;
+
             else if (key === 'H') width = 5; // Untuk Absensi
             else if (key === 'S') width = 5;
             else if (key === 'I') width = 5;
