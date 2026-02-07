@@ -486,8 +486,8 @@ const PublicExam: React.FC = () => {
                           </div>
                       </div>
 
-                      <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-400' : 'text-slate-800'}`}>{exam.title}</h3>
-                      <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
+                      <h3 className={`font-bold text-sm uppercase leading-tight ${isExpired ? 'text-slate-400' : 'text-slate-800'}`}>{exam.title}</h3>
+                      <p className="text-[8px] text-slate-400 mt-1 capitalize font-bold">{exam.category}</p>
                       
                       {exam.deadline && (
                           <div className="mt-2">
