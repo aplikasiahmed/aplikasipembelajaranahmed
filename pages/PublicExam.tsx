@@ -487,7 +487,7 @@ const PublicExam: React.FC = () => {
             <h1 className="text-lg font-black uppercase leading-tight mt-1">{selectedExam.title}</h1>
             <div className="flex gap-2 mt-2">
                 <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">Kelas {selectedExam.grade}</span>
-                <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">Sem {selectedExam.semester}</span>
+                <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">Semester {selectedExam.semester}</span>
             </div>
         </div>
 
