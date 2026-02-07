@@ -477,7 +477,7 @@ const PublicExam: React.FC = () => {
                       <div className="flex items-center gap-3 mb-2">
                           <div className="flex items-center gap-1.5 text-emerald-600">
                              <BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/>
-                             <span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
+                             <span className={`text-[10px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
                           </div>
                           
                           <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
