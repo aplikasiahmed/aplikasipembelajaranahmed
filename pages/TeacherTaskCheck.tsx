@@ -224,14 +224,25 @@ const TeacherTaskCheck: React.FC = () => {
         });
     }
 
-    // 3. SORTING LOGIC (REVISI)
-    if (activeTab === 'tasks') {
-        // KHUSUS TUGAS UPLOAD: Urutkan berdasarkan Waktu Upload (Terbaru di atas)
+    // 3. LOGIKA SORTING DINAMIS (SESUAI PERMINTAAN)
+    
+    if (filterClass === 'all') {
+        // JIKA FILTER = SEMUA JENJANG / SEMUA KELAS
+        // Urutkan berdasarkan WAKTU (Terakhir Kirim / Selesai) -> Terbaru di Atas
         data.sort((a, b) => {
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            const dateA = activeTab === 'tasks' 
+                ? new Date(a.created_at).getTime() 
+                : new Date(a.submitted_at).getTime();
+            
+            const dateB = activeTab === 'tasks' 
+                ? new Date(b.created_at).getTime() 
+                : new Date(b.submitted_at).getTime();
+
+            return dateB - dateA; // Descending (Newest first)
         });
     } else {
-        // KHUSUS HASIL UJIAN: Tetap Urutkan Abjad (A-Z) Sesuai request sebelumnya
+        // JIKA FILTER = KELAS TERTENTU (Spesifik)
+        // Urutkan berdasarkan ABJAD NAMA (A-Z)
         data.sort((a, b) => {
             const nameA = (a.student_name || '').toLowerCase();
             const nameB = (b.student_name || '').toLowerCase();

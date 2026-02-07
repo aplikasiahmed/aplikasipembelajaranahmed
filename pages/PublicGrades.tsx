@@ -78,7 +78,7 @@ const PublicGrades: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
       <div className="text-center space-y-1">
         <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Cek Nilai Siswa</h1>
-        <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk melihat laporan nilai.</p>
+        <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk melihat nilai.</p>
       </div>
 
       <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
