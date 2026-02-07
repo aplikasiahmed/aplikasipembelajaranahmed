@@ -225,6 +225,18 @@ class DatabaseService {
   }
 
   // 3. Student Public Exam (Tabel: ujian & hasil_ujian)
+  
+  // NEW: Get ALL Active Exams (Untuk List Publik)
+  async getAllActiveExams(): Promise<Exam[]> {
+    const { data, error } = await supabase
+        .from('ujian')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+    return (data || []) as Exam[];
+  }
+
   async getActiveExamsByGrade(grade: string, semester: string): Promise<Exam[]> {
     const semString = String(semester);
     const { data, error } = await supabase

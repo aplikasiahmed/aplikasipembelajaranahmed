@@ -6,16 +6,16 @@ import Swal from 'sweetalert2';
 
 const PublicExam: React.FC = () => {
   // --- STATES UTAMA ---
-  const [step, setStep] = useState<'login' | 'list' | 'exam' | 'result'>('login');
+  const [step, setStep] = useState<'public_list' | 'login' | 'exam' | 'result'>('public_list');
   
   // Data User & Ujian
   const [nis, setNis] = useState('');
-  const [semester, setSemester] = useState('0'); 
   const [student, setStudent] = useState<Student | null>(null);
   const [activeExams, setActiveExams] = useState<Exam[]>([]);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loadingExams, setLoadingExams] = useState(false);
+  const [loadingLogin, setLoadingLogin] = useState(false);
   
   // State Pengerjaan
   const [answers, setAnswers] = useState<Record<string, string>>({}); 
@@ -45,6 +45,17 @@ const PublicExam: React.FC = () => {
     }
     return newArray;
   };
+
+  // --- 0. FETCH ALL ACTIVE EXAMS ON MOUNT (NEW FLOW) ---
+  useEffect(() => {
+    const fetchActiveExams = async () => {
+        setLoadingExams(true);
+        const exams = await db.getAllActiveExams();
+        setActiveExams(exams);
+        setLoadingExams(false);
+    };
+    fetchActiveExams();
+  }, []);
 
   // --- 1. RESTORE SESSION ---
   useEffect(() => {
@@ -92,121 +103,125 @@ const PublicExam: React.FC = () => {
     }
   }, [answers, violationCount, step]); 
 
-  // --- HANDLERS LOGIN & START ---
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (semester === '0') return Swal.fire({ icon: 'warning', title: 'Pilih Semester', text: 'Silakan pilih semester terlebih dahulu.', heightAuto: false });
-    if (!nis.trim()) return Swal.fire({ icon: 'warning', title: 'NIS Kosong', text: 'Masukkan Nomor Induk Siswa.', heightAuto: false });
+  // --- HANDLERS: NEW FLOW LOGIC ---
 
-    try {
-      setLoadingExams(true);
-      const s = await db.getStudentByNIS(nis);
-      if (s) {
-        setStudent(s);
-        const gradeChar = s.kelas ? s.kelas.charAt(0) : ''; 
-        const exams = await db.getActiveExamsByGrade(gradeChar, semester);
-        setActiveExams(exams);
-        setStep('list');
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Halo, ${s.namalengkap}`, showConfirmButton: false, timer: 2000 });
-      } else {
-        Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
-      }
-    } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Koneksi Error', text: 'Gagal terhubung ke server soal.', heightAuto: false });
-    } finally {
-      setLoadingExams(false);
-    }
+  const handleExamClick = (exam: Exam) => {
+      setSelectedExam(exam);
+      setStep('login');
+      setNis(''); // Reset NIS saat ganti soal
   };
 
-  const startExam = async (exam: Exam) => {
-    // CEK ULANG DEADLINE SEBELUM MULAI (Proteksi Ganda)
-    if (exam.deadline && new Date() > new Date(exam.deadline)) {
-        Swal.fire({ icon: 'error', title: 'Waktu Habis', text: 'Maaf, batas waktu pengerjaan soal ini sudah berakhir.', heightAuto: false });
-        return;
-    }
+  const handleBackToList = () => {
+      setSelectedExam(null);
+      setStep('public_list');
+  };
 
-    // [REVISI] HAPUS Loading SweetAlert disini
-    if (student) {
-        const hasTaken = await db.checkStudentExamResult(student.nis, exam.id);
-        if (hasTaken) {
-            Swal.fire({ icon: 'error', title: 'Akses Ditolak', text: 'Anda sudah mengerjakan soal ini, soal dapat dikerjakan hanya 1x.', heightAuto: false });
-            return;
-        }
-    }
+  const handleLoginAndStart = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedExam) return;
+    if (!nis.trim()) return Swal.fire({ icon: 'warning', title: 'NIS Kosong', text: 'Masukkan Nomor Induk Siswa.', heightAuto: false });
 
-    const q = await db.getQuestionsByExamId(exam.id);
-    if (q.length === 0) {
-      Swal.fire('Maaf', 'Soal belum tersedia.', 'info');
-      return;
-    }
-    
-    // PERINGATAN AWAL (Masih pakai SweetAlert tidak apa-apa karena belum masuk mode ujian)
-    const rules = await Swal.fire({
-      title: 'PERATURAN',
-      html: `
-        <div class="text-left space-y-2">
-            <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
-                <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
-                <div>
-                    <h4 class="font-bold text-red-600 text-sm text-center">DILARANG CURANG!</h4>
-                    <p class="text-xs text-red-500 leading-tight text-center mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
-                </div>
-            </div>
-            <ul class="text-xs space-y-1 text-slate-600 list-disc pl-4 font-medium">
-                <li>Soal hanya dapat siswa kerjakan 1x.</li>
-                <li>Dilarang Screenshoot soal & menyebarluaskan.</li>
-                <li>Dilarang keluar dari halaman soal.</li>
-                <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya, Jawabanya yang sudah dijawab akan terkirim langsung ke sistem.</li>
-                <li>Perhatikan waktu saat mengerjakan soal.</li>
-                <li>Apabila waktu telah habis saat mengerjakan soal. Maka, akan selesai dan tidak dapat mengerjakan soal berikutnya, jawaban akan terkirim langsung ke sistem.</li>
-                <li>Jangan Lupa untuk berdoa sebelum mengerjakan soal.</li>
-            </ul>
-        </div>
-      `,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#059669',
-      confirmButtonText: 'SAYA MENGERTI & SIAP',
-      cancelButtonText: 'Batal',
-      heightAuto: false,
-      allowOutsideClick: false
-    });
-
-    if (rules.isConfirmed) {
-      const startTimeIso = new Date().toISOString();
-      const endTimeIso = new Date(new Date().getTime() + exam.duration * 60000).toISOString();
-
-      // PENGACAKAN SOAL (SHUFFLE) SEBELUM DISIMPAN KE STATE
-      const shuffledQuestions = shuffleArray(q);
-
-      setSelectedExam(exam);
-      setQuestions(shuffledQuestions);
-      setAnswers({});
-      setCurrentQIndex(0);
-      setFlaggedQuestions(new Set());
-      setTimeLeft(exam.duration * 60);
-      setStartTime(startTimeIso);
-
-      // RESET
-      setViolationCount(0); 
-      violationRef.current = 0; 
-      isPaused.current = false; 
-      setShowViolationModal(false);
-      setShowFinishModal(false);
-      setIsSubmitting(false);
+    setLoadingLogin(true);
+    try {
+      // 1. Cek Siswa di DB
+      const s = await db.getStudentByNIS(nis);
       
-      const sessionData = {
-          student,
-          exam,
-          questions: shuffledQuestions, // Simpan urutan acak ke sesi agar tetap sama saat reload
-          answers: {},
-          startTime: startTimeIso,
-          endTime: endTimeIso,
-          violationCount: 0
-      };
-      localStorage.setItem('pai_exam_session', JSON.stringify(sessionData));
+      if (!s) {
+        Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
+        setLoadingLogin(false);
+        return;
+      }
 
-      setStep('exam');
+      // 2. Validasi Kelas Siswa vs Kelas Ujian (PENTING!)
+      const studentGrade = s.kelas ? s.kelas.charAt(0) : ''; 
+      if (studentGrade !== selectedExam.grade) {
+          Swal.fire({ 
+              icon: 'error', 
+              title: 'Kelas Tidak Sesuai', 
+              text: `Soal ini untuk Kelas ${selectedExam.grade}, sedangkan Anda Kelas ${s.kelas}.`, 
+              heightAuto: false 
+          });
+          setLoadingLogin(false);
+          return;
+      }
+
+      setStudent(s);
+
+      // 3. Cek Apakah Sudah Mengerjakan
+      const hasTaken = await db.checkStudentExamResult(s.nis, selectedExam.id);
+      if (hasTaken) {
+          Swal.fire({ icon: 'error', title: 'Akses Ditolak', text: 'Anda sudah mengerjakan soal ini, soal dapat dikerjakan hanya 1x.', heightAuto: false });
+          setLoadingLogin(false);
+          return;
+      }
+
+      // 4. Ambil Soal
+      const q = await db.getQuestionsByExamId(selectedExam.id);
+      if (q.length === 0) {
+        Swal.fire('Maaf', 'Soal belum tersedia untuk ujian ini.', 'info');
+        setLoadingLogin(false);
+        return;
+      }
+
+      // 5. Tampilkan Peraturan (Rules)
+      const rules = await Swal.fire({
+        title: `Halo, ${s.namalengkap}`,
+        html: `
+          <div class="text-left space-y-2 mt-2">
+              <p class="text-xs text-center text-slate-500 mb-2 font-bold">Anda akan mengerjakan: ${selectedExam.title}</p>
+              <div class="bg-red-50 border border-red-100 p-3 rounded-xl flex gap-3">
+                  <div class="text-red-500 shrink-0"><ShieldAlert size={24} /></div>
+                  <div>
+                      <h4 class="font-bold text-red-600 text-sm text-center">DILARANG CURANG!</h4>
+                      <p class="text-xs text-red-500 leading-tight text-center mt-1">Sistem mendeteksi jika Anda membuka Google, Ai, WA, atau lainya.</p>
+                  </div>
+              </div>
+              <ul class="text-xs space-y-1 text-slate-600 list-disc pl-4 font-medium">
+                  <li>Soal hanya dapat siswa kerjakan 1x.</li>
+                  <li>Dilarang Screenshoot soal & menyebarluaskan.</li>
+                  <li>Dilarang keluar dari halaman soal.</li>
+                  <li>Jika melanggar 3x, Akan DISKUALIFIKASI dan tidak dapat mengerjakan soal berikutnya.</li>
+                  <li>Perhatikan waktu saat mengerjakan soal.</li>
+                  <li>Jangan Lupa untuk berdoa sebelum mengerjakan soal.</li>
+              </ul>
+          </div>
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#059669',
+        confirmButtonText: 'KERJAKAN SOAL',
+        cancelButtonText: 'Batal',
+        heightAuto: false,
+        allowOutsideClick: false
+      });
+
+      if (rules.isConfirmed) {
+          // 6. Mulai Ujian
+          const startTimeIso = new Date().toISOString();
+          const endTimeIso = new Date(new Date().getTime() + selectedExam.duration * 60000).toISOString();
+          const shuffledQuestions = shuffleArray(q);
+
+          setQuestions(shuffledQuestions);
+          setAnswers({});
+          setCurrentQIndex(0);
+          setFlaggedQuestions(new Set());
+          setTimeLeft(selectedExam.duration * 60);
+          setStartTime(startTimeIso);
+
+          setViolationCount(0); 
+          violationRef.current = 0; 
+          isPaused.current = false; 
+          setShowViolationModal(false);
+          setShowFinishModal(false);
+          setIsSubmitting(false);
+          
+          setStep('exam');
+      }
+
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.', heightAuto: false });
+    } finally {
+      setLoadingLogin(false);
     }
   };
 
@@ -384,41 +399,113 @@ const PublicExam: React.FC = () => {
       setFlaggedQuestions(newFlags);
   };
 
-  // --- RENDER ---
+  // --- RENDER VIEWS ---
 
-  if (step === 'login') {
-    return (
-      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0">
-        <div className="text-center space-y-1">
-          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih Semester & masukkan NIS untuk mengerjanakn soal.</p>
+  // 1. PLACEHOLDER (Jika tidak ada soal)
+  if (!loadingExams && activeExams.length === 0 && step === 'public_list') {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] md:min-h-[50vh] space-y-2 md:space-y-4 animate-fadeIn px-4 text-center">
+            <div className="bg-slate-200/50 p-3 md:p-4 rounded-full mb-2">
+                <div className="w-8 h-8 md:w-12 md:h-12 border-4 border-slate-300 border-t-emerald-600 rounded-full animate-spin"></div>
+            </div>
+            <h1 className="text-lg md:text-2xl font-bold text-slate-800">Kerjakan Soal</h1>
+            <p className="text-[10px] md:text-sm text-slate-500 max-w-xs">Belum ada soal yang harus di kerjakan</p>
         </div>
-        <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
-          <form onSubmit={handleLogin} className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <select 
-                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-normal outline-none focus:ring-2 focus:ring-emerald-500/10 cursor-pointer"
-                value={semester} 
-                onChange={(e) => setSemester(e.target.value)}
-              >
-                <option value="0">Pilih Semester</option>
-                <option value="1">Semester 1 (Ganjil)</option>
-                <option value="2">Semester 2 (Genap)</option>
-              </select>
-              <div className="relative md:col-span-2">
+      );
+  }
+
+  // 2. PUBLIC LIST (Daftar Soal)
+  if (step === 'public_list') {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4 animate-fadeIn pb-24 px-1 md:px-0 pt-4">
+        <div className="text-center space-y-1 mb-4">
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih soal yang ingin dikerjakan dari daftar di bawah.</p>
+        </div>
+
+        <div className="space-y-3">
+             {activeExams.map(exam => {
+               const isExpired = exam.deadline && new Date() > new Date(exam.deadline);
+               return (
+                 <div key={exam.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all ${isExpired ? 'border-red-100 bg-red-50/30' : 'border-slate-100 hover:border-emerald-300'}`}>
+                   <div className="mb-4">
+                      {/* HEADER CARD */}
+                      <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-1.5 text-emerald-600">
+                             <BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/>
+                             <span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Kelas {exam.grade} • Sem {exam.semester}</span>
+                          </div>
+                          
+                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                             <Timer size={12} />
+                             <span className="text-[9px] font-black uppercase">{exam.duration} Min</span>
+                          </div>
+                      </div>
+
+                      <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
+                      <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
+                      
+                      {exam.deadline && (
+                          <div className="mt-2">
+                              <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase w-full ${isExpired ? 'text-red-600 bg-red-100 px-3 py-2 rounded-lg' : 'text-red-600 pt-1'}`}>
+                                  <Clock size={12} />
+                                  <span>Batas: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
+                              </div>
+                          </div>
+                      )}
+                   </div>
+                   
+                   <button 
+                     onClick={() => !isExpired && handleExamClick(exam)} 
+                     disabled={!!isExpired}
+                     className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${isExpired ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-red-500 text-white hover:bg-emerald-600'}`}
+                   >
+                     {isExpired ? <><AlertOctagon size={12}/> Waktu Habis</> : <><Play size={12} fill="currentColor" /> Kerjakan</>}
+                   </button>
+                 </div>
+               );
+             })}
+        </div>
+      </div>
+    );
+  }
+
+  // 3. LOGIN FORM (Specific for Selected Exam)
+  if (step === 'login' && selectedExam) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0 pt-4">
+        <button onClick={handleBackToList} className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-tight mb-2">
+            <ArrowRight className="rotate-180" size={12}/> Kembali ke Daftar Soal
+        </button>
+
+        <div className="bg-emerald-600 text-white p-5 rounded-2xl shadow-lg">
+            <p className="text-emerald-200 text-[9px] font-bold uppercase tracking-widest">Anda Memilih Soal:</p>
+            <h1 className="text-lg font-black uppercase leading-tight mt-1">{selectedExam.title}</h1>
+            <div className="flex gap-2 mt-2">
+                <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">Kelas {selectedExam.grade}</span>
+                <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">Sem {selectedExam.semester}</span>
+            </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+          <form onSubmit={handleLoginAndStart} className="space-y-4">
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Masukkan Identitas</label>
+              <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                 <input 
                   type="text" 
                   inputMode="numeric" 
-                  className="w-full pl-10 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:border-emerald-500 transition-all shadow-sm placeholder:text-slate-400" 
-                  placeholder="Masukkan nomor NIS siswa" 
+                  className="w-full pl-10 pr-4 py-3.5 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:border-emerald-500 transition-all shadow-sm placeholder:text-slate-400" 
+                  placeholder="Nomor Induk Siswa (NIS)" 
                   value={nis} 
                   onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
                 />
               </div>
             </div>
-            <button type="submit" disabled={loadingExams} className="w-full bg-emerald-700 text-white px-5 py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all">
-               {loadingExams ? 'Mencari...' : <><Search size={14} /> CARI SOAL</>}
+            
+            <button type="submit" disabled={loadingLogin} className="w-full bg-emerald-700 text-white px-5 py-4 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all">
+               {loadingLogin ? <><Loader2 size={14} className="animate-spin"/> Memverifikasi...</> : <><Play size={14} fill="currentColor"/> KERJAKAN SOAL</>}
             </button>
           </form>
         </div>
@@ -426,81 +513,7 @@ const PublicExam: React.FC = () => {
     );
   }
 
-  if (step === 'list') {
-    return (
-      <div className="max-w-2xl mx-auto space-y-4 animate-fadeIn pb-24 px-1 md:px-0 pt-4">
-        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="md:hidden flex items-center gap-1 text-slate-500 text-[10px] font-bold uppercase"><ArrowRight className="rotate-180" size={12}/> Ganti Akun</button>
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
-          <div className="relative z-10">
-            <p className="text-emerald-100 text-[9px] font-bold uppercase tracking-widest">Data Siswa</p>
-            <h1 className="text-lg font-black uppercase">{student?.namalengkap}</h1>
-            <p className="text-xs mt-0.5 opacity-90">Kelas {student?.kelas} • NIS {student?.nis} • {student.jeniskelamin}</p>
-          </div>
-        </div>
-        <h2 className="text-sm font-black text-slate-800 uppercase ml-1">Daftar Soal</h2>
-        <div className="space-y-3">
-          {activeExams.length === 0 ? (
-             <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-200"><p className="text-slate-400 text-xs font-bold">Tidak ada soal tersedia.</p></div>
-          ) : (
-             activeExams.map(exam => {
-               // LOGIKA OTOMATIS NON-AKTIF (EXPIRED)
-               const isExpired = exam.deadline && new Date() > new Date(exam.deadline);
-               
-               return (
-                 <div key={exam.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all ${isExpired ? 'border-red-100 bg-red-50/30' : 'border-slate-100 hover:border-emerald-300'}`}>
-                   {/* LAYOUT KARTU SOAL DIPERBAIKI SESUAI PERMINTAAN */}
-                   <div className="mb-4">
-                      
-                      {/* BARIS 1: SEMESTER & DURASI (SEJAJAR HORIZONTAL) */}
-                      <div className="flex items-center gap-3 mb-2">
-                          <div className="flex items-center gap-1.5 text-emerald-600">
-                             <BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/>
-                             <span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Semester {exam.semester}</span>
-                          </div>
-                          
-                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
-                             <Timer size={12} />
-                             <span className="text-[9px] font-black uppercase">Durasi {exam.duration} Menit</span>
-                          </div>
-                      </div>
-
-                      {/* JUDUL & KATEGORI (MEMANJANG KE KANAN) */}
-                      <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
-                      <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
-                      
-                      {/* BARIS DEADLINE (MEMANJANG KE KANAN - FULL WIDTH) */}
-                      {exam.deadline && (
-                          <div className="mt-2">
-                              <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase w-full ${isExpired ? 'text-red-600 bg-red-100 px-3 py-2 rounded-lg' : 'text-red-600 pt-1'}`}>
-                                  <Clock size={12} />
-                                  <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
-                              </div>
-                              {/* TEKS PERINGATAN KECIL DI BAWAH DEADLINE */}
-                              <p className="text-[8px] text-black italic mt-1 font-medium">
-                                 *Soal tidak bisa dikerjakan apabila lewat dari tanggal & waktu ini
-                              </p>
-                          </div>
-                      )}
-                   </div>
-                   
-                   {/* TOMBOL BERUBAH JIKA EXPIRED */}
-                   <button 
-                     onClick={() => !isExpired && startExam(exam)} 
-                     disabled={!!isExpired}
-                     className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${isExpired ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-red-500 text-white hover:bg-emerald-600'}`}
-                   >
-                     {isExpired ? <><AlertOctagon size={12}/> Waktu Habis</> : <><Play size={12} fill="currentColor" /> Kerjakan Sekarang</>}
-                   </button>
-                 </div>
-               );
-             })
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // --- EXAM UI ---
+  // 4. EXAM INTERFACE (Sama seperti sebelumnya)
   if (step === 'exam' && selectedExam && questions.length > 0) {
     const currentQ = questions[currentQIndex];
     const answeredCount = Object.keys(answers).length;
@@ -735,6 +748,7 @@ const PublicExam: React.FC = () => {
     );
   }
 
+  // 5. RESULT PAGE
   if (step === 'result') {
     return (
       <div className="max-w-md mx-auto min-h-[60vh] flex flex-col items-center justify-center px-4 animate-slideUp text-center">
@@ -746,7 +760,7 @@ const PublicExam: React.FC = () => {
            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nilai Kamu</p>
            <p className="text-5xl font-black text-emerald-600 tracking-tighter">{score}</p>
         </div>
-        <button onClick={() => { setStep('login'); setNis(''); setSemester('0'); }} className="bg-emerald-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
+        <button onClick={() => { setStep('public_list'); setNis(''); setSelectedExam(null); }} className="bg-emerald-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"><ArrowRight size={16} /> Selesai</button>
       </div>
     );
   }
