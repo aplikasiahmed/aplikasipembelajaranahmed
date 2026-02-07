@@ -283,7 +283,7 @@ const TeacherTaskCheck: React.FC = () => {
                 onClick={() => setActiveTab('exams')}
                 className={`flex-1 px-4 py-2 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${activeTab === 'exams' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
             >
-                <CheckCircle2 size={14} /> Hasil Ujian
+                <CheckCircle2 size={14} /> Tugas Online
             </button>
         </div>
       </div>
@@ -414,7 +414,7 @@ const TeacherTaskCheck: React.FC = () => {
                     <tr>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-12">NO</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Siswa</th>
-                      <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Nama Ujian</th>
+                      <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Nama Tugas</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Nilai</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
                       <th className="px-4 py-3 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Hapus</th>
