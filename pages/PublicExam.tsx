@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle, Loader2, HelpCircle, AlertOctagon, Clock, LogIn, AlertCircle } from 'lucide-react';
+import { Search, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle, Loader2, HelpCircle, AlertOctagon, Clock, LogIn } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
 import Swal from 'sweetalert2';
@@ -105,7 +105,7 @@ const PublicExam: React.FC = () => {
         };
         localStorage.setItem('pai_exam_session', JSON.stringify(sessionData));
     }
-  }, [answers, violationCount, step]); 
+  }, [answers, violationCount, step, selectedExam, student, questions, startTime]); 
 
   // --- HANDLERS: NEW FLOW LOGIC ---
 
@@ -136,7 +136,7 @@ const PublicExam: React.FC = () => {
             icon: 'error',
             title: 'Gagal Masuk',
             text: text,
-            position: 'center', // REVISI: Muncul di tengah layar (centered)
+            position: 'center',
             timer: 3000,
             showConfirmButton: false,
             customClass: {
@@ -324,7 +324,7 @@ const PublicExam: React.FC = () => {
     };
 
     // TAMBAHAN: DETEKSI TOMBOL SCREENSHOT (KEYUP - DESKTOP)
-    const handleKeyUp = (e: KeyboardEvent) => {
+    const handleKeyUp = (e: any) => {
         if (isPaused.current) return;
 
         // 1. Tombol PrintScreen (Windows)
@@ -345,11 +345,11 @@ const PublicExam: React.FC = () => {
     };
 
     // TAMBAHAN BARU: DETEKSI GESTUR 3 JARI (MOBILE)
-    const handleTouchStart = (e: TouchEvent) => {
+    const handleTouchStart = (e: any) => {
         if (isPaused.current) return;
         // Jika terdeteksi lebih dari 2 jari (3, 4, dst) menyentuh layar
         // Ini biasa digunakan untuk screenshot 3 jari di Android/iOS atau gestures multitasking
-        if (e.touches.length > 2) {
+        if (e.touches && e.touches.length > 2) {
             triggerViolation();
         }
     };
@@ -417,6 +417,7 @@ const PublicExam: React.FC = () => {
       handleSubmitExam(true); 
     }
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, timeLeft]);
 
   const formatTime = (s: number) => {
