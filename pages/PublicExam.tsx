@@ -582,7 +582,7 @@ const PublicExam: React.FC = () => {
                                     <button 
                                         type="submit" 
                                         disabled={loadingLogin} 
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
                                     >
                                         {loadingLogin ? <><Loader2 size={14} className="animate-spin"/> Memproses...</> : 'MULAI MENGERJAKAN SOAL'}
                                     </button>
