@@ -136,7 +136,7 @@ const PublicExam: React.FC = () => {
             icon: 'error',
             title: 'Gagal Masuk',
             text: text,
-            position: 'center', // Muncul di tengah-tengah layar
+            position: 'top', // REVISI: Muncul di atas layar
             timer: 3000,
             showConfirmButton: false,
             customClass: {
@@ -489,7 +489,7 @@ const PublicExam: React.FC = () => {
                                   <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
                               </div>
                               <p className="text-[8px] md:text-[10px] font-medium italic text-slate-500 mt-1.5 leading-tight">
-                                *Soal tidak dapat dikerjakan apabila lewat dari tanggal & waktu ini
+                                *Soal tidak dapat dikerjakan apabila lewat dari waktu & tanggal ini
                               </p>
                           </div>
                       )}
@@ -531,7 +531,7 @@ const PublicExam: React.FC = () => {
                     <div className="px-6 pb-8 -mt-6 relative z-10">
                         <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100 space-y-4">
                             <div className="text-center space-y-1 mb-2">
-                                <p className="text-xs font-bold text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
+                                <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
                                 <p className="text-[10px] text-slate-500 font-medium">Pilih Semester & Masukkan NIS</p>
                             </div>
                             
@@ -575,7 +575,7 @@ const PublicExam: React.FC = () => {
                                         disabled={loadingLogin} 
                                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
                                     >
-                                        {loadingLogin ? <><Loader2 size={14} className="animate-spin"/> Memproses...</> : 'KERJAKAN SOAL'}
+                                        {loadingLogin ? <><Loader2 size={14} className="animate-spin"/> Memproses...</> : 'MULAI MENGERJAKAN SOAL'}
                                     </button>
                                 </div>
                             </form>
