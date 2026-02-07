@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff, BookOpen, X, Loader2 } from 'lucide-react';
@@ -67,8 +66,9 @@ const TeacherLogin: React.FC<TeacherLoginProps> = ({ onClose }) => {
           <div className="inline-flex bg-white/20 p-2 rounded-xl mb-2 backdrop-blur-sm">
             <BookOpen size={20} />
           </div>
-          <h1 className="text-sm font-bold uppercase tracking-tighter">Masuk Dashboard Guru</h1>
-          <p className="text-emerald-100 text-[8px] mt-0.5 font-normal opacity-80 tracking-widest">Akses Khusus Guru</p>
+          {/* UPDATED TYPOGRAPHY: Font Bold & Subtitle Size Adjusted */}
+          <h1 className="text-sm font-bold uppercase tracking-tight leading-tight">Masuk Dashboard Guru</h1>
+          <p className="text-emerald-50 text-[10px] mt-1 font-medium opacity-90 tracking-wide">Akses Khusus Guru Pengajar</p>
         </div>
         
         <form onSubmit={handleLogin} className="p-5 space-y-3">

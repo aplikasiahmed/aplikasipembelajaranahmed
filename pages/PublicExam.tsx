@@ -88,6 +88,7 @@ const PublicExam: React.FC = () => {
             localStorage.removeItem('pai_exam_session');
         }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- 2. UPDATE SESSION ---
@@ -105,6 +106,7 @@ const PublicExam: React.FC = () => {
         };
         localStorage.setItem('pai_exam_session', JSON.stringify(sessionData));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answers, violationCount, step, selectedExam, student, questions, startTime]); 
 
   // --- HANDLERS: NEW FLOW LOGIC ---
@@ -376,6 +378,7 @@ const PublicExam: React.FC = () => {
         window.removeEventListener("touchstart", handleTouchStart);
         window.removeEventListener('popstate', handlePopState);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]); 
 
   // --- HANDLER MODAL ---
@@ -460,7 +463,7 @@ const PublicExam: React.FC = () => {
       <div className="max-w-2xl mx-auto space-y-4 animate-fadeIn pb-24 px-1 md:px-0 pt-4">
         <div className="text-center space-y-1 mb-4">
           <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase tracking-tight">Kerjakan Soal</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih soal yang ingin dikerjakan dari daftar di bawah ini</p>
+          <p className="text-[10px] md:text-xs text-slate-500 font-medium tracking-tight">Pilih soal yang ingin dikerjakan dari daftar di bawah.</p>
         </div>
 
         <div className="space-y-3">
