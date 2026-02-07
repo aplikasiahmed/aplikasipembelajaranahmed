@@ -471,16 +471,16 @@ const PublicExam: React.FC = () => {
              {activeExams.map(exam => {
                const isExpired = exam.deadline && new Date() > new Date(exam.deadline);
                return (
-                 <div key={exam.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all ${isExpired ? 'border-red-100 bg-red-50/30' : 'border-slate-100 hover:border-emerald-300'}`}>
+                 <div key={exam.id} className={`bg-white p-5 rounded-2xl border shadow-sm transition-all ${isExpired ? 'border-slate-100 bg-slate-50/30' : 'border-slate-100 hover:border-emerald-300'}`}>
                    <div className="mb-4">
                       {/* HEADER CARD */}
                       <div className="flex items-center gap-3 mb-2">
                           <div className="flex items-center gap-1.5 text-emerald-600">
-                             <BookOpen size={12} className={isExpired ? "text-slate-100" : "text-emerald-600"}/>
-                             <span className={`text-[10px] font-black uppercase ${isExpired ? "text-slate-100" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
+                             <BookOpen size={12} className={isExpired ? "text-slate-500" : "text-emerald-600"}/>
+                             <span className={`text-[10px] font-black uppercase ${isExpired ? "text-slate-500" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
                           </div>
                           
-                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-500 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
                              <Timer size={12} />
                              <span className="text-[9px] font-black uppercase">Durasi {exam.duration} Menit</span>
                           </div>
