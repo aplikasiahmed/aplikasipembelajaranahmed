@@ -480,7 +480,7 @@ const PublicExam: React.FC = () => {
                              <span className={`text-[10px] font-black uppercase ${isExpired ? "text-slate-500" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
                           </div>
                           
-                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-500 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
                              <Timer size={12} />
                              <span className="text-[9px] font-black uppercase">Durasi {exam.duration} Menit</span>
                           </div>
