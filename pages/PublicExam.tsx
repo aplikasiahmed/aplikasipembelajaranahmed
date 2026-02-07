@@ -451,7 +451,10 @@ const PublicExam: React.FC = () => {
                                   <Clock size={12} />
                                   <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
                               </div>
-                              <p className="text-[8px] md:text-sm italic text-slate-800 max-w-xs">  *Soal tidak dapat dikerjakan apabila lewat dari waktu & tanggal ini</p>
+                              {/* REVISI: Menyesuaikan tampilan teks disclaimer agar tidak acak-acakan di desktop */}
+                              <p className="text-[8px] md:text-[10px] font-medium italic text-slate-500 mt-1.5 leading-tight">
+                                *Soal tidak dapat dikerjakan apabila lewat dari waktu & tanggal ini
+                              </p>
                           </div>
                       )}
                    </div>
