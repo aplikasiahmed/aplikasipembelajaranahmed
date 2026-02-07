@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle, Loader2, HelpCircle, AlertOctagon, Clock } from 'lucide-react';
+import { Search, Play, Timer, CheckCircle, ShieldAlert, LogOut, ChevronLeft, ChevronRight, Flag, Grid, User, Calendar, X, ArrowRight, BookOpen, AlertTriangle, Loader2, HelpCircle, AlertOctagon, Clock, LogIn, AlertCircle } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Student, Exam, Question } from '../types';
 import Swal from 'sweetalert2';
 
 const PublicExam: React.FC = () => {
   // --- STATES UTAMA ---
-  const [step, setStep] = useState<'public_list' | 'login' | 'exam' | 'result'>('public_list');
+  const [step, setStep] = useState<'public_list' | 'exam' | 'result'>('public_list');
   
   // Data User & Ujian
   const [nis, setNis] = useState('');
+  const [loginSemester, setLoginSemester] = useState('0'); // NEW: State Semester Login
   const [student, setStudent] = useState<Student | null>(null);
   const [activeExams, setActiveExams] = useState<Exam[]>([]);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
@@ -17,6 +18,9 @@ const PublicExam: React.FC = () => {
   const [loadingExams, setLoadingExams] = useState(false);
   const [loadingLogin, setLoadingLogin] = useState(false);
   
+  // UI State
+  const [showLoginModal, setShowLoginModal] = useState(false); // NEW: Modal Login State
+
   // State Pengerjaan
   const [answers, setAnswers] = useState<Record<string, string>>({}); 
   const [timeLeft, setTimeLeft] = useState(0); 
@@ -107,19 +111,55 @@ const PublicExam: React.FC = () => {
 
   const handleExamClick = (exam: Exam) => {
       setSelectedExam(exam);
-      setStep('login');
-      setNis(''); // Reset NIS saat ganti soal
+      setNis(''); // Reset NIS
+      setLoginSemester('0'); // Reset Semester
+      setLoadingLogin(false); // Reset Loading State agar tidak stuck jika sebelumnya cancel
+      setShowLoginModal(true); // Tampilkan Modal Login
   };
 
-  const handleBackToList = () => {
+  const handleCloseLoginModal = () => {
+      setShowLoginModal(false);
       setSelectedExam(null);
-      setStep('public_list');
   };
 
   const handleLoginAndStart = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedExam) return;
-    if (!nis.trim()) return Swal.fire({ icon: 'warning', title: 'NIS Kosong', text: 'Masukkan Nomor Induk Siswa.', heightAuto: false });
+
+    // Helper untuk Error & Close Modal
+    const failLogin = (text: string) => {
+        setLoadingLogin(false);
+        setShowLoginModal(false);
+        setSelectedExam(null); // Reset agar modal tertutup sepenuhnya secara konsep
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal Masuk',
+            text: text,
+            position: 'center', // Muncul di tengah layar
+            timer: 3000,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'rounded-2xl'
+            }
+        });
+    };
+
+    // VALIDASI SEMESTER
+    if (loginSemester === '0') {
+        failLogin('Silakan pilih semester terlebih dahulu.');
+        return;
+    }
+    // CEK KECOCOKAN SEMESTER
+    if (loginSemester !== selectedExam.semester) {
+        failLogin(`Soal ini untuk Semester ${selectedExam.semester}, Anda memilih Semester ${loginSemester}.`);
+        return;
+    }
+
+    if (!nis.trim()) {
+        failLogin('Masukkan Nomor Induk Siswa.');
+        return;
+    }
 
     setLoadingLogin(true);
     try {
@@ -127,21 +167,14 @@ const PublicExam: React.FC = () => {
       const s = await db.getStudentByNIS(nis);
       
       if (!s) {
-        Swal.fire({ icon: 'error', title: 'NIS Tidak Ditemukan', text: 'Periksa kembali nomor NIS Anda.', heightAuto: false });
-        setLoadingLogin(false);
+        failLogin('NIS Tidak Ditemukan. Periksa kembali.');
         return;
       }
 
       // 2. Validasi Kelas Siswa vs Kelas Ujian (PENTING!)
       const studentGrade = s.kelas ? s.kelas.charAt(0) : ''; 
       if (studentGrade !== selectedExam.grade) {
-          Swal.fire({ 
-              icon: 'error', 
-              title: 'Kelas Tidak Sesuai', 
-              text: `Soal ini untuk Kelas ${selectedExam.grade}, sedangkan Anda Kelas ${s.kelas}.`, 
-              heightAuto: false 
-          });
-          setLoadingLogin(false);
+          failLogin(`Soal untuk Kelas ${selectedExam.grade}, Anda Kelas ${s.kelas}.`);
           return;
       }
 
@@ -150,18 +183,19 @@ const PublicExam: React.FC = () => {
       // 3. Cek Apakah Sudah Mengerjakan
       const hasTaken = await db.checkStudentExamResult(s.nis, selectedExam.id);
       if (hasTaken) {
-          Swal.fire({ icon: 'error', title: 'Akses Ditolak', text: 'Anda sudah mengerjakan soal ini, soal dapat dikerjakan hanya 1x.', heightAuto: false });
-          setLoadingLogin(false);
+          failLogin('Anda sudah mengerjakan soal ini (Hanya 1x).');
           return;
       }
 
       // 4. Ambil Soal
       const q = await db.getQuestionsByExamId(selectedExam.id);
       if (q.length === 0) {
-        Swal.fire('Maaf', 'Soal belum tersedia untuk ujian ini.', 'info');
-        setLoadingLogin(false);
+        failLogin('Soal belum tersedia untuk ujian ini.');
         return;
       }
+
+      // TUTUP MODAL LOGIN DULU (Login Berhasil)
+      setShowLoginModal(false);
 
       // 5. Tampilkan Peraturan (Rules)
       const rules = await Swal.fire({
@@ -216,12 +250,15 @@ const PublicExam: React.FC = () => {
           setIsSubmitting(false);
           
           setStep('exam');
+      } else {
+          // Jika User Batal di Rules (Klik Batal), Reset Loading
+          setLoadingLogin(false);
       }
 
     } catch (err) {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.', heightAuto: false });
+      failLogin('Terjadi kesalahan sistem. Coba lagi.');
     } finally {
-      setLoadingLogin(false);
+      // setLoadingLogin handled by failLogin or success flow
     }
   };
 
@@ -414,7 +451,7 @@ const PublicExam: React.FC = () => {
       );
   }
 
-  // 2. PUBLIC LIST (Daftar Soal)
+  // 2. PUBLIC LIST (Daftar Soal + Modal Login)
   if (step === 'public_list') {
     return (
       <div className="max-w-2xl mx-auto space-y-4 animate-fadeIn pb-24 px-1 md:px-0 pt-4">
@@ -451,7 +488,6 @@ const PublicExam: React.FC = () => {
                                   <Clock size={12} />
                                   <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
                               </div>
-                              {/* REVISI: Menyesuaikan tampilan teks disclaimer agar tidak acak-acakan di desktop */}
                               <p className="text-[8px] md:text-[10px] font-medium italic text-slate-500 mt-1.5 leading-tight">
                                 *Soal tidak dapat dikerjakan apabila lewat dari waktu & tanggal ini
                               </p>
@@ -459,60 +495,94 @@ const PublicExam: React.FC = () => {
                       )}
                    </div>
                    
+                   {/* TOMBOL MASUK / WAKTU HABIS */}
                    <button 
                      onClick={() => !isExpired && handleExamClick(exam)} 
                      disabled={!!isExpired}
-                     className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${isExpired ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-red-500 text-white hover:bg-emerald-600'}`}
+                     className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${isExpired ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                    >
-                     {isExpired ? <><AlertOctagon size={14}/> Waktu Telah Habis</> : <><Play size={12} fill="currentColor" /> Kerjakan</>}
+                     {isExpired ? <><AlertOctagon size={14}/> Waktu Telah Habis</> : <><LogIn size={12} /> MASUK</>}
                    </button>
                  </div>
                );
              })}
         </div>
-      </div>
-    );
-  }
 
-  // 3. LOGIN FORM (Specific for Selected Exam)
-  if (step === 'login' && selectedExam) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fadeIn pb-10 px-1 md:px-0 pt-4">
-        <button onClick={handleBackToList} className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-tight mb-2">
-            <ArrowRight className="rotate-180" size={12}/> Kembali ke Daftar Soal
-        </button>
+        {/* --- MODAL POPUP LOGIN UJIAN (REVISI: CENTERED & ALERT TOP) --- */}
+        {showLoginModal && selectedExam && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+                <div className="absolute inset-0" onClick={handleCloseLoginModal}></div>
+                
+                <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-slideUp">
+                    {/* Header Modal */}
+                    <div className="bg-emerald-600 p-6 pt-8 pb-10 text-center relative">
+                        <button onClick={handleCloseLoginModal} className="absolute right-4 top-4 text-emerald-100 hover:text-white bg-red-500 p-2 rounded-full backdrop-blur-sm transition-all active:scale-90">
+                            <X size={16} />
+                        </button>
+                        <h2 className="text-white text-lg font-black uppercase tracking-tight leading-tight mb-1">{selectedExam.title}</h2>
+                        <div className="flex justify-center gap-2 text-[9px] font-bold text-emerald-100 uppercase tracking-widest">
+                            <span className="bg-emerald-700/50 px-2 py-0.5 rounded-lg border border-emerald-500/30">Kelas {selectedExam.grade}</span>
+                            <span className="bg-emerald-700/50 px-2 py-0.5 rounded-lg border border-emerald-500/30">Semester {selectedExam.semester}</span>
+                        </div>
+                    </div>
 
-        <div className="bg-emerald-600 text-white p-5 rounded-2xl shadow-lg">
-            <p className="text-emerald-200 text-[9px] font-bold uppercase tracking-widest">Anda Memilih Soal:</p>
-            <h1 className="text-lg font-black uppercase leading-tight mt-1">{selectedExam.title}</h1>
-            <div className="flex gap-2 mt-2">
-                <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">Kelas {selectedExam.grade}</span>
-                <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-bold">Semester {selectedExam.semester}</span>
+                    {/* Form Body - Overlap Effect */}
+                    <div className="px-6 pb-8 -mt-6 relative z-10">
+                        <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100 space-y-4">
+                            <div className="text-center space-y-1 mb-2">
+                                <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
+                                <p className="text-[10px] text-slate-500 font-medium">Pilih Semester & Masukkan NIS</p>
+                            </div>
+                            
+                            <form onSubmit={handleLoginAndStart} className="space-y-3">
+                                {/* Dropdown Semester */}
+                                <div className="space-y-1">
+                                    <div className="relative">
+                                        <select 
+                                            className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-normal outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all appearance-none"
+                                            value={loginSemester}
+                                            onChange={(e) => setLoginSemester(e.target.value)}
+                                        >
+                                            <option value="0">-- Pilih Semester --</option>
+                                            <option value="1">Semester 1 (Ganjil)</option>
+                                            <option value="2">Semester 2 (Genap)</option>
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                            <ChevronRight size={14} className="rotate-90" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Input NIS */}
+                                <div className="space-y-1">
+                                    <div className="relative">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <input 
+                                            type="text" 
+                                            inputMode="numeric" 
+                                            className="w-full pl-11 pr-4 py-3 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-normal outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:font-normal" 
+                                            placeholder="Masukkan Nomor NIS siswa" 
+                                            value={nis} 
+                                            onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-2">
+                                    <button 
+                                        type="submit" 
+                                        disabled={loadingLogin} 
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        {loadingLogin ? <><Loader2 size={14} className="animate-spin"/> Memproses...</> : 'MULAI MENGERJAKAN SOAL'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-          <form onSubmit={handleLoginAndStart} className="space-y-4">
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-1">Masukkan Identitas</label>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                <input 
-                  type="text" 
-                  inputMode="numeric" 
-                  className="w-full pl-10 pr-4 py-3.5 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 font-normal outline-none focus:border-emerald-500 transition-all shadow-sm placeholder:text-slate-400" 
-                  placeholder="Nomor Induk Siswa (NIS)" 
-                  value={nis} 
-                  onChange={(e) => setNis(e.target.value.replace(/[^0-9]/g, ''))}
-                />
-              </div>
-            </div>
-            
-            <button type="submit" disabled={loadingLogin} className="w-full bg-emerald-700 text-white px-5 py-4 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-800 active:scale-95 shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all">
-               {loadingLogin ? <><Loader2 size={14} className="animate-spin"/> Memverifikasi...</> : <><Play size={14} fill="currentColor"/> KERJAKAN SOAL</>}
-            </button>
-          </form>
-        </div>
+        )}
       </div>
     );
   }
