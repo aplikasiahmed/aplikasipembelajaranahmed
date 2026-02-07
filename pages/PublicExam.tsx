@@ -139,7 +139,7 @@ const PublicExam: React.FC = () => {
             icon: 'error',
             title: 'Gagal Masuk',
             text: text,
-            position: 'top', // FIXED: Position Top for better visibility
+            position: 'center', // REVISI: Kembali ke tengah layar
             timer: 3000,
             showConfirmButton: false,
             customClass: {
@@ -487,17 +487,17 @@ const PublicExam: React.FC = () => {
                       </div>
 
                       <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
-                      <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
+                      <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
                       
                       {exam.deadline && (
                           <div className="mt-2">
                               {/* REVISI: TAMPILAN DEADLINE AGAR LEBIH JELAS (TANGGAL & JAM DIPISAH) */}
-                              <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase w-full ${isExpired ? 'text-red-600 bg-red-100 px-3 py-2 rounded-lg' : 'text-red-600 pt-1'}`}>
+                              <div className={`flex items-center gap-1.5 text-[10px] font-black capitalize w-full ${isExpired ? 'text-slate-600 bg-slate-100 px-3 py-2 rounded-lg' : 'text-red-600 bg-red-100 px-3 py-2 rounded-lg'}`}>
                                   <Clock size={12} />
-                                  <span>Batas: {new Date(exam.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} • Pukul {new Date(exam.deadline).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                                  <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} • Pukul {new Date(exam.deadline).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                               <p className="text-[8px] md:text-[10px] font-medium italic text-slate-500 mt-1.5 leading-tight">
-                                *Soal tidak dapat dikerjakan apabila lewat dari waktu & tanggal ini
+                                *Soal tidak dapat dikerjakan apabila lewat dari tanggal ini & waktu ini
                               </p>
                           </div>
                       )}
@@ -672,7 +672,7 @@ const PublicExam: React.FC = () => {
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                                 {/* UPDATE TEKS PERINGATAN SCREENSHOT */}
                                 <p className="text-sm font-bold text-red-800 leading-relaxed">
-                                    Anda terdeteksi keluar dari halaman soal atau melakukan Screenshot
+                                    Anda terdeteksi melakukan pelanngaran.
                                 </p>
                             </div>
                             
