@@ -531,7 +531,7 @@ const PublicExam: React.FC = () => {
                     <div className="px-6 pb-8 -mt-6 relative z-10">
                         <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100 space-y-4">
                             <div className="text-center space-y-1 mb-2">
-                                <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
+                                <p className="text-xs font-bold text-slate-800 uppercase tracking-widest">Masuk Untuk Mengerjakan Soal</p>
                                 <p className="text-[10px] text-slate-500 font-medium">Pilih Semester & Masukkan NIS</p>
                             </div>
                             
