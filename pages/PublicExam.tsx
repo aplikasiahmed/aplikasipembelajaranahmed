@@ -136,7 +136,7 @@ const PublicExam: React.FC = () => {
             icon: 'error',
             title: 'Gagal Masuk',
             text: text,
-            position: 'top', // Muncul di atas layar
+            position: 'center', // Muncul di tengah-tengah layar
             timer: 3000,
             showConfirmButton: false,
             customClass: {
