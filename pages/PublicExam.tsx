@@ -433,12 +433,12 @@ const PublicExam: React.FC = () => {
                       <div className="flex items-center gap-3 mb-2">
                           <div className="flex items-center gap-1.5 text-emerald-600">
                              <BookOpen size={12} className={isExpired ? "text-red-400" : "text-emerald-600"}/>
-                             <span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Kelas {exam.grade} • Sem {exam.semester}</span>
+                             <span className={`text-[9px] font-black uppercase ${isExpired ? "text-red-400" : "text-emerald-600"}`}>Kelas {exam.grade} • Semester {exam.semester}</span>
                           </div>
                           
                           <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
                              <Timer size={12} />
-                             <span className="text-[9px] font-black uppercase">{exam.duration} Min</span>
+                             <span className="text-[9px] font-black uppercase">Durasi {exam.duration} Menit</span>
                           </div>
                       </div>
 
@@ -449,8 +449,9 @@ const PublicExam: React.FC = () => {
                           <div className="mt-2">
                               <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase w-full ${isExpired ? 'text-red-600 bg-red-100 px-3 py-2 rounded-lg' : 'text-red-600 pt-1'}`}>
                                   <Clock size={12} />
-                                  <span>Batas: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
+                                  <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
                               </div>
+                              <p className="text-[8px] md:text-sm italic text-slate-800 max-w-xs">  *Soal tidak dapat dikerjakan apabila lewat dari waktu & tanggal ini</p>
                           </div>
                       )}
                    </div>
@@ -460,7 +461,7 @@ const PublicExam: React.FC = () => {
                      disabled={!!isExpired}
                      className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${isExpired ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-red-500 text-white hover:bg-emerald-600'}`}
                    >
-                     {isExpired ? <><AlertOctagon size={12}/> Waktu Habis</> : <><Play size={12} fill="currentColor" /> Kerjakan</>}
+                     {isExpired ? <><AlertOctagon size={14}/> Waktu Telah Habis</> : <><Play size={12} fill="currentColor" /> Kerjakan</>}
                    </button>
                  </div>
                );
