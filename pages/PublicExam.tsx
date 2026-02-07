@@ -497,7 +497,7 @@ const PublicExam: React.FC = () => {
                                   <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} • Pukul {new Date(exam.deadline).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                               <p className="text-[8px] md:text-[10px] font-medium italic text-slate-500 mt-1.5 leading-tight">
-                                *Soal tidak dapat dikerjakan apabila lewat dari tanggal ini & waktu ini
+                                *Soal tidak dapat dikerjakan apabila lewat dari tanggal & waktu ini
                               </p>
                           </div>
                       )}
