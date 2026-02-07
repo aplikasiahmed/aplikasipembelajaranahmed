@@ -482,11 +482,11 @@ const PublicExam: React.FC = () => {
                           
                           <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${isExpired ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-700'}`}>
                              <Timer size={12} />
-                             <span className="text-[9px] font-black uppercase">Durasi {exam.duration} Menit</span>
+                             <span className="text-[10px] font-black uppercase">Durasi {exam.duration} Menit</span>
                           </div>
                       </div>
 
-                      <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-500' : 'text-slate-800'}`}>{exam.title}</h3>
+                      <h3 className={`font-bold text-sm leading-tight ${isExpired ? 'text-slate-400' : 'text-slate-800'}`}>{exam.title}</h3>
                       <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">{exam.category}</p>
                       
                       {exam.deadline && (
@@ -540,7 +540,7 @@ const PublicExam: React.FC = () => {
                         <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100 space-y-4">
                             <div className="text-center space-y-1 mb-2">
                                 {/* REVISI: Mengubah font-black menjadi font-bold dan text-slate-500 menjadi font-medium sesuai permintaan */}
-                                <p className="text-xs font-normal text-slate-800 uppercase tracking-widest">Masuk Untuk Kerjakan Soal</p>
+                                <p className="text-xs font-bold text-slate-800 uppercase">Masuk Untuk Kerjakan Soal</p>
                                 <p className="text-[11px] text-slate-500 font-medium">Pilih Semester & Masukkan NIS</p>
                             </div>
                             
