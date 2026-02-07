@@ -139,7 +139,7 @@ const PublicExam: React.FC = () => {
             icon: 'error',
             title: 'Gagal Masuk',
             text: text,
-            position: 'center',
+            position: 'top', // Changed to top for visibility as requested
             timer: 3000,
             showConfirmButton: false,
             customClass: {
@@ -491,9 +491,10 @@ const PublicExam: React.FC = () => {
                       
                       {exam.deadline && (
                           <div className="mt-2">
+                              {/* REVISI: TAMPILAN DEADLINE AGAR LEBIH JELAS (TANGGAL & JAM DIPISAH) */}
                               <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase w-full ${isExpired ? 'text-red-600 bg-red-100 px-3 py-2 rounded-lg' : 'text-red-600 pt-1'}`}>
                                   <Clock size={12} />
-                                  <span>Batas Kerjakan Soal: {new Date(exam.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
+                                  <span>Batas: {new Date(exam.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} • Pukul {new Date(exam.deadline).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                               <p className="text-[8px] md:text-[10px] font-medium italic text-slate-500 mt-1.5 leading-tight">
                                 *Soal tidak dapat dikerjakan apabila lewat dari waktu & tanggal ini
