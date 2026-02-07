@@ -136,7 +136,7 @@ const PublicExam: React.FC = () => {
             icon: 'error',
             title: 'Gagal Masuk',
             text: text,
-            position: 'center', // Muncul di tengah layar
+            position: 'top', // Muncul di atas layar
             timer: 3000,
             showConfirmButton: false,
             customClass: {
@@ -508,12 +508,13 @@ const PublicExam: React.FC = () => {
              })}
         </div>
 
-        {/* --- MODAL POPUP LOGIN UJIAN (REVISI: CENTERED & ALERT TOP) --- */}
+        {/* --- MODAL POPUP LOGIN UJIAN (REVISI: CENTERED & ALERT TOP & SIZE FIX) --- */}
         {showLoginModal && selectedExam && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
                 <div className="absolute inset-0" onClick={handleCloseLoginModal}></div>
                 
-                <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-slideUp">
+                {/* FIXED: max-w-[320px] agar lebih ideal di HP */}
+                <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] shadow-2xl relative overflow-hidden animate-slideUp">
                     {/* Header Modal */}
                     <div className="bg-emerald-600 p-6 pt-8 pb-10 text-center relative">
                         <button onClick={handleCloseLoginModal} className="absolute right-4 top-4 text-emerald-100 hover:text-white bg-red-500 p-2 rounded-full backdrop-blur-sm transition-all active:scale-90">
