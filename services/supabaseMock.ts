@@ -199,7 +199,7 @@ class DatabaseService {
 
   // 2. Manage Questions (Tabel: bank_soal)
   async getQuestionsByExamId(examId: string): Promise<Question[]> {
-    const { data, error } = await supabase.from('bank_soal').select('*').eq('exam_id', examId);
+    const { data, error } = await supabase.from('bank_soal').select('*').eq('exam_id', examId).order('created_at', { ascending: true });
     return (data || []) as Question[];
   }
 
