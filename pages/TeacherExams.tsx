@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileEdit, Plus, Trash2, Edit, PlayCircle, PauseCircle, Loader2, ArrowLeft, X, Save, BookOpen, Clock, Layers, Pencil, CalendarClock } from 'lucide-react';
+import { FileEdit, Plus, Trash2, Edit, PlayCircle, PauseCircle, Loader2, ArrowLeft, X, Save, BookOpen, Clock, Layers, Pencil, CalendarClock, Shuffle } from 'lucide-react';
 import { db } from '../services/supabaseMock';
 import { Exam, GradeLevel } from '../types';
 import Swal from 'sweetalert2';
@@ -169,6 +169,37 @@ const TeacherExams: React.FC = () => {
     if (result.isConfirmed) {
       await db.updateExamStatus(exam.id, newStatus);
       fetchExams();
+    }
+  };
+
+  const toggleRandom = async (exam: Exam) => {
+    const newRandom = !exam.is_random;
+    
+    try {
+        await db.updateExam(exam.id, { is_random: newRandom });
+        
+        // Show toast notification
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+        
+        Toast.fire({
+            icon: 'success',
+            title: newRandom ? 'Soal Diacak' : 'Soal Tidak Diacak'
+        });
+
+        fetchExams();
+    } catch (error) {
+        console.error("Failed to toggle random:", error);
+        Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal mengubah status acak soal.', heightAuto: false });
     }
   };
 
@@ -427,8 +458,16 @@ const TeacherExams: React.FC = () => {
                 {!exam.deadline && <p className="text-[10px] text-slate-400 font-medium">Semester {exam.semester}</p>}
               </div>
 
-              {/* REVISI URUTAN TOMBOL: STATUS -> KELOLA -> EDIT -> HAPUS */}
+              {/* REVISI URUTAN TOMBOL: ACAK -> STATUS -> KELOLA -> EDIT -> HAPUS */}
               <div className="flex items-center gap-2">
+                 <button 
+                   onClick={() => toggleRandom(exam)}
+                   className={`p-2.5 rounded-xl border transition-all ${exam.is_random ? 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
+                   title={exam.is_random ? "Soal Diacak" : "Soal Tidak Diacak"}
+                 >
+                   <Shuffle size={18} />
+                 </button>
+
                  <button 
                    onClick={() => toggleStatus(exam)}
                    className={`p-2.5 rounded-xl border transition-all ${exam.status === 'active' ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'}`}

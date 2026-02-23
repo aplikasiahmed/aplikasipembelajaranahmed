@@ -70,6 +70,7 @@ export interface Exam {
   semester: string;
   duration: number; // in minutes
   deadline?: string; // New: Batas Akhir Pengerjaan (ISO Date String)
+  is_random?: boolean; // New: Acak Soal
   status: 'draft' | 'active' | 'closed';
   created_at: string;
 }
