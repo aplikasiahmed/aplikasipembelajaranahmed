@@ -8,20 +8,39 @@
         const originalLog = console.log;
         const originalDebug = console.debug;
         const originalWarn = console.warn;
+        const originalInfo = console.info;
+
+        function shouldSuppress(args) {
+            if (!args || args.length === 0) return false;
+            const msg = args[0];
+            if (typeof msg === 'string') {
+                return msg.includes('[vite]') || 
+                       msg.includes('CONNECTED') || 
+                       msg.includes('Render Start') || 
+                       msg.includes('Render End') ||
+                       msg.includes('React Router Future Flag Warning');
+            }
+            return false;
+        }
 
         console.log = function(...args) {
-            if (args[0] && typeof args[0] === 'string' && (args[0].includes('[vite]') || args[0].includes('CONNECTED') || args[0].includes('Render Start') || args[0].includes('Render End'))) return;
+            if (shouldSuppress(args)) return;
             originalLog.apply(console, args);
         };
 
         console.debug = function(...args) {
-            if (args[0] && typeof args[0] === 'string' && (args[0].includes('[vite]') || args[0].includes('CONNECTED'))) return;
+            if (shouldSuppress(args)) return;
             originalDebug.apply(console, args);
         };
 
         console.warn = function(...args) {
-            if (args[0] && typeof args[0] === 'string' && (args[0].includes('React Router Future Flag Warning'))) return;
+            if (shouldSuppress(args)) return;
             originalWarn.apply(console, args);
+        };
+
+        console.info = function(...args) {
+            if (shouldSuppress(args)) return;
+            originalInfo.apply(console, args);
         };
     })();
     </script>

@@ -236,9 +236,14 @@ const PublicExam: React.FC = () => {
           // 6. Mulai Ujian
           const startTimeIso = new Date().toISOString();
           const endTimeIso = new Date(new Date().getTime() + selectedExam.duration * 60000).toISOString();
-          const shuffledQuestions = shuffleArray(q);
+          
+          // REVISI: Cek apakah soal harus diacak atau tidak
+          let finalQuestions = q;
+          if (selectedExam.is_random) {
+              finalQuestions = shuffleArray(q);
+          }
 
-          setQuestions(shuffledQuestions);
+          setQuestions(finalQuestions);
           setAnswers({});
           setCurrentQIndex(0);
           setFlaggedQuestions(new Set());
