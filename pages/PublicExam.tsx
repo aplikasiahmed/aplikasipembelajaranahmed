@@ -677,7 +677,7 @@ const PublicExam: React.FC = () => {
                             <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                                 {/* UPDATE TEKS PERINGATAN SCREENSHOT */}
                                 <p className="text-sm font-bold text-red-800 leading-relaxed">
-                                    Anda terdeteksi melakukan pelanngaran.
+                                    Anda terdeteksi melakukan pelanggaran.
                                 </p>
                             </div>
                             
