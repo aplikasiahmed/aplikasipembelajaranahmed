@@ -767,7 +767,7 @@ const PublicExam: React.FC = () => {
                           <button onClick={() => toggleFlag(currentQ.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${isCurrentFlagged ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-400 border-slate-200'}`}><Flag size={12} fill={isCurrentFlagged ? "currentColor" : "none"} /> Klik Ragu-ragu</button>
                       </div>
                       {currentQ.image_url && <div className="mb-4 md:mb-6 rounded-xl md:rounded-2xl overflow-hidden border border-slate-100 shadow-sm max-w-lg mx-auto bg-slate-50"><img src={currentQ.image_url} alt="Soal" className="w-full h-auto object-contain max-h-[250px] md:max-h-[300px]" /></div>}
-                      <div className="flex-1 mb-4 md:mb-6"><p className="text-sm md:text-lg font-bold text-slate-800 leading-relaxed text-justify">{currentQ.text}</p></div>
+                      <div className="flex-1 mb-4 md:mb-6"><p className="text-base md:text-lg font-medium text-slate-800 leading-relaxed text-justify">{currentQ.text}</p></div>
                       
                       {/* REVISI MOBILE: GAP DIPERKECIL */}
                       <div className="grid grid-cols-1 gap-2 md:gap-3">
