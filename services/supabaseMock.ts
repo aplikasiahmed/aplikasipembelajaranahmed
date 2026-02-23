@@ -166,7 +166,7 @@ class DatabaseService {
   
   // 1. Manage Exams (Tabel: ujian)
   async getExams(): Promise<Exam[]> {
-    const { data, error } = await supabase.from('ujian').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('ujian').select('*').order('created_at', { ascending: true });
     return (data || []) as Exam[];
   }
 
@@ -232,7 +232,7 @@ class DatabaseService {
         .from('ujian')
         .select('*')
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
     return (data || []) as Exam[];
   }
