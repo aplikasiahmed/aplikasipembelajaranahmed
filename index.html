@@ -2,6 +2,29 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <script>
+    // Sembunyikan log debug yang mengganggu SEBELUM script lain berjalan
+    (function() {
+        const originalLog = console.log;
+        const originalDebug = console.debug;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && (args[0].includes('[vite]') || args[0].includes('CONNECTED') || args[0].includes('Render Start') || args[0].includes('Render End'))) return;
+            originalLog.apply(console, args);
+        };
+
+        console.debug = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && (args[0].includes('[vite]') || args[0].includes('CONNECTED'))) return;
+            originalDebug.apply(console, args);
+        };
+
+        console.warn = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && (args[0].includes('React Router Future Flag Warning'))) return;
+            originalWarn.apply(console, args);
+        };
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal PAI & Budi Pekerti</title>
     

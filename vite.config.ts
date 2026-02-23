@@ -4,6 +4,12 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  logLevel: 'warn', // Kurangi log di terminal
+  server: {
+    hmr: {
+      overlay: false, // Sembunyikan overlay error jika mengganggu
+    }
+  },
   build: {
     // Menaikkan batas peringatan ukuran file menjadi 2000kb (2MB)
     // Ini menghilangkan warning "Adjust chunk size limit" di Vercel
