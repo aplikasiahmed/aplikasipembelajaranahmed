@@ -341,7 +341,7 @@ const TeacherInputGrades: React.FC = () => {
           if (rowTypeRaw.includes('UTS') || rowTypeRaw.includes('PTS')) finalType = 'UTS';
           else if (rowTypeRaw.includes('UAS') || rowTypeRaw.includes('PAS')) finalType = 'UAS';
           else if (rowTypeRaw.includes('Praktik')) finalType = 'Praktik';
-          else if (rowTypeRaw.includes('Harian')) finalType = 'Harian';
+          else if (rowTypeRaw.includes('harian')) finalType = 'harian';
           else if (type) finalType = type;
 
           if (rowNis && rowNilai !== undefined && rowNilai !== '') {

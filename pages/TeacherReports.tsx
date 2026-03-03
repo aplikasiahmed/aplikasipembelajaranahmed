@@ -100,19 +100,19 @@ const TeacherReports: React.FC = () => {
           const s = studentsMap.get(sid);
           const type = item.subject_type ? item.subject_type.toLowerCase().trim() : '';
 
-          if (type === 'Harian' || type === 'uh') {
+          if (type === 'harian' || type === 'uh') {
               s.harian.push(item.score);
               if (s.harian.length > maxHarianCount) maxHarianCount = s.harian.length;
-          } else if (type === 'UTS' || type === 'pts') {
+          } else if (type === 'uts' || type === 'pts') {
               s.uts = item.score;
               existUTS = true;
-          } else if (type === 'UAS' || type === 'pas') {
+          } else if (type === 'uas' || type === 'pas') {
               s.uas = item.score;
               existUAS = true;
-          } else if (type === 'Praktik') {
+          } else if (type === 'pts') {
               s.praktik = item.score;
               existPraktik = true;
-          } else if (type === 'Tugas online' || type === 'Ujian Online') {
+          } else if (type === 'tugas online' || type === 'ujian online') {
               // REVISI: Masukkan ke array TO
               s.to.push(item.score);
               if (s.to.length > maxTOCount) maxTOCount = s.to.length;
