@@ -98,15 +98,15 @@ const TeacherReports: React.FC = () => {
           }
 
           const s = studentsMap.get(sid);
-          const type = item.subject_type ? item.subject_type.toLowerCase() : '';
+          const type = item.subject_type ? item.subject_type.toLowerCase().trim() : '';
 
-          if (type === 'harian') {
+          if (type === 'harian' || type === 'uh') {
               s.harian.push(item.score);
               if (s.harian.length > maxHarianCount) maxHarianCount = s.harian.length;
-          } else if (type === 'uts') {
+          } else if (type === 'uts' || type === 'pts') {
               s.uts = item.score;
               existUTS = true;
-          } else if (type === 'uas') {
+          } else if (type === 'uas' || type === 'pas') {
               s.uas = item.score;
               existUAS = true;
           } else if (type === 'praktik') {

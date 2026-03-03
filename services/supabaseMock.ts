@@ -79,7 +79,17 @@ class DatabaseService {
 
   async getGradesByKelas(kelas: string, semester?: string): Promise<any[]> {
     let query = supabase.from('Nilai').select('*').eq('kelas', kelas);
-    if (semester) query = query.eq('semester', semester);
+    
+    if (semester) {
+        // REVISI: Handle variasi penulisan semester (1/Ganjil, 2/Genap)
+        if (semester === '1') {
+            query = query.in('semester', ['1', 'Ganjil', 'Semester 1', 'ganjil']);
+        } else if (semester === '2') {
+            query = query.in('semester', ['2', 'Genap', 'Semester 2', 'genap']);
+        } else {
+            query = query.eq('semester', semester);
+        }
+    }
     
     const { data: grades, error: gError } = await query.order('created_at', { ascending: false });
     if (gError || !grades) return [];

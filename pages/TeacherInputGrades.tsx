@@ -7,6 +7,14 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { generateExcel } from '../utils/excelGenerator';
 
+// Helper to normalize semester input
+const normalizeSemester = (val: string) => {
+  const v = String(val).toLowerCase().trim();
+  if (v === '1' || v === 'ganjil' || v.includes('ganjil') || v.includes('semester 1')) return '1';
+  if (v === '2' || v === 'genap' || v.includes('genap') || v.includes('semester 2')) return '2';
+  return val;
+};
+
 const TeacherInputGrades: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation(); // Hook untuk menangkap data kiriman
@@ -320,7 +328,7 @@ const TeacherInputGrades: React.FC = () => {
           const rowNis = String(row['NIS'] || row['nis'] || '').trim();
           const rowNilai = row['NILAI'] || row['nilai'];
           
-          const rowSem = String(row['SEMESTER'] || row['semester'] || importSemester).trim();
+          const rowSem = normalizeSemester(row['SEMESTER'] || row['semester'] || importSemester);
           const rowTypeRaw = String(row['JENIS TUGAS'] || row['jenis tugas'] || type).toLowerCase().trim();
           
           // Fallback: Jika Excel kosong, ambil dari State desc, tapi untuk template download dipastikan kosong.
