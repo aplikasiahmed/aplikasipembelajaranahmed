@@ -187,7 +187,7 @@ const TeacherInputGrades: React.FC = () => {
     try {
       await db.addGrade({ 
         student_id: selectedStudentId, 
-        subject_type: type as 'harian' | 'uts' | 'uas' | 'praktik', 
+        subject_type: type as 'Harian' | 'PTS' | 'UAS' | 'praktik', 
         score: parseInt(score), 
         description: desc, 
         kelas: selectedKelas, 
@@ -338,10 +338,10 @@ const TeacherInputGrades: React.FC = () => {
           const rowKelas = row['KELAS'] || row['kelas'] || importKelas;
 
           let finalType = 'harian';
-          if (rowTypeRaw.includes('uts') || rowTypeRaw.includes('pts')) finalType = 'uts';
-          else if (rowTypeRaw.includes('uas') || rowTypeRaw.includes('pas')) finalType = 'uas';
-          else if (rowTypeRaw.includes('praktik')) finalType = 'praktik';
-          else if (rowTypeRaw.includes('harian')) finalType = 'harian';
+          if (rowTypeRaw.includes('UTS') || rowTypeRaw.includes('PTS')) finalType = 'UTS';
+          else if (rowTypeRaw.includes('UAS') || rowTypeRaw.includes('PAS')) finalType = 'UAS';
+          else if (rowTypeRaw.includes('Praktik')) finalType = 'Praktik';
+          else if (rowTypeRaw.includes('Harian')) finalType = 'Harian';
           else if (type) finalType = type;
 
           if (rowNis && rowNilai !== undefined && rowNilai !== '') {
@@ -453,10 +453,10 @@ const TeacherInputGrades: React.FC = () => {
               <label className="text-[8px] md:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Jenis Tugas</label>
               <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-normal outline-none" value={type} onChange={(e: any) => setType(e.target.value)}>
                 <option value="">-- Pilih Tugas --</option>
-                <option value="harian">Harian</option>
-                <option value="uts">PTS/UTS</option>
-                <option value="uas">PAS/UAS</option>
-                <option value="praktik">Praktik</option>
+                <option value="Harian">Harian</option>
+                <option value="PTS">PTS/UTS</option>
+                <option value="UAS">PAS/UAS</option>
+                <option value="Praktik">Praktik</option>
               </select>
             </div>
             <div className="space-y-1">
