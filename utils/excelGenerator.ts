@@ -124,8 +124,8 @@ const setupWorksheet = (sheet: any, data: any[], meta?: ExcelMeta) => {
             const legendItems = [
                 "H = Harian",
                 "TO = Tugas Online",
-                "UTS = Ujian Tengah Semester",
-                "UAS = Ujian Akhir Semester"
+                "PTS/UTS = Penilaian Tengah Semester",
+                "PAS/UAS = Penilaian Akhir Semester"
             ];
 
             legendItems.forEach((item, idx) => {

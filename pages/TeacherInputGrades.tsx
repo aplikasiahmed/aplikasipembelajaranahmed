@@ -330,8 +330,8 @@ const TeacherInputGrades: React.FC = () => {
           const rowKelas = row['KELAS'] || row['kelas'] || importKelas;
 
           let finalType = 'harian';
-          if (rowTypeRaw.includes('uts')) finalType = 'uts';
-          else if (rowTypeRaw.includes('uas')) finalType = 'uas';
+          if (rowTypeRaw.includes('uts') || rowTypeRaw.includes('pts')) finalType = 'uts';
+          else if (rowTypeRaw.includes('uas') || rowTypeRaw.includes('pas')) finalType = 'uas';
           else if (rowTypeRaw.includes('praktik')) finalType = 'praktik';
           else if (rowTypeRaw.includes('harian')) finalType = 'harian';
           else if (type) finalType = type;
@@ -446,8 +446,8 @@ const TeacherInputGrades: React.FC = () => {
               <select className="w-full p-2 rounded-lg border border-slate-200 bg-white text-[9px] md:text-sm font-normal outline-none" value={type} onChange={(e: any) => setType(e.target.value)}>
                 <option value="">-- Pilih Tugas --</option>
                 <option value="harian">Harian</option>
-                <option value="uts">UTS</option>
-                <option value="uas">UAS</option>
+                <option value="uts">PTS/UTS</option>
+                <option value="uas">PAS/UAS</option>
                 <option value="praktik">Praktik</option>
               </select>
             </div>

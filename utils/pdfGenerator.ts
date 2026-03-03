@@ -84,8 +84,8 @@ const drawPageContent = (doc: jsPDF, type: 'nilai' | 'absensi', data: any[], met
         doc.setFontSize(8);
         doc.text("H = Harian", legendX, finalY + 5);
         doc.text("TO = Tugas Online", legendX, finalY + 9);
-        doc.text("UTS = Ujian Tengah Semester", legendX, finalY + 13);
-        doc.text("UAS = Ujian Akhir Semester", legendX, finalY + 17);
+        doc.text("PTS/UTS = Penilaian Tengah Semester", legendX, finalY + 13);
+        doc.text("PAS/UAS = Penilaian Akhir Semester", legendX, finalY + 17);
     }
     
     const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });

@@ -161,8 +161,8 @@ const TeacherReports: React.FC = () => {
 
           // Column Lain
           if (existPraktik) row['PRAKTIK'] = s.praktik !== null ? s.praktik : '';
-          if (existUTS) row['UTS'] = s.uts !== null ? s.uts : '';
-          if (existUAS) row['UAS'] = s.uas !== null ? s.uas : '';
+          if (existUTS) row['PTS/UTS'] = s.uts !== null ? s.uts : '';
+          if (existUAS) row['PAS/UAS'] = s.uas !== null ? s.uas : '';
           
           // REVISI FINAL: Ganti 'RATA-RATA' menjadi 'RATA2'
           row['RATA2'] = average;
